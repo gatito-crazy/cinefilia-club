@@ -1,0 +1,192 @@
+<section
+    class="portada"
+    aria-labelledby="titulo-inicio"
+>
+    <div class="bienvenida">
+        <p class="etiqueta">
+            CINEFILIA CLUB
+        </p>
+
+        <h1 id="titulo-inicio">
+            Tu próxima historia empieza en el cine.
+        </h1>
+
+        <p class="descripcion">
+            Descubrí películas, elegí tu función y reservá tus
+            butacas. Sumá algo rico del Candy y disfrutá la
+            experiencia.
+        </p>
+
+        <div class="acciones">
+            <a
+                class="boton"
+                routerLink="/cartelera"
+            >
+                Ver cartelera
+            </a>
+
+            <a
+                class="boton secundario"
+                routerLink="/mis-compras"
+            >
+                Mis compras y QR
+            </a>
+
+            <a
+                class="boton secundario"
+                routerLink="/candy"
+            >
+                Comprar solo Candy
+            </a>
+
+        </div>
+    </div>
+
+    <div
+        class="marca"
+        aria-hidden="true"
+    >
+        <img
+            src="/cinefilia-club-logo.png"
+            alt=""
+            width="360"
+            height="360"
+        >
+
+        <p>
+            Películas · Butacas · Candy
+        </p>
+    </div>
+</section>
+
+<section
+    class="destacadas"
+    aria-labelledby="titulo-destacadas"
+    [attr.aria-busy]="cargando()"
+>
+    <header class="cabecera">
+        <div>
+            <p class="etiqueta">
+                LAS FAVORITAS DEL PÚBLICO
+            </p>
+
+            <h2 id="titulo-destacadas">
+                Las películas más vendidas
+            </h2>
+
+            <p>
+                Las tres películas activas con más entradas
+                vendidas.
+            </p>
+        </div>
+
+        <a
+            class="boton secundario"
+            routerLink="/cartelera"
+        >
+            Explorar cartelera →
+        </a>
+    </header>
+
+    @if (cargando()) {
+        <p
+            class="mensaje"
+            role="status"
+        >
+            Cargando las favoritas del público…
+        </p>
+    } @else if (error()) {
+        <div
+            class="mensaje error"
+            role="alert"
+        >
+            <p>
+                {{ error() }}
+            </p>
+
+            <button
+                type="button"
+                class="boton secundario"
+                (click)="cargarRanking()"
+            >
+                Reintentar
+            </button>
+        </div>
+    } @else {
+        <div class="peliculas">
+            @for (
+                pelicula of peliculas();
+                track pelicula.id;
+                let posicion = $index
+            ) {
+                <article class="pelicula">
+                    <div class="poster">
+                        @if (
+                            pelicula.imagen_url &&
+                            !imagenesFallidas().includes(pelicula.id)
+                        ) {
+                            <img
+                                [src]="pelicula.imagen_url"
+                                [alt]="'Póster de ' + pelicula.nombre"
+                                loading="lazy"
+                                (error)="marcarImagenFallida(pelicula.id)"
+                            >
+                        } @else {
+                            <div class="sin-imagen">
+                                Póster no disponible
+                            </div>
+                        }
+
+                        <span class="puesto">
+                            #{{ posicion + 1 }}
+                        </span>
+                    </div>
+
+                    <div class="informacion">
+                        <h3>
+                            {{ pelicula.nombre }}
+                        </h3>
+
+                        <p class="datos">
+                            {{ pelicula.duracion_minutos }} min
+                            ·
+                            {{ pelicula.entradas_vendidas }}
+                            entradas vendidas
+                        </p>
+
+                        <p class="sinopsis">
+                            {{ pelicula.sinopsis }}
+                        </p>
+
+                        <a
+                            class="boton"
+                            routerLink="/cartelera"
+                        >
+                            Ir a la cartelera
+                        </a>
+                    </div>
+                </article>
+            } @empty {
+                <div class="mensaje vacio">
+                    <h3>
+                        Las favoritas están por descubrirse
+                    </h3>
+
+                    <p>
+                        Cuando haya compras confirmadas,
+                        aparecerán acá las películas más vendidas.
+                    </p>
+
+                    <a
+                        class="boton"
+                        routerLink="/cartelera"
+                    >
+                        Elegir una película
+                    </a>
+                </div>
+            }
+        </div>
+    }
+</section>
+
+<app-candy-destacados></app-candy-destacados>

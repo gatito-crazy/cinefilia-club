@@ -1,0 +1,267 @@
+<h1>Cartelera</h1>
+<p>Descubrí las películas de Cinefilia Club.</p>
+
+@if (cargando()) {
+    <p role="status">Cargando cartelera...</p>
+} @else if (mensajeError()) {
+    <p role="alert">{{ mensajeError() }}</p>
+} @else {
+    <div class="filtros">
+        <div class="campo">
+            <label for="busqueda">Buscar película</label>
+
+            <input
+                #campoBusqueda
+                id="busqueda"
+                type="search"
+                placeholder="Escribí un nombre..."
+                [value]="busqueda()"
+                (input)="busqueda.set(campoBusqueda.value)"
+            />
+        </div>
+
+        <div class="campo">
+            <label for="genero">Género</label>
+
+            <select
+                #campoGenero
+                id="genero"
+                [value]="generoSeleccionado()"
+                (change)="generoSeleccionado.set(campoGenero.value)"
+            >
+                <option value="">Todos los géneros</option>
+
+                @for (genero of generos(); track genero.id) {
+                    <option [value]="genero.id">
+                        {{ genero.nombre }}
+                    </option>
+                }
+            </select>
+        </div>
+
+        <button type="button" (click)="limpiarFiltros()">
+            Limpiar filtros
+        </button>
+    </div>
+
+    @if (peliculaSeleccionada(); as seleccionada) {
+        <section
+            id="horarios-pc"
+            class="funciones-disponibles horarios-pc"
+            aria-labelledby="tituloHorariosPc"
+            [attr.aria-busy]="cargandoFunciones()"
+            aria-live="polite"
+        >
+            <header class="cabecera-funciones">
+                <div>
+                    <p class="etiqueta-funciones">HORARIOS DISPONIBLES</p>
+
+                    <h2 id="tituloHorariosPc">
+                        {{ seleccionada.nombre }}
+                    </h2>
+
+                    <p>Fecha y hora de Argentina.</p>
+                </div>
+
+                <button
+                    class="cerrar-funciones"
+                    type="button"
+                    (click)="cerrarFunciones()"
+                >
+                    Cerrar horarios
+                </button>
+            </header>
+
+            <ng-container
+                [ngTemplateOutlet]="contenidoHorarios"
+            ></ng-container>
+        </section>
+    }
+
+    <p role="status">
+        Películas encontradas: {{ peliculasFiltradas().length }}
+    </p>
+
+    <section class="peliculas" aria-label="Películas disponibles">
+        @for (pelicula of peliculasFiltradas(); track pelicula.id) {
+            <article class="pelicula">
+                @if (pelicula.imagen_url) {
+                    <img
+                        [src]="pelicula.imagen_url"
+                        [alt]="'Póster de ' + pelicula.nombre"
+                        loading="lazy"
+                    />
+                } @else {
+                    <div class="sin-imagen">Póster pendiente</div>
+                }
+
+                <div class="informacion">
+                    <h2>{{ pelicula.nombre }}</h2>
+                    <p>{{ pelicula.sinopsis }}</p>
+
+                    <div class="generos">
+                        @for (genero of pelicula.generos; track genero.id) {
+                            <span>{{ genero.nombre }}</span>
+                        }
+                    </div>
+
+                    <p>
+                        <strong>Duración:</strong>
+                        {{ pelicula.duracion_minutos }} minutos
+                    </p>
+
+                    <p>
+                        <strong>Edad mínima:</strong>
+
+                        {{
+                            pelicula.edad_minima === 0
+                                ? 'Sin restricción'
+                                : pelicula.edad_minima + ' años'
+                        }}
+                    </p>
+
+                    <button
+                        class="ver-funciones"
+                        type="button"
+                        [attr.aria-expanded]="peliculaSeleccionada()?.id === pelicula.id"
+                        (click)="alternarFunciones(pelicula)"
+                    >
+                        {{
+                            peliculaSeleccionada()?.id === pelicula.id
+                                ? 'Ocultar horarios'
+                                : 'Ver funciones'
+                        }}
+
+                        <span aria-hidden="true">
+                            {{
+                                peliculaSeleccionada()?.id === pelicula.id
+                                    ? '−'
+                                    : '+'
+                            }}
+                        </span>
+                    </button>
+                </div>
+
+                @if (peliculaSeleccionada()?.id === pelicula.id) {
+                    <section
+                        class="funciones-disponibles horarios-movil"
+                        [id]="'horarios-movil-' + pelicula.id"
+                        [attr.aria-labelledby]="'tituloHorariosMovil-' + pelicula.id"
+                        [attr.aria-busy]="cargandoFunciones()"
+                        aria-live="polite"
+                    >
+                        <header class="cabecera-funciones">
+                            <div>
+                                <h3 [id]="'tituloHorariosMovil-' + pelicula.id">
+                                    Horarios disponibles
+                                </h3>
+
+                                <p>Fecha y hora de Argentina.</p>
+                            </div>
+                        </header>
+
+                        <ng-container
+                            [ngTemplateOutlet]="contenidoHorarios"
+                        ></ng-container>
+                    </section>
+                }
+            </article>
+        } @empty {
+            <p>No hay películas que coincidan con los filtros.</p>
+        }
+    </section>
+}
+
+<ng-template #contenidoHorarios>
+    @if (cargandoFunciones()) {
+        <p role="status">Consultando funciones...</p>
+    } @else if (errorFunciones()) {
+        <p class="error-funciones" role="alert">
+            {{ errorFunciones() }}
+        </p>
+
+        <button
+            type="button"
+            (click)="reintentarFunciones()"
+        >
+            Volver a intentar
+        </button>
+    } @else {
+        <div class="lista-funciones">
+            @for (funcion of funciones(); track funcion.id) {
+                <article class="funcion">
+                    <div class="fecha-funcion">
+                        <span>
+                            {{ funcion.inicio | date:'dd/MM/yyyy':'-0300' }}
+                        </span>
+
+                        <h4>
+                            {{ funcion.inicio | date:'HH:mm':'-0300' }} hs
+                        </h4>
+                    </div>
+
+                    <p class="sala-funcion">
+                        {{ funcion.sala.nombre }}
+                    </p>
+
+                    <div class="detalles-funcion">
+                        <span>{{ funcion.formato }}</span>
+
+                        <span>
+                            {{
+                                funcion.idioma === 'castellano'
+                                    ? 'Castellano'
+                                    : 'Subtitulada'
+                            }}
+                        </span>
+                    </div>
+
+                    <p class="fin-funcion">
+                        Finaliza a las
+                        {{ funcion.fin | date:'HH:mm':'-0300' }} hs.
+                    </p>
+
+                    <dl class="precios-funcion">
+                        <div>
+                            <dt>Estándar</dt>
+
+                            <dd>
+                                $ {{ funcion.precio_estandar | number:'1.2-2' }}
+                                ARS
+                            </dd>
+                        </div>
+
+                        <div>
+                            <dt>Accesible</dt>
+
+                            <dd>
+                                $ {{ funcion.precio_accesible | number:'1.2-2' }}
+                                ARS
+                            </dd>
+                        </div>
+
+                        <div class="precio-vip">
+                            <dt>VIP · Filas R, S y T</dt>
+
+                            <dd>
+                                $ {{ funcion.precio_vip | number:'1.2-2' }}
+                                ARS
+                            </dd>
+                        </div>
+                    </dl>
+
+                    <a
+                        class="elegir-butacas"
+                        [routerLink]="['/butacas', funcion.id]"
+                    >
+                        Elegir butacas
+                    </a>
+                </article>
+            } @empty {
+                <p class="sin-funciones">
+                    Esta película todavía no tiene funciones disponibles.
+                </p>
+            }
+        </div>
+    }
+</ng-template>

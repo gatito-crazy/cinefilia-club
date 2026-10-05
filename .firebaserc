@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "tp-proyecto-cine"
+  },
+  "targets": {
+    "tp-proyecto-cine": {
+      "hosting": {
+        "cinefilia": [
+          "cinefilia-club"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

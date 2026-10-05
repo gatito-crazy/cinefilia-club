@@ -1,0 +1,385 @@
+:host {
+    display: block;
+    max-width: 1180px;
+    min-width: 0;
+    margin: 0 auto;
+    color: #f5f5fa;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+.portada {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1.5fr)
+        minmax(0, 1fr);
+    align-items: center;
+    gap: 2rem;
+    padding: clamp(1.25rem, 4vw, 3rem);
+    border: 1px solid #50506a;
+    border-radius: 24px;
+    background:
+        radial-gradient(
+            ellipse at top right,
+            #50202d,
+            transparent 70%
+        ),
+        #151522;
+}
+
+.bienvenida,
+.marca {
+    min-width: 0;
+}
+
+.etiqueta {
+    margin: 0 0 0.75rem;
+    color: #ffb4c0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+
+h1 {
+    max-width: 18ch;
+    margin: 0;
+    font-size: clamp(2rem, 4.5vw, 3.5rem);
+    line-height: 1.15;
+}
+
+h2 {
+    margin: 0;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+h3 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+p {
+    line-height: 1.65;
+    overflow-wrap: anywhere;
+}
+
+.descripcion,
+.cabecera > div > p:last-child {
+    color: #bcbccc;
+}
+
+.descripcion {
+    max-width: 55ch;
+    margin: 1.5rem 0;
+}
+
+.acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0.8rem 1.2rem;
+    border: 1px solid #e34b61;
+    border-radius: 10px;
+    background: #b72d40;
+    color: #ffffff;
+    font: inherit;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 180ms ease;
+}
+
+.secundario {
+    border-color: #50506a;
+    background: #28283a;
+}
+
+.marca {
+    text-align: center;
+}
+
+.marca img {
+    display: block;
+    width: 100%;
+    max-width: 300px;
+    height: auto;
+    margin: 0 auto;
+    object-fit: contain;
+}
+
+.marca p {
+    color: #ffb4c0;
+}
+
+.destacadas {
+    margin-top: 2.5rem;
+}
+
+.cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.cabecera > div {
+    min-width: 0;
+}
+
+.enlace {
+    color: #ffb4c0;
+    text-underline-offset: 0.3rem;
+}
+
+.peliculas {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.pelicula {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid #38384b;
+    border-radius: 16px;
+    background: #151522;
+}
+
+.poster {
+    position: relative;
+}
+
+.poster img,
+.sin-imagen {
+    display: block;
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+}
+
+.sin-imagen {
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: #222233;
+    color: #bcbccc;
+    text-align: center;
+}
+
+.puesto {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 8px;
+    background: #702332;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.informacion {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    overflow-wrap: anywhere;
+}
+
+.informacion p {
+    margin: 0;
+    color: #bcbccc;
+}
+
+.datos {
+    font-size: 0.85rem;
+}
+
+.sinopsis {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+}
+
+.informacion .boton {
+    width: 100%;
+    margin-top: auto;
+}
+
+.mensaje {
+    padding: 1.25rem;
+    border: 1px solid #50506a;
+    border-radius: 12px;
+    background: #222233;
+}
+
+.error {
+    border-color: #75404b;
+    background: #34202a;
+    color: #ffb4b4;
+}
+
+.vacio {
+    grid-column: 1 / -1;
+}
+
+a:focus-visible,
+button:focus-visible {
+    outline: 2px solid #ffb4c0;
+    outline-offset: 4px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .boton:hover {
+        background: #d0374c;
+    }
+
+    .secundario:hover {
+        background: #38384b;
+    }
+}
+
+@media (max-width: 850px) {
+    .portada {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .marca {
+        display: none;
+    }
+
+    .peliculas {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .portada {
+        border-radius: 16px;
+    }
+
+    .acciones .boton {
+        width: 100%;
+    }
+
+    .peliculas {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pelicula {
+        display: grid;
+        grid-template-columns: 95px minmax(0, 1fr);
+        align-items: start;
+    }
+
+    .informacion {
+        height: 100%;
+        padding: 1rem;
+    }
+
+.sinopsis {
+    font-size: 0.9rem;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+}
+
+    .puesto {
+        top: 0.35rem;
+        left: 0.35rem;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 350px) {
+    .pelicula {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .poster {
+        width: 140px;
+        justify-self: center;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .boton {
+        transition: none;
+    }
+}
+
+a.boton,
+button.boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-sizing: border-box;
+    min-height: 46px;
+    padding: 12px 20px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: #b72d40;
+    color: #ffffff;
+    font: inherit;
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+a.boton.secundario,
+button.boton.secundario {
+    border-color: #555568;
+    background: #252533;
+    color: #ffffff;
+}
+
+.cabecera > .boton {
+    flex-shrink: 0;
+}
+
+a.boton:hover,
+button.boton:hover:not(:disabled) {
+    background: #d0374c;
+}
+
+a.boton.secundario:hover,
+button.boton.secundario:hover:not(:disabled) {
+    border-color: #b72d40;
+    background: #353545;
+}
+
+a.boton:focus-visible,
+button.boton:focus-visible {
+    outline: 3px solid #ffb4c0;
+    outline-offset: 4px;
+}
+
+button.boton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+    .cabecera > .boton {
+        width: 100%;
+    }
+}

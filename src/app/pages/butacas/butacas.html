@@ -1,0 +1,332 @@
+<section class="pagina-butacas">
+    <a class="volver" routerLink="/cartelera">
+        ← Volver a cartelera
+    </a>
+
+    @if (cargando()) {
+        <p role="status">Cargando mapa de butacas...</p>
+    } @else if (error()) {
+        <div class="mensaje error" role="alert">
+            <p>{{ error() }}</p>
+
+            <button type="button" (click)="cargar()">
+                Volver a intentar
+            </button>
+        </div>
+    } @else if (funcion(); as actual) {
+        <header class="cabecera">
+            <p class="etiqueta">ELEGÍ TUS UBICACIONES</p>
+            <h1>{{ nombrePelicula() }}</h1>
+
+            <p>
+                {{ actual.sala.nombre }} ·
+                {{ actual.inicio | date:'dd/MM/yyyy HH:mm':'-0300' }} ·
+                {{ actual.formato }} ·
+                {{
+                    actual.idioma === 'castellano'
+                        ? 'Castellano'
+                        : 'Subtitulada'
+                }}
+            </p>
+        </header>
+
+        @if (reservaVigente()) {
+            <div class="reserva-activa">
+                <div>
+                    <strong>Tus ubicaciones están reservadas</strong>
+
+                    <p>
+                        Tiempo disponible para elegir Candy y confirmar
+                        la compra.
+                    </p>
+                </div>
+
+                <strong
+                    class="contador"
+                    role="timer"
+                    aria-label="Tiempo restante de la reserva"
+                >
+                    {{ tiempoRestante() }}
+                </strong>
+            </div>
+        } @else {
+            <p class="mensaje">
+                Elegí tus ubicaciones y presioná Continuar para
+                reservarlas durante 5 minutos.
+                La selección por sí sola todavía no las reserva.
+            </p>
+        }
+
+        @if (ventaCerrada()) {
+            <p class="mensaje error" role="alert">
+                Esta función ya no está disponible para comprar entradas.
+            </p>
+        }
+
+        @if (errorSincronizacion()) {
+            <div class="mensaje error" role="alert">
+                <p>{{ errorSincronizacion() }}</p>
+
+                <button
+                    type="button"
+                    [disabled]="sincronizando() || reservando() || cancelando()"
+                    (click)="sincronizar()"
+                >
+                    Actualizar disponibilidad
+                </button>
+            </div>
+        }
+
+        <p class="estado-conexion">
+            {{
+                conexionEnVivo()
+                    ? 'Actualización en tiempo real conectada.'
+                    : 'Comprobando disponibilidad periódicamente.'
+            }}
+        </p>
+
+        <div class="leyenda" aria-label="Tipos y estados de ubicaciones">
+            <span>
+                <i class="muestra estandar" aria-hidden="true"></i>
+                Estándar · ARS {{ actual.precio_estandar | number:'1.2-2' }}
+            </span>
+
+            <span>
+                <i class="muestra accesible" aria-hidden="true"></i>
+                Accesible · ARS {{ actual.precio_accesible | number:'1.2-2' }}
+            </span>
+
+            <span>
+                <i class="muestra vip" aria-hidden="true"></i>
+                VIP · ARS {{ actual.precio_vip | number:'1.2-2' }}
+            </span>
+
+            <span>
+                <i class="muestra seleccionada" aria-hidden="true"></i>
+                Seleccionada
+            </span>
+
+            <span>
+                <i class="muestra propia" aria-hidden="true"></i>
+                Reservada para vos
+            </span>
+
+            <span>
+                <i class="muestra reservada" aria-hidden="true"></i>
+                Reservada por otro comprador
+            </span>
+
+            <span>
+                <i class="muestra vendida" aria-hidden="true"></i>
+                Vendida
+            </span>
+        </div>
+
+        <p id="ayudaMapa" class="ayuda">
+            La pantalla está frente a la fila A.
+            En el teléfono, deslizá el mapa horizontalmente.
+            ACC identifica la fila accesible; las filas R, S y T son VIP.
+            Las ubicaciones reservadas por otros o vendidas están bloqueadas.
+        </p>
+
+        <div
+            class="mapa-desplazable"
+            tabindex="0"
+            role="region"
+            aria-label="Mapa de ubicaciones de la sala"
+            aria-describedby="ayudaMapa"
+        >
+            <div class="mapa">
+                <div class="pantalla">PANTALLA</div>
+
+                @for (fila of filas(); track fila.nombre) {
+                    <div
+                        class="fila-butacas"
+                        [class.fila-accesible]="fila.nombre === 'ACC'"
+                    >
+                        <span class="nombre-fila">{{ fila.nombre }}</span>
+
+                        @for (bloque of fila.bloques; track bloque.nombre) {
+                            <div class="bloque-butacas">
+                                @for (butaca of bloque.butacas; track butaca.id) {
+                                    <button
+                                        class="butaca"
+                                        type="button"
+                                        [class.vip]="butaca.tipo === 'vip'"
+                                        [class.accesible]="butaca.tipo === 'accesible'"
+                                        [class.seleccionada]="seleccionadas().includes(butaca.id)"
+                                        [class.propia]="estadoButaca(butaca) === 'propia'"
+                                        [class.reservada]="estadoButaca(butaca) === 'reservada'"
+                                        [class.vendida]="estadoButaca(butaca) === 'vendida'"
+                                        [attr.aria-label]="etiquetaButaca(butaca)"
+                                        [attr.aria-pressed]="seleccionadas().includes(butaca.id)"
+                                        [disabled]="butacaBloqueada(butaca)"
+                                        (click)="alternarButaca(butaca)"
+                                    >
+                                        {{ butaca.numero }}
+                                    </button>
+                                }
+                            </div>
+                        }
+
+                        <span class="nombre-fila" aria-hidden="true">
+                            {{ fila.nombre }}
+                        </span>
+                    </div>
+                } @empty {
+                    <p>No se encontraron ubicaciones para esta sala.</p>
+                }
+            </div>
+        </div>
+
+        @if (aviso()) {
+            <p class="mensaje" role="status">{{ aviso() }}</p>
+        }
+
+        @if (errorOperacion()) {
+            <p class="mensaje error" role="alert">
+                {{ errorOperacion() }}
+            </p>
+        }
+
+        <section class="resumen" aria-labelledby="tituloSeleccion">
+            <h2 id="tituloSeleccion">
+                {{
+                    reservaVigente()
+                        ? 'Tus ubicaciones reservadas'
+                        : 'Tu selección'
+                }}
+            </h2>
+
+            @if (detalleSeleccion().length > 0) {
+                <ul class="seleccion">
+                    @for (butaca of detalleSeleccion(); track butaca.id) {
+                        <li>
+                            <div>
+                                <strong>
+                                    {{ butaca.fila }} · {{ butaca.numero }}
+                                </strong>
+
+                                <span>{{ nombreTipo(butaca) }}</span>
+                            </div>
+
+                            <span>
+                                ARS {{ precioButaca(butaca) | number:'1.2-2' }}
+                            </span>
+
+                            @if (!reservaVigente() && !resultadoIncierto()) {
+                                <button
+                                    type="button"
+                                    [disabled]="reservando() || cancelando()"
+                                    [attr.aria-label]="'Quitar ubicación ' + butaca.fila + ' ' + butaca.numero"
+                                    (click)="alternarButaca(butaca)"
+                                >
+                                    Quitar
+                                </button>
+                            }
+                        </li>
+                    }
+                </ul>
+
+                @if (tieneVip()) {
+                    <p class="aviso-vip">
+                        Tu selección incluye butacas VIP con un precio
+                        superior al estándar.
+                    </p>
+                }
+
+                <p class="total">
+                    {{ detalleSeleccion().length }} ubicaciones ·
+                    Total: ARS {{ total() | number:'1.2-2' }}
+                </p>
+            } @else {
+                <p>Seleccioná tus ubicaciones en el mapa.</p>
+            }
+
+            @if (reservaVigente()) {
+                <p>
+                    Continuá al Candy para agregar productos o seguir
+                    solamente con tus entradas. El contador no se reinicia.
+                </p>
+
+                <p>
+                    Para cambiar las ubicaciones, cancelá primero
+                    esta reserva.
+                </p>
+
+                <div class="acciones-reserva">
+                    @if (!cancelando() && !reservando() && !sincronizando() && !errorSincronizacion()) {
+                        <a
+                            class="continuar enlace-candy"
+                            [routerLink]="['/compra', actual.id, 'candy']"
+                        >
+                            Continuar al Candy
+                        </a>
+                    } @else {
+                        <button
+                            class="continuar"
+                            type="button"
+                            disabled
+                        >
+                            Continuar al Candy
+                        </button>
+                    }
+
+                    <button
+                        class="cancelar-reserva"
+                        type="button"
+                        [disabled]="cancelando() || reservando() || sincronizando()"
+                        (click)="cancelarReserva()"
+                    >
+                        {{
+                            cancelando()
+                                ? 'Cancelando...'
+                                : 'Cancelar reserva'
+                        }}
+                    </button>
+                </div>
+            } @else if (resultadoIncierto()) {
+                <p>
+                    Necesitamos comprobar el resultado de tu solicitud
+                    antes de permitir otra reserva.
+                </p>
+
+                <button
+                    class="continuar"
+                    type="button"
+                    [disabled]="reservando() || cancelando() || sincronizando() || ventaCerrada()"
+                    (click)="continuar()"
+                >
+                    {{
+                        reservando()
+                            ? 'Comprobando...'
+                            : 'Comprobar reserva'
+                    }}
+                </button>
+            } @else if (detalleSeleccion().length > 0) {
+                <div class="acciones-reserva">
+                    <button
+                        class="continuar"
+                        type="button"
+                        [disabled]="reservando() || cancelando() || sincronizando() || ventaCerrada() || !!errorSincronizacion()"
+                        (click)="continuar()"
+                    >
+                        {{
+                            reservando()
+                                ? 'Reservando...'
+                                : 'Continuar · Reservar 5 minutos'
+                        }}
+                    </button>
+
+                    <button
+                        type="button"
+                        [disabled]="reservando() || cancelando()"
+                        (click)="limpiarSeleccion()"
+                    >
+                        Limpiar selección
+                    </button>
+                </div>
+            }
+        </section>
+    }
+</section>

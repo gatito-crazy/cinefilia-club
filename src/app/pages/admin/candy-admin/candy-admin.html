@@ -1,0 +1,592 @@
+<section class="panel-candy" aria-labelledby="tituloCandy">
+    <header class="cabecera">
+        <div>
+            <h2 id="tituloCandy">Administración de Candy</h2>
+            <p>Gestioná categorías, productos y combos.</p>
+        </div>
+
+        <div class="acciones">
+            <button
+                class="boton secundario"
+                type="button"
+                [disabled]="ocupado() || editor() !== null"
+                (click)="cargar()"
+            >
+                Actualizar
+            </button>
+
+            <button
+                class="boton"
+                type="button"
+                [disabled]="ocupado() || editor() !== null"
+                (click)="nuevaCategoria()"
+            >
+                Agregar categoría
+            </button>
+
+            <button
+                class="boton"
+                type="button"
+                [disabled]="ocupado() || editor() !== null || categorias().length === 0"
+                (click)="nuevoProducto()"
+            >
+                Agregar producto
+            </button>
+
+            <button
+                class="boton"
+                type="button"
+                [disabled]="ocupado() || editor() !== null || productos().length === 0"
+                (click)="nuevoCombo()"
+            >
+                Agregar combo
+            </button>
+        </div>
+    </header>
+
+    @if (error()) {
+        <p class="mensaje error" role="alert">{{ error() }}</p>
+    }
+
+    @if (exito()) {
+        <p class="mensaje exito" role="status">{{ exito() }}</p>
+    }
+
+    @if (editor() === 'categoria') {
+        <article class="tarjeta editor">
+            <h3>
+                {{ categoriaEditada ? 'Editar categoría' : 'Nueva categoría' }}
+            </h3>
+
+            <form #formCategoria="ngForm" (ngSubmit)="guardarCategoria()">
+                <fieldset [disabled]="guardando()">
+                    <div class="campo">
+                        <label for="nombreCategoriaCandy">Nombre</label>
+                        <input
+                            id="nombreCategoriaCandy"
+                            name="nombreCategoria"
+                            [(ngModel)]="nombreCategoria"
+                            maxlength="80"
+                            required
+                        />
+                    </div>
+
+                    <label class="check">
+                        <input
+                            type="checkbox"
+                            name="categoriaActiva"
+                            [(ngModel)]="categoriaActiva"
+                        />
+                        Categoría activa
+                    </label>
+
+                    <p class="ayuda">
+                        Una categoría desactivada oculta sus productos
+                        en el catálogo del cliente.
+                    </p>
+
+                    <div class="acciones">
+                        <button
+                            class="boton"
+                            type="submit"
+                            [disabled]="formCategoria.invalid || !nombreCategoria.trim()"
+                        >
+                            {{ guardando() ? 'Guardando...' : 'Guardar categoría' }}
+                        </button>
+                        <button
+                            class="boton secundario"
+                            type="button"
+                            (click)="cerrarEditor()"
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </fieldset>
+            </form>
+        </article>
+    }
+
+    @if (editor() === 'producto') {
+        <article class="tarjeta editor">
+            <h3>{{ productoEditado ? 'Editar producto' : 'Nuevo producto' }}</h3>
+
+            <form #formProducto="ngForm" (ngSubmit)="guardarProducto()">
+                <fieldset [disabled]="guardando()">
+                    <div class="campo">
+                        <label for="categoriaProductoCandy">Categoría</label>
+                        <select
+                            id="categoriaProductoCandy"
+                            name="categoriaProducto"
+                            [(ngModel)]="borrador.categoria_id"
+                            required
+                        >
+                            <option value="" disabled>Seleccioná una categoría</option>
+                            @for (categoria of categorias(); track categoria.id) {
+                                <option [value]="categoria.id">
+                                    {{ categoria.nombre }}
+                                    {{ categoria.activa ? '' : ' · Desactivada' }}
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="campo">
+                        <label for="nombreProductoCandy">Nombre</label>
+                        <input
+                            id="nombreProductoCandy"
+                            name="nombreProducto"
+                            [(ngModel)]="borrador.nombre"
+                            maxlength="120"
+                            required
+                        />
+                    </div>
+
+                    <div class="campo">
+                        <label for="descripcionProductoCandy">Descripción</label>
+                        <textarea
+                            id="descripcionProductoCandy"
+                            name="descripcionProducto"
+                            [(ngModel)]="borrador.descripcion"
+                            rows="3"
+                            maxlength="1500"
+                        ></textarea>
+                    </div>
+
+                    <div class="campo">
+                        <label for="precioProductoCandy">Precio en ARS</label>
+                        <input
+                            id="precioProductoCandy"
+                            name="precioProducto"
+                            type="number"
+                            [(ngModel)]="borrador.precio"
+                            min="0.01"
+                            max="9999999999.99"
+                            step="0.01"
+                            required
+                        />
+                    </div>
+
+                    <div class="campo">
+                        <label for="imagenProductoCandy">Imagen · opcional</label>
+                        <input
+                            id="imagenProductoCandy"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            (change)="seleccionarImagen($event)"
+                        />
+                        <small class="ayuda">
+                            JPG, PNG o WEBP de hasta 5 MB.
+                            Si no elegís otra imagen, se conserva la actual.
+                        </small>
+                        @if (vistaImagen()) {
+                            <img
+                                class="preview-imagen"
+                                [src]="vistaImagen()"
+                                alt="Vista previa del producto"
+                            />
+                        }
+                    </div>
+
+                    <label class="check">
+                        <input
+                            type="checkbox"
+                            name="productoActivo"
+                            [(ngModel)]="borrador.activo"
+                        />
+                        Producto activo
+                    </label>
+
+                    <div class="acciones">
+                        <button
+                            class="boton"
+                            type="submit"
+                            [disabled]="formProducto.invalid || !borrador.nombre.trim()"
+                        >
+                            {{ guardando() ? 'Guardando...' : 'Guardar producto' }}
+                        </button>
+                        <button
+                            class="boton secundario"
+                            type="button"
+                            (click)="cerrarEditor()"
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </fieldset>
+            </form>
+        </article>
+    }
+
+    @if (editor() === 'combo') {
+        <article class="tarjeta editor">
+            <h3>{{ comboEditado ? 'Editar combo' : 'Nuevo combo' }}</h3>
+
+            <form #formCombo="ngForm" (ngSubmit)="guardarCombo()">
+                <fieldset [disabled]="guardando()">
+                    <div class="campo">
+                        <label for="nombreComboCandy">Nombre</label>
+                        <input
+                            id="nombreComboCandy"
+                            name="nombreCombo"
+                            [(ngModel)]="borradorCombo.nombre"
+                            maxlength="120"
+                            required
+                        />
+                    </div>
+
+                    <div class="campo">
+                        <label for="descripcionComboCandy">Descripción</label>
+                        <textarea
+                            id="descripcionComboCandy"
+                            name="descripcionCombo"
+                            [(ngModel)]="borradorCombo.descripcion"
+                            rows="3"
+                            maxlength="1500"
+                        ></textarea>
+                    </div>
+
+                    <div class="campo">
+                        <label for="precioComboCandy">Precio del combo en ARS</label>
+                        <input
+                            id="precioComboCandy"
+                            name="precioCombo"
+                            type="number"
+                            [(ngModel)]="borradorCombo.precio"
+                            min="0.01"
+                            max="9999999999.99"
+                            step="0.01"
+                            required
+                        />
+                        <small class="ayuda">
+                            Este es el precio del combo completo.
+                            No se suman los precios individuales.
+                        </small>
+                    </div>
+
+                    <div class="campo">
+                        <label for="imagenComboCandy">Imagen · opcional</label>
+                        <input
+                            id="imagenComboCandy"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            (change)="seleccionarImagen($event)"
+                        />
+                        <small class="ayuda">
+                            JPG, PNG o WEBP de hasta 5 MB.
+                            Si no elegís otra imagen, se conserva la actual.
+                        </small>
+                        @if (vistaImagen()) {
+                            <img
+                                class="preview-imagen"
+                                [src]="vistaImagen()"
+                                alt="Vista previa del combo"
+                            />
+                        }
+                    </div>
+
+                    <h4>Productos incluidos</h4>
+
+                    <div class="campo">
+                        <label for="buscarComponenteCandy">Buscar producto</label>
+                        <input
+                            #buscadorComponentes
+                            id="buscarComponenteCandy"
+                            type="search"
+                            [value]="busquedaComponentes()"
+                            (input)="busquedaComponentes.set(buscadorComponentes.value)"
+                            placeholder="Nombre del producto..."
+                        />
+                    </div>
+
+                    <p class="ayuda">
+                        Indicá la cantidad de cada producto.
+                        Usá 0 para no incluirlo.
+                    </p>
+
+                    <div class="componentes-editor">
+                        @for (producto of productosParaCombo(); track producto.id) {
+                            <div class="componente-editor">
+                                <div>
+                                    <strong>{{ producto.nombre }}</strong>
+                                    <small>
+                                        {{ nombreDeCategoria(producto.categoria_id) }}
+                                    </small>
+                                    @if (!producto.activo || !categoriaEstaActiva(producto.categoria_id)) {
+                                        <small class="texto-aviso">No disponible</small>
+                                    }
+                                </div>
+
+                                <div class="campo">
+                                    <label [for]="'cantidadCombo-' + producto.id">
+                                        Cantidad
+                                    </label>
+                                    <input
+                                        #cantidadProducto
+                                        [id]="'cantidadCombo-' + producto.id"
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        step="1"
+                                        [value]="cantidadEnCombo(producto.id)"
+                                        (change)="cambiarCantidad(producto.id, cantidadProducto.value)"
+                                    />
+                                </div>
+                            </div>
+                        } @empty {
+                            <p>No hay productos que coincidan con la búsqueda.</p>
+                        }
+                    </div>
+
+                    <div class="composicion-seleccionada">
+                        <h4>Composición seleccionada</h4>
+                        <ul>
+                            @for (componente of borradorCombo.componentes; track componente.producto_id) {
+                                <li>
+                                    {{ componente.cantidad }} ×
+                                    {{ nombreDeProducto(componente.producto_id) }}
+                                    <button
+                                        class="boton secundario"
+                                        type="button"
+                                        [attr.aria-label]="'Quitar ' + nombreDeProducto(componente.producto_id)"
+                                        (click)="cambiarCantidad(componente.producto_id, 0)"
+                                    >
+                                        Quitar
+                                    </button>
+                                </li>
+                            } @empty {
+                                <li>Seleccioná al menos un producto.</li>
+                            }
+                        </ul>
+                    </div>
+
+                    <label class="check">
+                        <input
+                            type="checkbox"
+                            name="comboActivo"
+                            [(ngModel)]="borradorCombo.activo"
+                        />
+                        Combo activo
+                    </label>
+
+                    <p class="ayuda">
+                        Para activar el combo, sus productos y categorías
+                        deben estar activos.
+                    </p>
+
+                    <div class="acciones">
+                        <button
+                            class="boton"
+                            type="submit"
+                            [disabled]="formCombo.invalid || !borradorCombo.nombre.trim() || borradorCombo.componentes.length === 0"
+                        >
+                            {{ guardando() ? 'Guardando...' : 'Guardar combo' }}
+                        </button>
+                        <button
+                            class="boton secundario"
+                            type="button"
+                            (click)="cerrarEditor()"
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </fieldset>
+            </form>
+        </article>
+    }
+
+    @if (cargando()) {
+        <p role="status">Cargando catálogo...</p>
+    } @else {
+        <section class="tarjeta categorias">
+            <h3>Categorías</h3>
+            <div class="lista-categorias">
+                @for (categoria of categorias(); track categoria.id) {
+                    <button
+                        class="categoria"
+                        type="button"
+                        [disabled]="ocupado() || editor() !== null"
+                        (click)="editarCategoria(categoria)"
+                    >
+                        <strong>{{ categoria.nombre }}</strong>
+                        <span>
+                            {{ categoria.activa ? 'Activa' : 'Desactivada' }} · Editar
+                        </span>
+                    </button>
+                } @empty {
+                    <p>Creá una categoría para comenzar.</p>
+                }
+            </div>
+        </section>
+
+        <h3>Productos</h3>
+
+        <div class="filtros-candy">
+            <div class="campo">
+                <label for="buscarProductoCandy">Buscar producto</label>
+                <input
+                    #buscadorProductos
+                    id="buscarProductoCandy"
+                    type="search"
+                    [value]="busqueda()"
+                    (input)="busqueda.set(buscadorProductos.value)"
+                    placeholder="Nombre del producto..."
+                />
+            </div>
+
+            <div class="campo">
+                <label for="filtrarCategoriaCandy">Categoría</label>
+                <select
+                    #selectorCategoria
+                    id="filtrarCategoriaCandy"
+                    [value]="categoriaFiltro()"
+                    (change)="categoriaFiltro.set(selectorCategoria.value)"
+                >
+                    <option value="">Todas las categorías</option>
+                    @for (categoria of categorias(); track categoria.id) {
+                        <option [value]="categoria.id">{{ categoria.nombre }}</option>
+                    }
+                </select>
+            </div>
+
+            <div class="campo">
+                <label for="filtrarEstadoCandy">Estado del producto</label>
+                <select
+                    #selectorEstado
+                    id="filtrarEstadoCandy"
+                    [value]="estadoFiltro()"
+                    (change)="estadoFiltro.set(selectorEstado.value)"
+                >
+                    <option value="todos">Todos</option>
+                    <option value="activos">Activos</option>
+                    <option value="inactivos">Desactivados</option>
+                </select>
+            </div>
+
+            <button
+                class="boton secundario"
+                type="button"
+                (click)="limpiarFiltros()"
+            >
+                Limpiar filtros
+            </button>
+        </div>
+
+        <p role="status">
+            Productos encontrados: {{ productosFiltrados().length }}
+        </p>
+
+        <div class="productos">
+            @for (producto of productosFiltrados(); track producto.id) {
+                <article class="tarjeta producto">
+                    @if (producto.imagen_url) {
+                        <img
+                            [src]="producto.imagen_url"
+                            [alt]="producto.nombre"
+                            loading="lazy"
+                        />
+                    } @else {
+                        <div class="sin-imagen">Sin imagen</div>
+                    }
+
+                    <span class="etiqueta">
+                        {{ nombreDeCategoria(producto.categoria_id) }}
+                    </span>
+                    <h4>{{ producto.nombre }}</h4>
+                    <p>{{ producto.descripcion }}</p>
+                    <p class="precio">ARS {{ producto.precio | number:'1.2-2' }}</p>
+                    <p class="estado">{{ producto.activo ? 'Activo' : 'Desactivado' }}</p>
+
+                    @if (!categoriaEstaActiva(producto.categoria_id)) {
+                        <p class="aviso">
+                            Su categoría está desactivada.
+                            No aparece en el catálogo del cliente.
+                        </p>
+                    }
+
+                    <div class="acciones">
+                        <button
+                            class="boton secundario"
+                            type="button"
+                            [disabled]="ocupado() || editor() !== null"
+                            (click)="editarProducto(producto)"
+                        >
+                            Editar
+                        </button>
+                        <button
+                            class="boton"
+                            type="button"
+                            [disabled]="ocupado() || editor() !== null"
+                            (click)="cambiarEstado(producto)"
+                        >
+                            {{ producto.activo ? 'Desactivar' : 'Activar' }}
+                        </button>
+                    </div>
+                </article>
+            } @empty {
+                <p>No hay productos que coincidan con los filtros.</p>
+            }
+        </div>
+
+        <h3 class="titulo-combos">Combos</h3>
+
+        <div class="productos">
+            @for (combo of combos(); track combo.id) {
+                <article class="tarjeta producto">
+                    @if (combo.imagen_url) {
+                        <img
+                            [src]="combo.imagen_url"
+                            [alt]="combo.nombre"
+                            loading="lazy"
+                        />
+                    } @else {
+                        <div class="sin-imagen">Sin imagen</div>
+                    }
+
+                    <span class="etiqueta">COMBO</span>
+                    <h4>{{ combo.nombre }}</h4>
+                    <p>{{ combo.descripcion }}</p>
+
+                    <ul class="contenido-combo">
+                        @for (componente of combo.componentes; track componente.producto_id) {
+                            <li>
+                                {{ componente.cantidad }} ×
+                                {{ nombreDeProducto(componente.producto_id) }}
+                            </li>
+                        }
+                    </ul>
+
+                    <p class="precio">ARS {{ combo.precio | number:'1.2-2' }}</p>
+                    <p class="estado">{{ combo.activo ? 'Activo' : 'Desactivado' }}</p>
+
+                    @if (combo.activo && !comboDisponible(combo)) {
+                        <p class="aviso">
+                            Tiene componentes desactivados o no disponibles.
+                            Debe ocultarse al cliente hasta que estén disponibles.
+                        </p>
+                    }
+
+                    <div class="acciones">
+                        <button
+                            class="boton secundario"
+                            type="button"
+                            [disabled]="ocupado() || editor() !== null"
+                            (click)="editarCombo(combo)"
+                        >
+                            Editar
+                        </button>
+                        <button
+                            class="boton"
+                            type="button"
+                            [disabled]="ocupado() || editor() !== null"
+                            (click)="cambiarEstadoCombo(combo)"
+                        >
+                            {{ combo.activo ? 'Desactivar' : 'Activar' }}
+                        </button>
+                    </div>
+                </article>
+            } @empty {
+                <p>Todavía no hay combos cargados.</p>
+            }
+        </div>
+    }
+</section>

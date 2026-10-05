@@ -1,0 +1,442 @@
+:host {
+  display: block;
+  color: #f5f5fa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.pagina {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+h1,
+h2,
+h3 {
+  margin-top: 0;
+}
+
+p,
+li {
+  color: #c7c7d5;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.etiqueta {
+  color: #ffb4c0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.lista,
+.comprobantes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 1rem;
+}
+
+.tarjeta,
+.detalle,
+.comprobante {
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid #38384b;
+  border-radius: 16px;
+  background: #151522;
+}
+
+.detalle {
+  margin-top: 1.5rem;
+  border-color: #86505b;
+}
+
+.detalle .cabecera {
+  margin-top: 0;
+}
+
+.codigo {
+  overflow-wrap: anywhere;
+  font-size: 0.85rem;
+}
+
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e34b61;
+  border-radius: 10px;
+  background: #b72d40;
+  color: white;
+  font: inherit;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.secundario {
+  border-color: #50506a;
+  background: #28283a;
+}
+
+.acciones {
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.total {
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.aviso,
+.error {
+  padding: 1rem;
+  border-radius: 10px;
+}
+
+.aviso {
+  background: #342d22;
+  color: #ffe0ad;
+}
+
+.error {
+  background: #34202a;
+  color: #ffb4b4;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #ffb4c0;
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .tarjeta,
+  .detalle,
+  .comprobante {
+    padding: 1rem;
+  }
+
+  .tarjeta .boton,
+  .comprobante .boton {
+    width: 100%;
+  }
+}
+
+.comprobantes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 1.5rem;
+  max-width: 800px;
+  margin: 1.5rem auto;
+}
+
+.comprobante {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  padding: 1.5rem;
+  border: 1px solid #50506a;
+  border-radius: 16px;
+  background: #222233;
+  text-align: center;
+}
+
+.comprobante:only-child {
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: 380px;
+  justify-self: center;
+}
+
+.comprobante h3 {
+  margin: 0 0 1rem;
+  color: #ffffff;
+  font-size: 1.2rem;
+}
+
+.comprobante img {
+  display: block;
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 12px;
+}
+
+.comprobante .codigo {
+  width: 100%;
+  margin: 1rem 0 0.5rem;
+  color: #aaaabd;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.comprobante .boton {
+  width: 100%;
+  margin-top: auto;
+}
+
+@media (max-width: 600px) {
+  .comprobantes {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  .comprobante {
+    padding: 1.25rem;
+  }
+
+  .comprobante:only-child {
+    max-width: none;
+  }
+}
+
+.acciones {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+
+.boton.peligro {
+  border: 1px solid #b44b60;
+  background: #702332;
+  color: #ffffff;
+}
+
+.exito {
+  padding: 1rem;
+  border: 1px solid #386452;
+  border-radius: 10px;
+  background: #18372d;
+  color: #bcf0d7;
+  line-height: 1.6;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .boton.peligro:hover:not(:disabled) {
+    background: #922d40;
+  }
+}
+
+@media (max-width: 600px) {
+  .cabecera > .acciones {
+    width: 100%;
+  }
+
+  .acciones .boton {
+    flex: 1 1 180px;
+  }
+}
+
+.estados-qr {
+  width: 100%;
+  margin: 0.75rem 0 1rem;
+  padding: 0.85rem;
+  border: 1px solid #50506a;
+  border-radius: 10px;
+  background: #151522;
+  text-align: left;
+}
+
+.estados-qr p {
+  margin: 0;
+  color: #eeeef5;
+  line-height: 1.6;
+}
+
+.estados-qr p + p {
+  margin-top: 0.5rem;
+}
+
+.detalle {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 1.25rem;
+  scroll-margin-top: 1.5rem;
+}
+
+.detalle > .cabecera {
+  margin-bottom: 1rem;
+}
+
+.detalle > .cabecera h2 {
+  margin: 0;
+}
+
+.detalle-columnas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  align-items: start;
+  gap: 1.5rem;
+}
+
+.detalle-informacion,
+.detalle-qr {
+  min-width: 0;
+}
+
+.detalle-informacion {
+  overflow-wrap: anywhere;
+}
+
+.detalle-informacion > p:first-child {
+  margin-top: 0;
+  color: #bcbccc;
+  line-height: 1.6;
+}
+
+.detalle-informacion h3 {
+  margin: 1.25rem 0 0.65rem;
+}
+
+.detalle-informacion ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  line-height: 1.8;
+}
+
+.detalle-informacion .total {
+  margin: 1.25rem 0 0;
+}
+
+.detalle .comprobantes {
+  display: block;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.detalle .comprobante,
+.detalle .comprobante:only-child {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  padding: 1rem;
+  margin: 0;
+}
+
+.detalle .comprobante img {
+  display: block;
+  width: 100%;
+  max-width: 230px;
+  height: auto;
+  margin: 0 auto;
+}
+
+.detalle .comprobante h3 {
+  margin: 0 0 0.85rem;
+  font-size: 1.1rem;
+}
+
+.detalle .codigo {
+  margin: 0.75rem 0;
+  overflow-wrap: anywhere;
+}
+
+.detalle .estados-qr {
+  box-sizing: border-box;
+  margin: 0 0 0.85rem;
+}
+
+.detalle .comprobante .boton {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+}
+
+@media (max-width: 700px) {
+  .detalle {
+    padding: 1rem;
+  }
+
+  .detalle-columnas {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+  }
+
+  .detalle-qr {
+    width: 100%;
+    max-width: 320px;
+    justify-self: center;
+  }
+}
+/* Contenedores y controles adaptables. */
+:host {
+  min-width: 0;
+}
+button,
+a,
+input,
+select,
+textarea {
+  overflow-wrap: anywhere;
+}
+
+/* Una tarjeta por QR, con separación incluso si hay varios comprobantes. */
+.detalle .comprobantes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+.detalle-columnas {
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 300px);
+}
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+}
+.tarjeta > .acciones {
+  margin-top: auto;
+  padding-top: 1rem;
+}
+@media (max-width: 700px) {
+    .detalle-columnas {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button,
+  .boton,
+  .volver,
+  a.elegir-butacas {
+    transition: none;
+  }
+  button:hover,
+  button:active,
+  .boton:hover,
+  .boton:active,
+  .volver:hover,
+  .volver:active,
+  a.elegir-butacas:hover,
+  a.elegir-butacas:active {
+    transform: none;
+  }
+}

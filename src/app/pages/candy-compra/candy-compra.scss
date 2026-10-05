@@ -1,0 +1,360 @@
+:host {
+  display: block;
+  color: #f5f5fa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.pagina-candy {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.cabecera,
+.filtros,
+.tarjeta,
+.resumen,
+.mensaje {
+  padding: 1.25rem;
+  border: 1px solid #38384b;
+  border-radius: 16px;
+  background: #151522;
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+h1,
+h3 {
+  margin-top: 0;
+}
+
+h2 {
+  margin-top: 1.75rem;
+}
+
+p,
+li {
+  color: #c7c7d5;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.etiqueta {
+  color: #ffb4c0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.tiempo {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #3d9478;
+  border-radius: 12px;
+  background: #18372d;
+  color: #bcf0d7;
+}
+
+.tiempo strong {
+  font-size: 1.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+
+.campo {
+  display: grid;
+  flex: 1 1 200px;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+input,
+select,
+button,
+.boton {
+  min-height: 46px;
+  padding: 0.75rem 1rem;
+  border: 1px solid #50506a;
+  border-radius: 10px;
+  font: inherit;
+}
+
+input,
+select {
+  width: 100%;
+  min-width: 0;
+  background: #28283a;
+  color: white;
+}
+
+.catalogo {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+  gap: 1rem;
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tarjeta img {
+  width: 100%;
+  height: 180px;
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  background: #222233;
+  object-fit: contain;
+}
+
+.precio {
+  display: block;
+  margin-top: auto;
+  padding-top: 1rem;
+  font-size: 1.2rem;
+}
+
+.cantidad {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.cantidad button {
+  padding: 0;
+  font-size: 1.4rem;
+}
+
+button,
+.boton {
+  background: #b72d40;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    transform 180ms ease,
+    background-color 180ms ease;
+}
+
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.secundario {
+  background: #28283a;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.resumen {
+  margin-top: 1.5rem;
+}
+
+.resumen h2 {
+  margin-top: 0;
+}
+
+.total {
+  padding-top: 1rem;
+  border-top: 1px solid #50506a;
+  color: white;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.error {
+  border-color: #75404b;
+  background: #34202a;
+  color: #ffb4b4;
+}
+
+.ayuda {
+  font-size: 0.9rem;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #ffb4c0;
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button:hover:not(:disabled),
+  .boton:hover {
+    background: #d0374c;
+    transform: translateY(-2px);
+  }
+}
+
+button:active:not(:disabled),
+.boton:active {
+  transform: scale(0.97);
+}
+
+@media (max-width: 600px) {
+  .cabecera,
+  .resumen,
+  .filtros,
+  .tarjeta {
+    padding: 1rem;
+  }
+
+  .filtros {
+    flex-direction: column;
+  }
+
+  .campo {
+    flex: none;
+  }
+
+  .catalogo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .resumen .boton {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button,
+  .boton {
+    transition: none;
+    transform: none !important;
+  }
+}
+
+.volver {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 46px;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #50506a;
+  border-radius: 10px;
+  background: #222233;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background-color 180ms ease,
+    transform 180ms ease;
+}
+
+.volver:focus-visible {
+  outline: 2px solid #ffb4c0;
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .volver:hover {
+    background: #38384b;
+    transform: translateX(-3px);
+  }
+}
+
+.volver:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .volver {
+    transition: none;
+    transform: none;
+  }
+}
+
+.acciones-compra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.acciones-compra > .boton {
+  flex: 1 1 220px;
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .acciones-compra {
+    flex-direction: column;
+  }
+
+  .acciones-compra > .boton {
+    flex: none;
+    width: 100%;
+  }
+}
+/* Contenedores y controles adaptables. */
+:host {
+  min-width: 0;
+}
+button,
+a,
+input,
+select,
+textarea {
+  overflow-wrap: anywhere;
+}
+
+.cabecera > div,
+.tiempo {
+  min-width: 0;
+}
+@media (hover: hover) and (pointer: fine) {
+  .secundario:hover {
+    background: #38384b;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button,
+  .boton,
+  .volver,
+  a.elegir-butacas {
+    transition: none;
+  }
+  button:hover,
+  button:active,
+  .boton:hover,
+  .boton:active,
+  .volver:hover,
+  .volver:active,
+  a.elegir-butacas:hover,
+  a.elegir-butacas:active {
+    transform: none;
+  }
+}

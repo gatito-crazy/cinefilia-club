@@ -1,0 +1,207 @@
+<section class="panel-salas" aria-labelledby="tituloSalas">
+    <header class="cabecera-salas">
+        <div>
+            <h2 id="tituloSalas">Salas</h2>
+            <p>Administrá las salas y consultá su capacidad.</p>
+        </div>
+
+        <div class="acciones">
+            <button
+                class="boton"
+                type="button"
+                [disabled]="ocupado() || editorAbierto()"
+                (click)="nuevaSala()"
+            >
+                Agregar sala
+            </button>
+
+            <button
+                class="boton secundario"
+                type="button"
+                [disabled]="ocupado() || editorAbierto()"
+                (click)="cargarSalas()"
+            >
+                Actualizar
+            </button>
+        </div>
+    </header>
+
+    @if (error()) {
+        <p class="error" role="alert">{{ error() }}</p>
+    }
+
+    @if (exito()) {
+        <p class="exito" role="status">{{ exito() }}</p>
+    }
+
+    @if (editorAbierto()) {
+        <section class="editor-sala" aria-labelledby="tituloEditorSala">
+            <h3 id="tituloEditorSala">
+                {{ salaEditada ? 'Editar sala' : 'Agregar sala' }}
+            </h3>
+
+            <form
+                #formSala="ngForm"
+                (ngSubmit)="guardar(formSala)"
+            >
+                <div class="campo">
+                    <label for="nombreSala">Nombre de la sala</label>
+
+                    <input
+                        id="nombreSala"
+                        name="nombreSala"
+                        type="text"
+                        placeholder="Por ejemplo, Sala 1"
+                        maxlength="80"
+                        [(ngModel)]="borrador.nombre"
+                        [disabled]="guardando()"
+                        required
+                    />
+                </div>
+
+                <label class="opcion">
+                    <input
+                        name="salaActiva"
+                        type="checkbox"
+                        [(ngModel)]="borrador.activa"
+                        [disabled]="guardando()"
+                    />
+
+                    <span>Sala activa</span>
+                </label>
+
+                <p class="detalle-distribucion">
+                    Cada sala tiene 518 lugares: 420 estándar,
+                    14 accesibles y 84 VIP. La distribución se genera
+                    automáticamente.
+                </p>
+
+                @if (errorFormulario()) {
+                    <p class="error" role="alert">
+                        {{ errorFormulario() }}
+                    </p>
+                }
+
+                <div class="acciones">
+                    <button
+                        class="boton"
+                        type="submit"
+                        [disabled]="guardando()"
+                    >
+                        {{
+                            guardando()
+                                ? 'Guardando...'
+                                : salaEditada
+                                    ? 'Guardar cambios'
+                                    : 'Crear sala'
+                        }}
+                    </button>
+
+                    <button
+                        class="boton secundario"
+                        type="button"
+                        [disabled]="guardando()"
+                        (click)="cancelar()"
+                    >
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </section>
+    }
+
+    @if (cargando()) {
+        <p role="status">Cargando salas...</p>
+    } @else {
+        <div class="lista-salas">
+            @for (sala of salas(); track sala.id) {
+                <article class="tarjeta-sala">
+                    <div class="titulo-sala">
+                        <h3>{{ sala.nombre }}</h3>
+
+                        <span
+                            class="estado"
+                            [class.desactivada]="!sala.activa"
+                        >
+                            {{ sala.activa ? 'Activa' : 'Desactivada' }}
+                        </span>
+                    </div>
+
+                    @if (resumenes()[sala.id]; as resumen) {
+                        <p class="capacidad">
+                            <strong>{{ resumen.capacidad }}</strong>
+                            lugares
+                        </p>
+
+                        <dl class="resumen-butacas">
+                            <div>
+                                <dt>Estándar</dt>
+                                <dd>{{ resumen.estandar }}</dd>
+                            </div>
+
+                            <div>
+                                <dt>Accesibles</dt>
+                                <dd>{{ resumen.accesibles }}</dd>
+                            </div>
+
+                            <div>
+                                <dt>VIP</dt>
+                                <dd>{{ resumen.vip }}</dd>
+                            </div>
+                        </dl>
+
+                        @if (
+                            resumen.capacidad !== 518
+                            || resumen.estandar !== 420
+                            || resumen.accesibles !== 14
+                            || resumen.vip !== 84
+                        ) {
+                            <p class="error" role="alert">
+                                La distribución no coincide con la esperada.
+                                Revisá la generación de butacas en Supabase.
+                            </p>
+                        }
+                    }
+
+                    <div class="acciones">
+                        <button
+                            class="boton"
+                            type="button"
+                            [disabled]="ocupado() || editorAbierto()"
+                            (click)="editarSala(sala)"
+                        >
+                            Editar
+                        </button>
+
+                        <button
+                            class="boton secundario"
+                            type="button"
+                            [disabled]="ocupado() || editorAbierto()"
+                            (click)="cambiarEstado(sala)"
+                        >
+                            {{ sala.activa ? 'Desactivar' : 'Activar' }}
+                        </button>
+
+                        <button
+                            class="boton peligro"
+                            type="button"
+                            [disabled]="ocupado() || editorAbierto()"
+                            (click)="eliminarSala(sala)"
+                        >
+                            Eliminar sala
+                        </button>
+                    </div>
+
+                    @if (procesandoSala() === sala.id) {
+                        <p role="status">Procesando...</p>
+                    }
+                </article>
+            } @empty {
+                <p>
+                    Todavía no hay salas.
+                    Presioná “Agregar sala” para crear la primera.
+                </p>
+            }
+        </div>
+    }
+</section>

@@ -1,0 +1,324 @@
+<section class="pagina-candy">
+    <a
+        class="volver"
+        [routerLink]="['/butacas', funcionId]"
+    >
+        ← Volver a las butacas
+    </a>
+
+    @if (cargando()) {
+        <p role="status">Cargando Candy y reserva...</p>
+    } @else if (error()) {
+        <div class="mensaje error" role="alert">
+            <p>{{ error() }}</p>
+
+            <button type="button" (click)="cargar()">
+                Volver a intentar
+            </button>
+        </div>
+    } @else if (!reservaVigente()) {
+        <div class="mensaje error" role="alert">
+            <h1>Tu reserva ya no está vigente</h1>
+
+            <p>
+                Volvé a elegir tus butacas para iniciar una nueva compra.
+            </p>
+
+            <a
+                class="boton"
+                [routerLink]="['/butacas', funcionId]"
+            >
+                Elegir butacas
+            </a>
+        </div>
+    } @else {
+        <header class="cabecera">
+            <div>
+                <p class="etiqueta">CINEFILIA CLUB · CANDY</p>
+
+                <h1>
+                    {{ mostrarResumen() ? 'Resumen de tu compra' : 'Sumá algo rico' }}
+                </h1>
+
+                <p>
+                    Podés agregar productos y combos o seguir sin Candy.
+                </p>
+            </div>
+
+            <div class="tiempo">
+                <span>Tiempo restante</span>
+                <strong>{{ tiempoRestante() }}</strong>
+            </div>
+        </header>
+
+        @if (errorConexion()) {
+            <p class="mensaje error" role="alert">
+                {{ errorConexion() }}
+            </p>
+        }
+
+        @if (!mostrarResumen()) {
+            <div class="filtros">
+                <div class="campo">
+                    <label for="buscarCandy">Buscar</label>
+
+                    <input
+                        #buscar
+                        id="buscarCandy"
+                        type="search"
+                        placeholder="Producto o combo..."
+                        [value]="busqueda()"
+                        (input)="busqueda.set(buscar.value)"
+                    />
+                </div>
+
+                <div class="campo">
+                    <label for="categoriaCandy">Categoría</label>
+
+                    <select
+                        #categoria
+                        id="categoriaCandy"
+                        [value]="categoriaSeleccionada()"
+                        (change)="categoriaSeleccionada.set(categoria.value)"
+                    >
+                        <option value="">Todas las categorías</option>
+
+                        @for (item of categorias(); track item.id) {
+                            <option [value]="item.id">
+                                {{ item.nombre }}
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="campo">
+                    <label for="vistaCandy">Mostrar</label>
+
+                    <select
+                        id="vistaCandy"
+                        [ngModel]="vista()"
+                        (ngModelChange)="vista.set($event)"
+                    >
+                        <option value="todos">Productos y combos</option>
+                        <option value="productos">Productos</option>
+                        <option value="combos">Combos</option>
+                    </select>
+                </div>
+            </div>
+
+            @if (vista() !== 'combos') {
+                <h2>Productos</h2>
+
+                <div class="catalogo">
+                    @for (producto of productosFiltrados(); track producto.id) {
+                        <article class="tarjeta">
+                            @if (producto.imagen_url) {
+                                <img
+                                    [src]="producto.imagen_url"
+                                    [alt]="producto.nombre"
+                                    loading="lazy"
+                                />
+                            }
+
+                            <h3>{{ producto.nombre }}</h3>
+                            <p>{{ producto.descripcion }}</p>
+
+                            <strong class="precio">
+                                ARS {{ producto.precio | number:'1.2-2' }}
+                            </strong>
+
+                            <div
+                                class="cantidad"
+                                [attr.aria-label]="'Cantidad de ' + producto.nombre"
+                            >
+                                <button
+                                    type="button"
+                                    [disabled]="!(cantidadesProductos()[producto.id] > 0)"
+                                    [attr.aria-label]="'Quitar uno de ' + producto.nombre"
+                                    (click)="cambiarCantidad('producto', producto.id, (cantidadesProductos()[producto.id] || 0) - 1)"
+                                >
+                                    −
+                                </button>
+
+                                <span>
+                                    {{ cantidadesProductos()[producto.id] || 0 }}
+                                </span>
+
+                                <button
+                                    type="button"
+                                    [disabled]="cantidadesProductos()[producto.id] >= 20"
+                                    [attr.aria-label]="'Agregar uno de ' + producto.nombre"
+                                    (click)="cambiarCantidad('producto', producto.id, (cantidadesProductos()[producto.id] || 0) + 1)"
+                                >
+                                    +
+                                </button>
+                            </div>
+                        </article>
+                    } @empty {
+                        <p>No hay productos que coincidan con los filtros.</p>
+                    }
+                </div>
+            }
+
+            @if (vista() !== 'productos') {
+                <h2>Combos</h2>
+
+                <div class="catalogo">
+                    @for (combo of combosFiltrados(); track combo.id) {
+                        <article class="tarjeta">
+                            @if (combo.imagen_url) {
+                                <img
+                                    [src]="combo.imagen_url"
+                                    [alt]="combo.nombre"
+                                    loading="lazy"
+                                />
+                            }
+
+                            <h3>{{ combo.nombre }}</h3>
+                            <p>{{ combo.descripcion }}</p>
+
+                            <ul>
+                                @for (item of combo.componentes; track item.producto_id) {
+                                    <li>
+                                        {{ item.cantidad }} ×
+                                        {{ nombreProducto(item.producto_id) }}
+                                    </li>
+                                }
+                            </ul>
+
+                            <strong class="precio">
+                                ARS {{ combo.precio | number:'1.2-2' }}
+                            </strong>
+
+                            <div
+                                class="cantidad"
+                                [attr.aria-label]="'Cantidad de ' + combo.nombre"
+                            >
+                                <button
+                                    type="button"
+                                    [disabled]="!(cantidadesCombos()[combo.id] > 0)"
+                                    [attr.aria-label]="'Quitar uno de ' + combo.nombre"
+                                    (click)="cambiarCantidad('combo', combo.id, (cantidadesCombos()[combo.id] || 0) - 1)"
+                                >
+                                    −
+                                </button>
+
+                                <span>
+                                    {{ cantidadesCombos()[combo.id] || 0 }}
+                                </span>
+
+                                <button
+                                    type="button"
+                                    [disabled]="cantidadesCombos()[combo.id] >= 20"
+                                    [attr.aria-label]="'Agregar uno de ' + combo.nombre"
+                                    (click)="cambiarCantidad('combo', combo.id, (cantidadesCombos()[combo.id] || 0) + 1)"
+                                >
+                                    +
+                                </button>
+                            </div>
+                        </article>
+                    } @empty {
+                        <p>No hay combos que coincidan con los filtros.</p>
+                    }
+                </div>
+            }
+        }
+
+        <section class="resumen">
+            <h2>Tu compra</h2>
+
+            @if (mostrarResumen()) {
+                <h3>Entradas</h3>
+
+                <ul>
+                    @for (butaca of reserva()?.butacas; track butaca.butaca_id) {
+                        <li>
+                            {{ butaca.fila }} · {{ butaca.numero }}
+
+                            ·
+                            {{
+                                butaca.tipo === 'vip'
+                                    ? 'VIP'
+                                    : butaca.tipo === 'accesible'
+                                        ? 'Accesible'
+                                        : 'Estándar'
+                            }}
+
+                            · ARS {{ butaca.precio | number:'1.2-2' }}
+                        </li>
+                    }
+                </ul>
+            }
+
+            <p>
+                Entradas:
+                <strong>
+                    ARS {{ reserva()?.total | number:'1.2-2' }}
+                </strong>
+            </p>
+
+            @if (detalleCandy().length > 0) {
+                <h3>Candy</h3>
+
+                <ul>
+                    @for (item of detalleCandy(); track item.clave) {
+                        <li>
+                            {{ item.cantidad }} × {{ item.nombre }}
+                            · ARS {{ item.precio * item.cantidad | number:'1.2-2' }}
+                        </li>
+                    }
+                </ul>
+            } @else {
+                <p>Sin productos de Candy.</p>
+            }
+
+            <p>
+                Candy:
+                <strong>
+                    ARS {{ totalCandy() | number:'1.2-2' }}
+                </strong>
+            </p>
+
+            <p class="total">
+                Total: ARS {{ totalCompra() | number:'1.2-2' }}
+            </p>
+
+            @if (mostrarResumen()) {
+                <div class="acciones-compra">
+                    <button
+                        class="boton secundario"
+                        type="button"
+                        (click)="mostrarResumen.set(false)"
+                    >
+                        Modificar Candy
+                    </button>
+
+                    <a
+                        class="boton"
+                        [routerLink]="['/compra', funcionId, 'confirmar']"
+                    >
+                        Continuar a la confirmación
+                    </a>
+                </div>
+
+                <p class="ayuda">
+                    En el siguiente paso podrás confirmar la compra
+                    de prueba. No se cobrará dinero real.
+                </p>
+            } @else {
+                <button
+                    class="boton"
+                    type="button"
+                    [disabled]="!!errorConexion()"
+                    (click)="revisarCompra()"
+                >
+                    {{
+                        detalleCandy().length > 0
+                            ? 'Revisar compra'
+                            : 'Continuar sin Candy'
+                    }}
+                </button>
+            }
+        </section>
+    }
+</section>

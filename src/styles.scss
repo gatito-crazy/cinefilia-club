@@ -1,1 +1,124 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+    color-scheme: dark;
+
+    --cine-fondo: #0c0c14;
+    --cine-superficie: #151522;
+    --cine-superficie-elevada: #222233;
+    --cine-borde: #38384b;
+    --cine-texto: #f5f5fa;
+    --cine-texto-secundario: #bcbccc;
+    --cine-acento: #b72d40;
+    --cine-acento-hover: #d0374c;
+    --cine-foco: #ffb4c0;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    min-height: 100%;
+    background: var(--cine-fondo);
+}
+
+body {
+    min-width: 280px;
+    min-height: 100vh;
+    margin: 0;
+    background:
+        radial-gradient(
+            ellipse at top left,
+            rgba(183, 45, 64, 0.1),
+            transparent 55%
+        ),
+        var(--cine-fondo);
+    color: var(--cine-texto);
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.5;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+    -webkit-tap-highlight-color: rgba(183, 45, 64, 0.2);
+}
+
+button,
+a {
+    touch-action: manipulation;
+}
+
+img {
+    max-width: 100%;
+}
+
+button:disabled {
+    cursor: not-allowed;
+}
+
+::selection {
+    background: #b72d40;
+    color: #ffffff;
+}
+
+/* Botones compartidos por registro y los dashboards. */
+.boton,
+.crear,
+.secciones button {
+    transition:
+        transform 180ms ease,
+        background-color 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .boton:not(:disabled):hover,
+    .crear:not(:disabled):hover,
+    .secciones button:not(:disabled):hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    }
+}
+
+.boton:not(:disabled):active,
+.crear:not(:disabled):active,
+.secciones button:not(:disabled):active {
+    transform: scale(0.97);
+    box-shadow: none;
+}
+
+.boton:focus-visible,
+.crear:focus-visible,
+.secciones button:focus-visible {
+    outline: 2px solid var(--cine-foco);
+    outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .boton,
+    .crear,
+    .secciones button {
+        transition: none;
+    }
+
+    .boton:not(:disabled):hover,
+    .boton:not(:disabled):active,
+    .crear:not(:disabled):hover,
+    .crear:not(:disabled):active,
+    .secciones button:not(:disabled):hover,
+    .secciones button:not(:disabled):active {
+        transform: none;
+    }
+}

@@ -1,0 +1,583 @@
+:host {
+    display: block;
+    color: var(--cine-texto, #f5f5fa);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.barra {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    padding: 1rem clamp(1rem, 4vw, 3rem);
+    border-bottom: 1px solid #38384b;
+    background: #151522;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.barra a {
+    color: #f5f5fa;
+    text-decoration: none;
+}
+
+.marca {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    border-radius: 8px;
+    transition:
+        opacity 180ms ease,
+        transform 180ms ease;
+}
+
+.logo-marca {
+    display: block;
+    width: 220px;
+    max-width: 100%;
+    height: auto;
+}
+
+.paginas {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.paginas a {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.7rem 1rem;
+    border-radius: 10px;
+    color: #bcbccc;
+    font-weight: 600;
+    white-space: nowrap;
+    transition:
+        color 180ms ease,
+        background-color 180ms ease,
+        transform 180ms ease;
+}
+
+.paginas a::after {
+    position: absolute;
+    right: 1rem;
+    bottom: 0.3rem;
+    left: 1rem;
+    height: 2px;
+    border-radius: 2px;
+    background: #e34b61;
+    content: "";
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 180ms ease;
+}
+
+.paginas a.activo {
+    background: rgba(183, 45, 64, 0.14);
+    color: #ffffff;
+}
+
+.paginas a.activo::after,
+.paginas a:focus-visible::after {
+    transform: scaleX(1);
+}
+
+.cuenta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+    min-width: 0;
+    margin-left: auto;
+}
+
+.nombre-usuario {
+    max-width: 260px;
+    color: #eeeeF5;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.cuenta button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    min-height: 44px;
+    padding: 0.7rem 1rem;
+    border: 1px solid #45455c;
+    border-radius: 10px;
+    background: #222233;
+    color: #ffffff;
+    cursor: pointer;
+    transition:
+        transform 180ms ease,
+        background-color 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+.boton-usuario svg {
+    flex-shrink: 0;
+    transition: transform 180ms ease;
+}
+
+.ventana-login {
+    width: min(460px, calc(100% - 2rem));
+    max-height: calc(100dvh - 2rem);
+    margin: auto;
+    padding: 0;
+    overflow: auto;
+    border: 1px solid #45455c;
+    border-radius: 20px;
+    background: #151522;
+    color: #f5f5fa;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+}
+
+.ventana-login[open] {
+    animation: aparecer-login 220ms ease-out;
+}
+
+.ventana-login::backdrop {
+    background: rgba(4, 4, 10, 0.78);
+    backdrop-filter: blur(5px);
+}
+
+.encabezado-login {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #38384b;
+    background: #1b1b2a;
+}
+
+.encabezado-login span {
+    color: #ffb4c0;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.cerrar {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: #28283a;
+    color: #ffffff;
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+        background-color 180ms ease,
+        transform 180ms ease;
+}
+
+.contenido-login {
+    padding: 1.75rem;
+}
+
+.contenido-login h2 {
+    margin: 0;
+    font-size: clamp(1.35rem, 5vw, 1.6rem);
+    line-height: 1.3;
+}
+
+.contenido-login > p {
+    margin-bottom: 0;
+    color: #bcbccc;
+    line-height: 1.6;
+}
+
+.contenido-login form {
+    display: grid;
+    gap: 1.2rem;
+    margin-top: 1.5rem;
+}
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.campo label {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.campo input {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    padding: 0.85rem 1rem;
+    border: 1px solid #45455c;
+    border-radius: 10px;
+    background: #222233;
+    color: #ffffff;
+    font-size: 1rem;
+    transition:
+        border-color 180ms ease,
+        background-color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+.campo input:focus {
+    border-color: #e34b61;
+    background: #28283a;
+    box-shadow: 0 0 0 3px rgba(183, 45, 64, 0.18);
+}
+
+.entrada-password {
+    position: relative;
+}
+
+.campo .entrada-password input {
+    padding-right: 3.75rem;
+}
+
+.boton-ojo {
+    position: absolute;
+    top: 50%;
+    right: 0.3rem;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #bcbccc;
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition:
+        color 180ms ease,
+        background-color 180ms ease;
+}
+
+.boton-ojo:active {
+    background: #38384b;
+    color: #ffffff;
+}
+
+.recordarme {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    min-height: 44px;
+    color: #bcbccc;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.recordarme input {
+    flex-shrink: 0;
+    width: 1.2rem;
+    height: 1.2rem;
+    margin: 0;
+    accent-color: #b72d40;
+}
+
+.iniciar,
+.crear-cuenta a,
+.boton-reenvio {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 48px;
+    padding: 0.9rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: #ffffff;
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+        transform 180ms ease,
+        background-color 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+.iniciar {
+    background: #b72d40;
+}
+
+.crear-cuenta {
+    margin-top: 1.75rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #38384b;
+    text-align: center;
+}
+
+.crear-cuenta p {
+    margin-top: 0;
+    color: #bcbccc;
+}
+
+.crear-cuenta a {
+    border-color: #50506a;
+    background: #222233;
+}
+
+.confirmacion-correo {
+    padding: 1rem;
+    border: 1px solid #50506a;
+    border-radius: 12px;
+    background: #222233;
+}
+
+.confirmacion-correo p {
+    margin: 0 0 0.85rem;
+    color: #dedee9;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.confirmacion-correo p:last-child {
+    margin-bottom: 0;
+}
+
+.boton-reenvio {
+    margin-bottom: 0.85rem;
+    border-color: #b72d40;
+    background: #b72d40;
+}
+
+button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.error {
+    margin: 0;
+    padding: 0.85rem 1rem;
+    border: 1px solid #75404b;
+    border-radius: 10px;
+    background: #34202a;
+    color: #ffb4b4;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.error-salida {
+    margin: 1rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid #75404b;
+    border-radius: 10px;
+    background: #34202a;
+    color: #ffb4b4;
+    overflow-wrap: anywhere;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+    outline: 2px solid #ffb4c0;
+    outline-offset: 4px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .marca:hover {
+        opacity: 0.85;
+        transform: translateY(-1px);
+    }
+
+    .paginas a:hover {
+        background: #28283a;
+        color: #ffffff;
+        transform: translateY(-2px);
+    }
+
+    .paginas a:hover::after {
+        transform: scaleX(1);
+    }
+
+    .cuenta button:hover:not(:disabled) {
+        border-color: #b72d40;
+        background: #2d2230;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+        transform: translateY(-2px);
+    }
+
+    .boton-usuario:hover svg {
+        transform: scale(1.08);
+    }
+
+    .cerrar:hover {
+        background: #493040;
+    }
+
+    .boton-ojo:hover {
+        background: #38384b;
+        color: #ffffff;
+    }
+
+    .iniciar:hover:not(:disabled),
+    .boton-reenvio:hover:not(:disabled) {
+        background: #d0374c;
+        box-shadow: 0 6px 20px rgba(183, 45, 64, 0.25);
+        transform: translateY(-2px);
+    }
+
+    .crear-cuenta a:hover {
+        border-color: #ffb4c0;
+        background: #303044;
+        transform: translateY(-2px);
+    }
+}
+
+.marca:active,
+.paginas a:active,
+.cuenta button:not(:disabled):active,
+.cerrar:active,
+.iniciar:not(:disabled):active,
+.crear-cuenta a:active,
+.boton-reenvio:not(:disabled):active {
+    transform: scale(0.97);
+    box-shadow: none;
+}
+
+.paginas a:active {
+    background: #352330;
+    color: #ffffff;
+}
+
+.paginas a:active::after {
+    transform: scaleX(1);
+}
+
+@keyframes aparecer-login {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (max-width: 700px) {
+    .barra {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            "marca cuenta"
+            "paginas paginas";
+        gap: 0.85rem;
+        padding: 1rem;
+    }
+
+    .marca {
+        grid-area: marca;
+        min-width: 0;
+        width: fit-content;
+        max-width: 100%;
+    }
+
+    .logo-marca {
+        width: 170px;
+    }
+
+    .cuenta {
+        grid-area: cuenta;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.5rem;
+        max-width: 170px;
+        margin-left: 0;
+    }
+
+    .nombre-usuario {
+        max-width: 100%;
+        font-size: 0.85rem;
+        line-height: 1.4;
+        text-align: right;
+    }
+
+    .cuenta button {
+        padding: 0.6rem 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    .paginas {
+        grid-area: paginas;
+        gap: 0.5rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #38384b;
+    }
+
+    .paginas a {
+        flex: 1 1 auto;
+        padding: 0.65rem 0.8rem;
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .barra {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            "marca"
+            "paginas"
+            "cuenta";
+    }
+
+    .cuenta {
+        flex-direction: row;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        width: 100%;
+        max-width: none;
+    }
+
+    .nombre-usuario {
+        flex: 1;
+        text-align: left;
+    }
+}
+
+@media (max-width: 600px) {
+    .contenido-login {
+        padding: 1.25rem;
+    }
+
+    .encabezado-login {
+        padding: 0.85rem 1.25rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    .marca,
+    .paginas a,
+    .cuenta button,
+    .cerrar,
+    .iniciar,
+    .crear-cuenta a,
+    .boton-reenvio,
+    .boton-usuario svg {
+        transform: none !important;
+    }
+}

@@ -1,0 +1,271 @@
+<section class="dashboard">
+    <header class="cabecera">
+        <div>
+            <p class="etiqueta">CINEFILIA CLUB · EQUIPO</p>
+            <h1>Validación de códigos</h1>
+
+            <p>
+                Elegí el sector, leé el QR o ingresá su código manualmente.
+            </p>
+        </div>
+
+        @if (esAdmin()) {
+            <a
+                class="boton secundario"
+                routerLink="/admin"
+                (click)="detenerCamara()"
+            >
+                Volver al panel de administración
+            </a>
+        }
+    </header>
+
+    <p class="aviso">
+        Al validar un QR de entradas se registra el ingreso de todas
+        las ubicaciones de esa compra. El QR de Candy registra
+        la entrega completa de sus productos.
+    </p>
+
+    <div class="columnas">
+        <article class="tarjeta">
+            <h2>Ingreso manual</h2>
+
+            <form class="formulario" (ngSubmit)="validar()">
+                <div class="campo">
+                    <label for="sectorValidacion">Sector</label>
+
+                    <select
+                        id="sectorValidacion"
+                        name="tipo"
+                        [(ngModel)]="tipo"
+                        (ngModelChange)="limpiarResultado()"
+                        [disabled]="validando()"
+                    >
+                        <option value="entrada">Cine · Entrada</option>
+                        <option value="candy">Candy · Entrega</option>
+                    </select>
+                </div>
+
+                <div class="campo">
+                    <label for="codigoValidacion">Código</label>
+
+                    <input
+                        id="codigoValidacion"
+                        name="codigo"
+                        [(ngModel)]="codigo"
+                        (ngModelChange)="limpiarResultado()"
+                        [disabled]="validando()"
+                        maxlength="80"
+                        autocomplete="off"
+                        spellcheck="false"
+                        placeholder="Pegá o escribí el código"
+                        aria-describedby="ayudaCodigo"
+                        required
+                    />
+
+                    <small id="ayudaCodigo">
+                        Al validar, el comprobante queda utilizado
+                        y no puede volver a usarse.
+                    </small>
+                </div>
+
+                <button
+                    class="boton"
+                    type="submit"
+                    [disabled]="validando() || !codigo.trim()"
+                >
+                    {{
+                        validando()
+                            ? 'Validando...'
+                            : tipo === 'entrada'
+                                ? 'Validar y registrar ingreso'
+                                : 'Validar y registrar entrega'
+                    }}
+                </button>
+            </form>
+
+            @if (avisoCamara()) {
+                <p role="status">{{ avisoCamara() }}</p>
+            }
+
+            @if (error()) {
+                <p class="error" role="alert">{{ error() }}</p>
+            }
+
+            @if (resultado(); as validacion) {
+                <div class="resultado" role="status">
+                    <h3>
+                        {{
+                            validacion.origen === 'prueba'
+                                ? 'Código de prueba validado'
+                                : validacion.tipo === 'entrada'
+                                    ? 'Ingreso registrado'
+                                    : 'Entrega registrada'
+                        }}
+                    </h3>
+
+                    <p>{{ validacion.descripcion }}</p>
+
+                    <p>
+                        Sector:
+                        {{ validacion.tipo === 'entrada' ? 'Cine' : 'Candy' }}
+                    </p>
+
+                    <p>
+                        {{
+                            validacion.validado_en
+                                | date:'dd/MM/yyyy HH:mm:ss':'-0300'
+                        }}
+                    </p>
+
+                    @if (validacion.origen === 'compra') {
+                        @if (validacion.modalidad === 'prueba') {
+                            <p class="aviso">
+                                Esta compra corresponde al modo de prueba.
+                            </p>
+                        }
+
+                        @if (validacion.funcion; as funcion) {
+                            @if (funcion.pelicula_nombre) {
+                                <h3>
+                                    {{ funcion.pelicula_nombre }}
+                                </h3>
+
+                                <p>
+                                    {{ funcion.sala_nombre }} ·
+                                    {{
+                                        funcion.inicio
+                                            | date:'dd/MM/yyyy HH:mm':'-0300'
+                                    }}
+                                    · {{ funcion.formato }}
+                                </p>
+                            } @else {
+                                <h3>
+                                    Compra de Candy sin entradas
+                                </h3>
+                            }
+                        }
+
+                        @if (validacion.tipo === 'entrada') {
+                            <h4>
+                                Ubicaciones ·
+                                {{ validacion.entradas?.length }}
+                            </h4>
+
+                            <ul class="detalle-validacion">
+                                @for (entrada of validacion.entradas ?? []; track entrada.fila + '-' + entrada.numero) {
+                                    <li>
+                                        <strong>
+                                            {{ entrada.fila }} · {{ entrada.numero }}
+                                        </strong>
+
+                                        <span>
+                                            {{
+                                                entrada.tipo === 'vip'
+                                                    ? 'VIP'
+                                                    : entrada.tipo === 'accesible'
+                                                        ? 'Accesible'
+                                                        : 'Estándar'
+                                            }}
+                                        </span>
+                                    </li>
+                                }
+                            </ul>
+                        } @else {
+                            <h4>Productos para entregar</h4>
+
+                            <ul class="detalle-validacion">
+                                @for (item of validacion.candy ?? []; track item.id) {
+                                    <li>
+                                        <div>
+                                            <strong>
+                                                {{ item.cantidad }} ×
+                                                {{ item.nombre }}
+                                            </strong>
+
+                                            @if (item.tipo === 'combo') {
+                                                <ul class="componentes-combo">
+                                                    @for (producto of item.componentes; track producto.producto_id) {
+                                                        <li>
+                                                            {{ producto.cantidad * item.cantidad }}
+                                                            × {{ producto.nombre }}
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            }
+                                        </div>
+                                    </li>
+                                }
+                            </ul>
+                        }
+
+                        <p class="identificador-compra">
+                            Compra: {{ validacion.compra_id }}
+                        </p>
+                    }
+
+                    <button
+                        class="boton secundario"
+                        type="button"
+                        (click)="limpiarResultado()"
+                    >
+                        Validar otro código
+                    </button>
+                </div>
+            }
+        </article>
+
+        <article class="tarjeta">
+            <h2>Escanear QR</h2>
+
+            <p>
+                Apuntá la cámara al código. La lectura completa el campo;
+                la validación se confirma con el botón.
+            </p>
+
+            <video
+                #video
+                class="camara"
+                [hidden]="!camaraActiva() && !iniciandoCamara()"
+                autoplay
+                muted
+                playsinline
+                aria-label="Vista previa de la cámara"
+            ></video>
+
+            @if (!camaraActiva() && !iniciandoCamara()) {
+                <div class="camara-vacia">
+                    La cámara está apagada.
+                </div>
+            }
+
+            <div class="acciones">
+                <button
+                    class="boton"
+                    type="button"
+                    [disabled]="camaraActiva() || iniciandoCamara() || validando()"
+                    (click)="iniciarCamara()"
+                >
+                    {{
+                        iniciandoCamara()
+                            ? 'Abriendo cámara...'
+                            : 'Activar cámara'
+                    }}
+                </button>
+
+                <button
+                    class="boton secundario"
+                    type="button"
+                    [disabled]="!camaraActiva() && !iniciandoCamara()"
+                    (click)="detenerCamara()"
+                >
+                    Detener
+                </button>
+            </div>
+
+            @if (errorCamara()) {
+                <p class="error" role="alert">{{ errorCamara() }}</p>
+            }
+        </article>
+    </div>
+</section>

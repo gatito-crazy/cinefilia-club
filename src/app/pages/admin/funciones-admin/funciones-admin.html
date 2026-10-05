@@ -1,0 +1,907 @@
+<section class="panel-funciones" aria-labelledby="tituloFunciones">
+    <header class="cabecera-funciones">
+        <div>
+            <h2 id="tituloFunciones">Funciones y tarifas</h2>
+            <p>Organizá la programación y las tarifas generales por formato.</p>
+        </div>
+
+        <button
+            class="boton secundario"
+            type="button"
+            [disabled]="ocupado() || editorAbierto() || (programacionAbierta() && resultadosProgramacion().length === 0)"
+            (click)="cargarDatos()"
+        >
+            Actualizar
+        </button>
+    </header>
+
+    <nav class="solapas-modulo" aria-label="Funciones y tarifas">
+        <button
+            class="boton secundario"
+            type="button"
+            [class.seleccionado]="solapa() === 'funciones'"
+            [attr.aria-pressed]="solapa() === 'funciones'"
+            [disabled]="ocupado() || editorAbierto() || programacionAbierta()"
+            (click)="cambiarSolapa('funciones')"
+        >
+            Funciones
+        </button>
+
+        <button
+            class="boton secundario"
+            type="button"
+            [class.seleccionado]="solapa() === 'tarifas'"
+            [attr.aria-pressed]="solapa() === 'tarifas'"
+            [disabled]="ocupado() || editorAbierto() || programacionAbierta()"
+            (click)="cambiarSolapa('tarifas')"
+        >
+            Tarifas
+        </button>
+    </nav>
+
+    @if (error()) {
+        <p class="error" role="alert">{{ error() }}</p>
+    }
+
+    @if (exito()) {
+        <p class="exito" role="status">{{ exito() }}</p>
+    }
+
+    @if (cargando()) {
+        <p role="status">Cargando funciones y tarifas...</p>
+    } @else if (solapa() === 'tarifas') {
+        <section class="editor-funcion" aria-labelledby="tituloTarifas">
+            <h3 id="tituloTarifas">Tarifas generales por formato</h3>
+
+            <p>
+                Estos precios se aplican a todas las salas.
+                Al guardar se actualizan las funciones futuras del formato.
+                Las funciones que ya comenzaron conservan sus importes.
+            </p>
+
+            <div class="resumen-tarifas">
+                @for (formato of formatos; track formato) {
+                    <article class="tarjeta-tarifa">
+                        <h4>{{ formato }}</h4>
+
+                        @if (tarifaPorFormato(formato); as tarifa) {
+                            <dl class="resumen-precios">
+                                <div>
+                                    <dt>Normal</dt>
+                                    <dd>
+                                        ARS {{ tarifa.precio_estandar | number:'1.2-2' }}
+                                    </dd>
+                                </div>
+
+                                <div>
+                                    <dt>Accesible</dt>
+                                    <dd>
+                                        ARS {{ tarifa.precio_accesible | number:'1.2-2' }}
+                                    </dd>
+                                </div>
+
+                                <div class="precio-vip">
+                                    <dt>VIP</dt>
+                                    <dd>
+                                        ARS {{ tarifa.precio_vip | number:'1.2-2' }}
+                                    </dd>
+                                </div>
+                            </dl>
+                        } @else {
+                            <p class="detalle">Sin tarifas configuradas.</p>
+                        }
+
+                        <button
+                            class="boton secundario"
+                            type="button"
+                            [disabled]="ocupado()"
+                            (click)="editarTarifa(formato)"
+                        >
+                            {{
+                                tarifaPorFormato(formato)
+                                    ? 'Editar precios'
+                                    : 'Configurar precios'
+                            }}
+                        </button>
+                    </article>
+                }
+            </div>
+
+            <form #formTarifa="ngForm" (ngSubmit)="guardarTarifa(formTarifa)">
+                <fieldset class="campos" [disabled]="ocupado()">
+                    <div class="campo">
+                        <label for="formatoTarifa">Formato</label>
+
+                        <select
+                            id="formatoTarifa"
+                            name="formatoTarifa"
+                            [(ngModel)]="borradorTarifa.formato"
+                            (ngModelChange)="cargarBorradorTarifa()"
+                            required
+                        >
+                            @for (formato of formatos; track formato) {
+                                <option [value]="formato">{{ formato }}</option>
+                            }
+                        </select>
+                    </div>
+
+                    <p class="detalle">
+                        {{
+                            tarifaConfigurada()
+                                ? 'Este formato ya tiene tarifas. Podés modificarlas.'
+                                : 'Este formato todavía no tiene tarifas configuradas.'
+                        }}
+                    </p>
+
+                    <div class="precios-formulario">
+                        <div class="campo">
+                            <label for="tarifaEstandar">Estándar · ARS</label>
+
+                            <input
+                                id="tarifaEstandar"
+                                name="tarifaEstandar"
+                                type="number"
+                                min="0.01"
+                                max="9999999999.99"
+                                step="0.01"
+                                [(ngModel)]="borradorTarifa.precio_estandar"
+                                required
+                            />
+                        </div>
+
+                        <div class="campo">
+                            <label for="tarifaAccesible">Accesible · ARS</label>
+
+                            <input
+                                id="tarifaAccesible"
+                                name="tarifaAccesible"
+                                type="number"
+                                min="0.01"
+                                max="9999999999.99"
+                                step="0.01"
+                                [(ngModel)]="borradorTarifa.precio_accesible"
+                                required
+                            />
+                        </div>
+
+                        <div class="campo">
+                            <label for="tarifaVip">VIP · ARS</label>
+
+                            <input
+                                id="tarifaVip"
+                                name="tarifaVip"
+                                type="number"
+                                min="0.01"
+                                max="9999999999.99"
+                                step="0.01"
+                                [(ngModel)]="borradorTarifa.precio_vip"
+                                required
+                            />
+
+                            <small>Debe ser mayor al precio estándar.</small>
+                        </div>
+                    </div>
+                </fieldset>
+
+                @if (errorTarifa()) {
+                    <p class="error" role="alert">{{ errorTarifa() }}</p>
+                }
+
+                <button
+                    class="boton"
+                    type="submit"
+                    [disabled]="ocupado()"
+                >
+                    {{ guardandoTarifa() ? 'Guardando...' : 'Guardar tarifas' }}
+                </button>
+            </form>
+        </section>
+    } @else {
+        <div class="cabecera-funciones">
+            <p>Consultá las funciones agrupadas por sala.</p>
+
+            <div class="acciones">
+                <button
+                    class="boton"
+                    type="button"
+                    [disabled]="ocupado() || editorAbierto() || programacionAbierta()"
+                    (click)="nuevaFuncion()"
+                >
+                    Agregar función
+                </button>
+
+                <button
+                    class="boton secundario"
+                    type="button"
+                    [disabled]="ocupado() || editorAbierto() || programacionAbierta()"
+                    (click)="abrirProgramacion()"
+                >
+                    Programar varios días
+                </button>
+            </div>
+        </div>
+
+        <nav class="filtro-salas" aria-label="Filtrar funciones por sala">
+            <button
+                class="boton secundario"
+                type="button"
+                [class.seleccionado]="salaSeleccionada() === ''"
+                [attr.aria-pressed]="salaSeleccionada() === ''"
+                (click)="salaSeleccionada.set('')"
+            >
+                Todas las salas
+            </button>
+
+            @for (sala of salas(); track sala.id) {
+                <button
+                    class="boton secundario"
+                    type="button"
+                    [class.seleccionado]="salaSeleccionada() === sala.id"
+                    [attr.aria-pressed]="salaSeleccionada() === sala.id"
+                    (click)="salaSeleccionada.set(sala.id)"
+                >
+                    {{ sala.nombre }}
+                </button>
+            }
+        </nav>
+
+        @if (programacionAbierta()) {
+            <section
+                class="programacion-multiple"
+                aria-labelledby="tituloProgramacion"
+            >
+                <h3 id="tituloProgramacion">
+                    Programar funciones para varios días
+                </h3>
+
+                <p>
+                    Elegí los días y el horario. Cada fecha tendrá una sala
+                    asignada automáticamente. Los horarios corresponden
+                    a Argentina.
+                </p>
+
+                <form
+                    #formProgramacion="ngForm"
+                    (ngSubmit)="programarFunciones(formProgramacion)"
+                >
+                    <fieldset
+                        class="campos-programacion"
+                        [disabled]="ocupado() || resultadosProgramacion().length > 0"
+                    >
+                        <div class="campo">
+                            <label for="peliculaProgramacion">Película</label>
+
+                            <select
+                                id="peliculaProgramacion"
+                                name="peliculaProgramacion"
+                                [(ngModel)]="borradorProgramacion.pelicula_id"
+                                required
+                            >
+                                <option value="" disabled hidden>
+                                    Seleccioná una película
+                                </option>
+
+                                @for (pelicula of peliculas(); track pelicula.id) {
+                                    @if (pelicula.activa) {
+                                        <option [value]="pelicula.id">
+                                            {{ pelicula.nombre }}
+                                        </option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="fila">
+                            <div class="campo">
+                                <label for="desdeProgramacion">Desde</label>
+
+                                <input
+                                    id="desdeProgramacion"
+                                    name="desdeProgramacion"
+                                    type="date"
+                                    [(ngModel)]="borradorProgramacion.desde"
+                                    [min]="fechaMinimaProgramacion()"
+                                    required
+                                />
+                            </div>
+
+                            <div class="campo">
+                                <label for="hastaProgramacion">
+                                    Hasta, inclusive
+                                </label>
+
+                                <input
+                                    id="hastaProgramacion"
+                                    name="hastaProgramacion"
+                                    type="date"
+                                    [(ngModel)]="borradorProgramacion.hasta"
+                                    [min]="borradorProgramacion.desde"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div class="campo">
+                            <label for="horaProgramacion">
+                                Horario · Argentina
+                            </label>
+
+                            <input
+                                id="horaProgramacion"
+                                name="horaProgramacion"
+                                type="time"
+                                [(ngModel)]="borradorProgramacion.hora"
+                                step="60"
+                                required
+                            />
+                        </div>
+
+                        <fieldset class="dias-programacion">
+                            <legend>Días de la semana</legend>
+
+                            @for (dia of diasSemana; track dia.numero) {
+                                <label class="dia-programacion">
+                                    <input
+                                        #seleccionDia
+                                        type="checkbox"
+                                        [checked]="diasElegidos().includes(dia.numero)"
+                                        (change)="cambiarDia(dia.numero, seleccionDia.checked)"
+                                    />
+
+                                    <span>{{ dia.nombre }}</span>
+                                </label>
+                            }
+                        </fieldset>
+
+                        <div class="fila">
+                            <div class="campo">
+                                <label for="formatoProgramacion">Formato</label>
+
+                                <select
+                                    id="formatoProgramacion"
+                                    name="formatoProgramacion"
+                                    [(ngModel)]="borradorProgramacion.formato"
+                                    required
+                                >
+                                    @for (formato of formatos; track formato) {
+                                        <option [value]="formato">
+                                            {{ formato }}
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="campo">
+                                <label for="idiomaProgramacion">Idioma</label>
+
+                                <select
+                                    id="idiomaProgramacion"
+                                    name="idiomaProgramacion"
+                                    [(ngModel)]="borradorProgramacion.idioma"
+                                    required
+                                >
+                                    <option value="castellano">
+                                        Castellano
+                                    </option>
+
+                                    <option value="subtitulada">
+                                        Subtitulada
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="vista-tarifas">
+                            <h4>Asignación automática de salas</h4>
+
+                            <p>
+                                Para cada fecha se elegirá la primera sala
+                                activa disponible en orden numérico,
+                                respetando la duración de la película
+                                y los 30 minutos entre funciones.
+                            </p>
+                        </div>
+
+                        @if (tarifaPorFormato(borradorProgramacion.formato); as tarifa) {
+                            <div class="vista-tarifas">
+                                <h4>Tarifas del formato</h4>
+
+                                <dl class="resumen-precios">
+                                    <div>
+                                        <dt>Estándar</dt>
+                                        <dd>
+                                            ARS {{ tarifa.precio_estandar | number:'1.2-2' }}
+                                        </dd>
+                                    </div>
+
+                                    <div>
+                                        <dt>Accesible</dt>
+                                        <dd>
+                                            ARS {{ tarifa.precio_accesible | number:'1.2-2' }}
+                                        </dd>
+                                    </div>
+
+                                    <div class="precio-vip">
+                                        <dt>VIP</dt>
+                                        <dd>
+                                            ARS {{ tarifa.precio_vip | number:'1.2-2' }}
+                                        </dd>
+                                    </div>
+                                </dl>
+                            </div>
+                        } @else {
+                            <p class="error">
+                                Configurá las tarifas de este formato
+                                antes de programar.
+                            </p>
+                        }
+
+                        <p class="detalle">
+                            Se crearán funciones activas.
+                            Podés elegir un rango de hasta 90 días
+                            y crear hasta 60 funciones por programación.
+                        </p>
+                    </fieldset>
+
+                    @if (errorProgramacion()) {
+                        <p class="error" role="alert">
+                            {{ errorProgramacion() }}
+                        </p>
+                    }
+
+                    @if (progresoProgramacion()) {
+                        <p role="status">
+                            {{ progresoProgramacion() }}
+                        </p>
+                    }
+
+                    <div class="acciones-programacion">
+                        @if (resultadosProgramacion().length === 0 || programando()) {
+                            <button
+                                class="boton"
+                                type="submit"
+                                [disabled]="ocupado()"
+                            >
+                                {{
+                                    programando()
+                                        ? 'Programando...'
+                                        : 'Crear funciones'
+                                }}
+                            </button>
+                        }
+
+                        <button
+                            class="boton secundario"
+                            type="button"
+                            [disabled]="ocupado()"
+                            (click)="cerrarProgramacion()"
+                        >
+                            {{
+                                resultadosProgramacion().length > 0
+                                    ? 'Cerrar resumen'
+                                    : 'Cancelar'
+                            }}
+                        </button>
+                    </div>
+                </form>
+
+                @if (resultadosProgramacion().length > 0) {
+                    <section aria-labelledby="tituloResultadoProgramacion">
+                        <h4 id="tituloResultadoProgramacion">
+                            Resultado por fecha
+                        </h4>
+
+                        <ul class="resultados-programacion">
+                            @for (resultado of resultadosProgramacion(); track resultado.inicio) {
+                                <li
+                                    [class.resultado-creado]="resultado.estado === 'creada'"
+                                >
+                                    <strong>
+                                        {{
+                                            resultado.inicio
+                                                | date:'dd/MM/yyyy HH:mm':'-0300'
+                                        }}
+                                    </strong>
+
+                                    <span>
+                                        {{
+                                            resultado.estado === 'creada'
+                                                ? 'Creada'
+                                                : resultado.estado === 'rechazada'
+                                                    ? 'No creada'
+                                                    : resultado.estado === 'sin_comprobar'
+                                                        ? 'Resultado sin comprobar'
+                                                        : 'No procesada'
+                                        }}
+                                    </span>
+
+                                    @if (resultado.sala) {
+                                        <span>{{ resultado.sala }}</span>
+                                    }
+
+                                    <p>{{ resultado.mensaje }}</p>
+                                </li>
+                            }
+                        </ul>
+                    </section>
+                }
+            </section>
+        }
+
+        @if (editorAbierto()) {
+            <section
+                class="editor-funcion"
+                aria-labelledby="tituloEditorFuncion"
+            >
+                <h3 id="tituloEditorFuncion">
+                    {{ funcionEditada ? 'Editar función' : 'Agregar función' }}
+                </h3>
+
+                <form #formFuncion="ngForm" (ngSubmit)="guardar(formFuncion)">
+                    <fieldset class="campos" [disabled]="ocupado()">
+                        <div class="campo">
+                            <label for="peliculaFuncion">Película</label>
+
+                            <select
+                                id="peliculaFuncion"
+                                name="peliculaFuncion"
+                                [(ngModel)]="borrador.pelicula_id"
+                                required
+                            >
+                                <option value="" disabled hidden>
+                                    Seleccioná una película
+                                </option>
+
+                                @for (pelicula of peliculas(); track pelicula.id) {
+                                    <option [value]="pelicula.id">
+                                        {{ pelicula.nombre }}
+                                        {{ pelicula.activa ? '' : ' · Desactivada' }}
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        @if (funcionEditada) {
+                            <div class="campo">
+                                <label for="salaFuncion">Sala</label>
+
+                                <select
+                                    id="salaFuncion"
+                                    name="salaFuncion"
+                                    [(ngModel)]="borrador.sala_id"
+                                    required
+                                >
+                                    @for (sala of salas(); track sala.id) {
+                                        <option [value]="sala.id">
+                                            {{ sala.nombre }}
+                                            {{ sala.activa ? '' : ' · Desactivada' }}
+                                        </option>
+                                    }
+                                </select>
+
+                                <small>
+                                    Podés cambiar la sala al editar.
+                                    El sistema comprobará su disponibilidad.
+                                </small>
+                            </div>
+                        } @else {
+                            <div class="vista-tarifas">
+                                <h4>Asignación automática de sala</h4>
+
+                                <p>
+                                    Al guardar, el sistema elegirá una sala
+                                    activa y disponible en orden numérico,
+                                    respetando la duración de la película
+                                    y los 30 minutos entre funciones.
+                                </p>
+                            </div>
+                        }
+
+                        <div class="campo">
+                            <label for="inicioFuncion">
+                                Fecha y hora de inicio · Argentina
+                            </label>
+
+                            <input
+                                id="inicioFuncion"
+                                name="inicioFuncion"
+                                type="datetime-local"
+                                step="60"
+                                [min]="inicioMinimo()"
+                                [(ngModel)]="borrador.inicio"
+                                required
+                            />
+
+                            @if (finPrevisto(); as fin) {
+                                <small>
+                                    Finalización estimada:
+                                    {{ fin | date:'dd/MM/yyyy HH:mm':'-0300' }}.
+                                    Deben quedar 30 minutos antes de la
+                                    siguiente función de esa sala.
+                                </small>
+                            }
+                        </div>
+
+                        <div class="fila">
+                            <div class="campo">
+                                <label for="formatoFuncion">Formato</label>
+
+                                <select
+                                    id="formatoFuncion"
+                                    name="formatoFuncion"
+                                    [(ngModel)]="borrador.formato"
+                                    required
+                                >
+                                    @for (formato of formatos; track formato) {
+                                        <option [value]="formato">
+                                            {{ formato }}
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="campo">
+                                <label for="idiomaFuncion">Idioma</label>
+
+                                <select
+                                    id="idiomaFuncion"
+                                    name="idiomaFuncion"
+                                    [(ngModel)]="borrador.idioma"
+                                    required
+                                >
+                                    <option value="castellano">
+                                        Castellano
+                                    </option>
+
+                                    <option value="subtitulada">
+                                        Subtitulada
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
+                        @if (preciosFuncion(); as precios) {
+                            <div class="vista-tarifas">
+                                <h4>Precios de esta función</h4>
+
+                                <dl class="resumen-precios">
+                                    <div>
+                                        <dt>Estándar</dt>
+                                        <dd>
+                                            ARS {{ precios.precio_estandar | number:'1.2-2' }}
+                                        </dd>
+                                    </div>
+
+                                    <div>
+                                        <dt>Accesible</dt>
+                                        <dd>
+                                            ARS {{ precios.precio_accesible | number:'1.2-2' }}
+                                        </dd>
+                                    </div>
+
+                                    <div class="precio-vip">
+                                        <dt>VIP</dt>
+                                        <dd>
+                                            ARS {{ precios.precio_vip | number:'1.2-2' }}
+                                        </dd>
+                                    </div>
+                                </dl>
+
+                                <small>
+                                    Se aplican las tarifas generales del formato.
+                                    Cambiar una tarifa actualiza las funciones
+                                    que todavía no comenzaron.
+                                </small>
+                            </div>
+                        } @else {
+                            <p class="error">
+                                Configurá las tarifas generales de
+                                {{ borrador.formato }} antes de crear la función.
+                            </p>
+                        }
+
+                        <label class="opcion">
+                            <input
+                                name="funcionActiva"
+                                type="checkbox"
+                                [(ngModel)]="borrador.activa"
+                            />
+
+                            <span>Función activa</span>
+                        </label>
+
+                        <small>
+                            Para activar la función, la película y la sala
+                            también deben estar activas.
+                        </small>
+                    </fieldset>
+
+                    @if (errorFormulario()) {
+                        <p class="error" role="alert">
+                            {{ errorFormulario() }}
+                        </p>
+                    }
+
+                    <div class="acciones">
+                        <button
+                            class="boton"
+                            type="submit"
+                            [disabled]="ocupado()"
+                        >
+                            {{
+                                guardando()
+                                    ? 'Guardando...'
+                                    : funcionEditada
+                                        ? 'Guardar cambios'
+                                        : 'Crear función'
+                            }}
+                        </button>
+
+                        <button
+                            class="boton secundario"
+                            type="button"
+                            [disabled]="ocupado()"
+                            (click)="cancelar()"
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </section>
+        }
+
+        @for (grupo of gruposSalas(); track grupo.sala.id) {
+            <section
+                class="grupo-sala"
+                [attr.aria-labelledby]="'tituloSala-' + grupo.sala.id"
+            >
+                <header class="cabecera-grupo">
+                    <h3 [id]="'tituloSala-' + grupo.sala.id">
+                        {{ grupo.sala.nombre }}
+                    </h3>
+
+                    @if (!grupo.sala.activa) {
+                        <span class="estado desactivada">
+                            Sala desactivada
+                        </span>
+                    }
+                </header>
+
+                @for (seccion of grupo.secciones; track seccion.nombre) {
+                    <section class="seccion-horarios">
+                        <h4>{{ seccion.nombre }}</h4>
+
+                        <div class="lista-funciones">
+                            @for (funcion of seccion.funciones; track funcion.id) {
+                                <article class="tarjeta-funcion">
+                                    <div class="titulo-funcion">
+                                        <h3>
+                                            {{ nombrePelicula(funcion.pelicula_id) }}
+                                        </h3>
+
+                                        <span
+                                            class="estado"
+                                            [class.desactivada]="!funcion.activa"
+                                        >
+                                            {{
+                                                funcion.activa
+                                                    ? 'Activa'
+                                                    : 'Desactivada'
+                                            }}
+                                        </span>
+                                    </div>
+
+                                    <p
+                                        class="estado-temporal"
+                                        [class.en-curso]="estadoTemporal(funcion) === 'En curso'"
+                                        [class.terminada]="estadoTemporal(funcion) === 'Terminada' || !funcion.activa"
+                                    >
+                                        {{ estadoTemporal(funcion) }}
+
+                                        @if (!funcion.activa || funcionComenzada(funcion)) {
+                                            · Venta cerrada
+                                        }
+                                    </p>
+
+                                    <p>
+                                        <strong>Inicio:</strong>
+                                        {{ funcion.inicio | date:'dd/MM/yyyy HH:mm':'-0300' }}
+                                    </p>
+
+                                    <p>
+                                        <strong>Finalización:</strong>
+                                        {{ funcion.fin | date:'dd/MM/yyyy HH:mm':'-0300' }}
+                                    </p>
+
+                                    <p class="detalle">
+                                        {{ funcion.formato }} ·
+                                        {{
+                                            funcion.idioma === 'castellano'
+                                                ? 'Castellano'
+                                                : 'Subtitulada'
+                                        }}
+                                        · {{ funcion.duracion_minutos }} minutos
+                                    </p>
+
+                                    <dl class="resumen-precios">
+                                        <div>
+                                            <dt>Estándar</dt>
+                                            <dd>
+                                                ARS {{ funcion.precio_estandar | number:'1.2-2' }}
+                                            </dd>
+                                        </div>
+
+                                        <div>
+                                            <dt>Accesible</dt>
+                                            <dd>
+                                                ARS {{ funcion.precio_accesible | number:'1.2-2' }}
+                                            </dd>
+                                        </div>
+
+                                        <div class="precio-vip">
+                                            <dt>VIP</dt>
+                                            <dd>
+                                                ARS {{ funcion.precio_vip | number:'1.2-2' }}
+                                            </dd>
+                                        </div>
+                                    </dl>
+
+                                    @if (estadoTemporal(funcion) === 'Terminada') {
+                                        <p class="detalle">
+                                            Se muestra hasta que termine
+                                            otra función activa de esta sala.
+                                            Permanece guardada en el historial.
+                                        </p>
+                                    }
+
+                                    <div class="acciones">
+                                        <button
+                                            class="boton"
+                                            type="button"
+                                            [disabled]="ocupado() || editorAbierto() || programacionAbierta() || funcionComenzada(funcion)"
+                                            (click)="editarFuncion(funcion)"
+                                        >
+                                            Editar
+                                        </button>
+
+                                        <button
+                                            class="boton secundario"
+                                            type="button"
+                                            [disabled]="ocupado() || editorAbierto() || programacionAbierta() || (!funcion.activa && funcionComenzada(funcion))"
+                                            (click)="cambiarEstado(funcion)"
+                                        >
+                                            {{
+                                                funcion.activa
+                                                    ? 'Desactivar'
+                                                    : 'Activar'
+                                            }}
+                                        </button>
+                                        
+                                        <button
+                                            class="boton peligro"
+                                            type="button"
+                                            [disabled]="ocupado() || editorAbierto() || programacionAbierta() || funcionComenzada(funcion)"
+                                            (click)="eliminarFuncion(funcion)"
+                                        >
+                                            Eliminar
+                                        </button>
+                                    </div>
+
+                                    @if (procesando() === funcion.id) {
+                                        <p role="status">Procesando...</p>
+                                    }
+                                </article>
+                            } @empty {
+                                <p class="detalle">
+                                    No hay funciones en esta sección.
+                                </p>
+                            }
+                        </div>
+                    </section>
+                }
+            </section>
+        } @empty {
+            <p>No hay salas para mostrar.</p>
+        }
+    }
+</section>

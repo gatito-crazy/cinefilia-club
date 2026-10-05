@@ -1,0 +1,765 @@
+<section class="dashboard">
+    <header class="cabecera">
+        <div>
+            <p class="etiqueta">CINEFILIA CLUB</p>
+            <h1>Panel de administración</h1>
+
+            <p>
+                Administrá los usuarios, las películas, las salas,
+                las funciones y la actividad.
+            </p>
+        </div>
+
+        <a class="boton secundario" routerLink="/empleado">
+            Abrir panel de empleados
+        </a>
+    </header>
+
+    <nav class="secciones" aria-label="Secciones del administrador">
+        <button
+            type="button"
+            [class.activo]="seccion() === 'usuarios'"
+            [attr.aria-pressed]="seccion() === 'usuarios'"
+            (click)="seccion.set('usuarios')"
+        >
+            Usuarios
+        </button>
+
+        <button
+            type="button"
+            [class.activo]="seccion() === 'peliculas'"
+            [attr.aria-pressed]="seccion() === 'peliculas'"
+            (click)="abrirPeliculas()"
+        >
+            Películas
+        </button>
+
+        <button
+            type="button"
+            [class.activo]="seccion() === 'salas'"
+            [attr.aria-pressed]="seccion() === 'salas'"
+            (click)="seccion.set('salas')"
+        >
+            Salas
+        </button>
+
+        <button
+            type="button"
+            [class.activo]="seccion() === 'funciones'"
+            [attr.aria-pressed]="seccion() === 'funciones'"
+            (click)="seccion.set('funciones')"
+        >
+            Funciones
+        </button>
+
+        <button
+            type="button"
+            [class.activo]="seccion() === 'candy'"
+            [attr.aria-pressed]="seccion() === 'candy'"
+            (click)="seccion.set('candy')"
+        >
+            Candy
+        </button>
+
+        <button
+            type="button"
+            [class.activo]="seccion() === 'codigos'"
+            [attr.aria-pressed]="seccion() === 'codigos'"
+            (click)="seccion.set('codigos')"
+        >
+            Códigos de prueba
+        </button>
+
+        <button
+            type="button"
+            [class.activo]="seccion() === 'actividad'"
+            [attr.aria-pressed]="seccion() === 'actividad'"
+            (click)="abrirActividad()"
+        >
+            Actividad
+        </button>
+    </nav>
+
+    @if (seccion() === 'salas') {
+        <app-salas-admin />
+    }
+
+    @if (seccion() === 'funciones') {
+        <app-funciones-admin />
+    }
+
+    @if (seccion() === 'candy') {
+        <app-candy-admin />
+    }
+
+    @if (seccion() === 'usuarios') {
+        <section class="tarjeta" aria-labelledby="tituloUsuarios">
+            <h2 id="tituloUsuarios">Usuarios registrados</h2>
+
+            <p class="muted">
+                Podés cambiar el rol de clientes y empleados,
+                administrar sus cuentas o eliminarlas.
+                Las cuentas de administradores están protegidas.
+            </p>
+
+            <form class="busqueda" (ngSubmit)="buscar()">
+                <div class="campo">
+                    <label for="buscarUsuario">
+                        Buscar por nombre o apellido
+                    </label>
+
+                    <input
+                        id="buscarUsuario"
+                        name="buscarUsuario"
+                        type="search"
+                        placeholder="Escribí un nombre o apellido..."
+                        maxlength="80"
+                        [(ngModel)]="busqueda"
+                    />
+                </div>
+
+                <button
+                    class="boton"
+                    type="submit"
+                    [disabled]="cargando() || guardando() !== null"
+                >
+                    Buscar
+                </button>
+            </form>
+
+            @if (errorUsuarios()) {
+                <p class="error" role="alert">{{ errorUsuarios() }}</p>
+            }
+
+            @if (exitoUsuarios()) {
+                <p class="exito" role="status">{{ exitoUsuarios() }}</p>
+            }
+
+            @if (cargando()) {
+                <p role="status">Cargando usuarios...</p>
+            } @else {
+                <p class="muted">Usuarios encontrados: {{ total() }}</p>
+
+                <div class="tabla-contenedor">
+                    <table>
+                        <caption class="solo-lector">
+                            Usuarios registrados y acciones disponibles
+                        </caption>
+
+                        <thead>
+                            <tr>
+                                <th scope="col">Nombre y apellido</th>
+                                <th scope="col">Rol</th>
+                                <th scope="col">Registro</th>
+                                <th scope="col">Acción</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @for (usuario of usuarios(); track usuario.id) {
+                                <tr>
+                                    <td>
+                                        {{ usuario.nombre }} {{ usuario.apellido }}
+
+                                        <small class="identificador">
+                                            {{ usuario.id }}
+                                        </small>
+                                    </td>
+
+                                    <td>
+                                        <span class="insignia">{{ usuario.rol }}</span>
+
+                                        <span
+                                            class="estado-cuenta"
+                                            [class.desactivada]="!usuario.activo"
+                                        >
+                                            {{ usuario.activo ? 'Activa' : 'Desactivada' }}
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        {{ usuario.creado_en | date:'dd/MM/yyyy HH:mm' }}
+                                    </td>
+
+                                    <td>
+                                        @if (
+                                            usuario.rol === 'admin'
+                                            || usuario.id === auth.usuario()?.id
+                                        ) {
+                                            <span class="muted">Cuenta protegida</span>
+                                        } @else {
+                                            <div class="acciones-usuario">
+                                                <button
+                                                    class="boton secundario"
+                                                    type="button"
+                                                    [disabled]="guardando() !== null || cargando()"
+                                                    (click)="cambiarRol(usuario)"
+                                                >
+                                                    {{
+                                                        usuario.rol === 'cliente'
+                                                            ? 'Hacer empleado'
+                                                            : 'Hacer cliente'
+                                                    }}
+                                                </button>
+
+                                                <button
+                                                    class="boton secundario"
+                                                    type="button"
+                                                    [disabled]="guardando() !== null || cargando()"
+                                                    (click)="cambiarEstado(usuario)"
+                                                >
+                                                    {{
+                                                        usuario.activo
+                                                            ? 'Desactivar cuenta'
+                                                            : 'Reactivar cuenta'
+                                                    }}
+                                                </button>
+
+                                                <button
+                                                    class="boton peligro"
+                                                    type="button"
+                                                    [disabled]="guardando() !== null || cargando()"
+                                                    (click)="eliminarUsuario(usuario)"
+                                                >
+                                                    Eliminar definitivamente
+                                                </button>
+
+                                                @if (guardando() === usuario.id) {
+                                                    <small role="status">Procesando...</small>
+                                                }
+                                            </div>
+                                        }
+                                    </td>
+                                </tr>
+                            } @empty {
+                                <tr>
+                                    <td colspan="4">
+                                        No hay usuarios que coincidan con la búsqueda.
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="paginacion">
+                    <button
+                        class="boton secundario"
+                        type="button"
+                        [disabled]="pagina() === 0 || cargando() || guardando() !== null"
+                        (click)="cargarUsuarios(pagina() - 1)"
+                    >
+                        Anterior
+                    </button>
+
+                    <span>Página {{ pagina() + 1 }}</span>
+
+                    <button
+                        class="boton secundario"
+                        type="button"
+                        [disabled]="(pagina() + 1) * 20 >= total() || cargando() || guardando() !== null"
+                        (click)="cargarUsuarios(pagina() + 1)"
+                    >
+                        Siguiente
+                    </button>
+                </div>
+            }
+        </section>
+    }
+
+    @if (seccion() === 'peliculas') {
+        <section class="tarjeta" aria-labelledby="tituloPeliculas">
+            <div class="cabecera-seccion">
+                <div>
+                    <h2 id="tituloPeliculas">Películas</h2>
+                    <p>Administrá las películas disponibles en la cartelera.</p>
+                </div>
+
+                <div class="acciones-pelicula-admin">
+                    <button
+                        class="boton"
+                        type="button"
+                        [disabled]="peliculasOcupadas() || editorAbierto()"
+                        (click)="nuevaPelicula()"
+                    >
+                        Agregar película
+                    </button>
+
+                    <button
+                        class="boton secundario"
+                        type="button"
+                        [disabled]="peliculasOcupadas() || editorAbierto()"
+                        (click)="cargarPeliculas()"
+                    >
+                        Actualizar
+                    </button>
+                </div>
+            </div>
+
+            @if (exitoPeliculas()) {
+                <p class="exito" role="status">{{ exitoPeliculas() }}</p>
+            }
+
+            @if (errorPeliculas()) {
+                <p class="error" role="alert">{{ errorPeliculas() }}</p>
+            }
+
+            @if (editorAbierto()) {
+                <section class="editor-pelicula" aria-labelledby="tituloEditor">
+                    <h3 id="tituloEditor">
+                        {{ borrador.id ? 'Editar película' : 'Agregar película' }}
+                    </h3>
+
+                    <form
+                        #formPelicula="ngForm"
+                        (ngSubmit)="guardarPelicula(formPelicula)"
+                    >
+                        <fieldset
+                            class="campos-pelicula"
+                            [disabled]="guardandoFormulario()"
+                        >
+                            <div class="campo">
+                                <label for="nombrePelicula">Nombre</label>
+
+                                <input
+                                    id="nombrePelicula"
+                                    name="nombrePelicula"
+                                    type="text"
+                                    maxlength="150"
+                                    [(ngModel)]="borrador.nombre"
+                                    required
+                                />
+                            </div>
+
+                            <div class="campo">
+                                <label for="sinopsisPelicula">Sinopsis</label>
+
+                                <textarea
+                                    id="sinopsisPelicula"
+                                    name="sinopsisPelicula"
+                                    rows="5"
+                                    maxlength="3000"
+                                    [(ngModel)]="borrador.sinopsis"
+                                    required
+                                ></textarea>
+                            </div>
+
+                            <div class="fila-pelicula">
+                                <div class="campo">
+                                    <label for="duracionPelicula">
+                                        Duración en minutos
+                                    </label>
+
+                                    <input
+                                        id="duracionPelicula"
+                                        name="duracionPelicula"
+                                        type="number"
+                                        min="1"
+                                        max="600"
+                                        step="1"
+                                        [(ngModel)]="borrador.duracion_minutos"
+                                        required
+                                    />
+                                </div>
+
+                                <div class="campo">
+                                    <label for="edadPelicula">Edad mínima</label>
+
+                                    <input
+                                        id="edadPelicula"
+                                        name="edadPelicula"
+                                        type="number"
+                                        min="0"
+                                        max="18"
+                                        step="1"
+                                        [(ngModel)]="borrador.edad_minima"
+                                        required
+                                    />
+
+                                    <small class="muted">
+                                        Ingresá 0 si no tiene restricción.
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="campo">
+                                <label for="estrenoPelicula">
+                                    Fecha de estreno · Opcional
+                                </label>
+
+                                <input
+                                    id="estrenoPelicula"
+                                    name="estrenoPelicula"
+                                    type="date"
+                                    [(ngModel)]="borrador.fecha_estreno"
+                                />
+                            </div>
+
+                            <fieldset class="selector-generos">
+                                <legend>Géneros · Elegí al menos uno</legend>
+
+                                <div class="opciones-generos">
+                                    @for (genero of generos(); track genero.id) {
+                                        <label class="opcion-genero">
+                                            <input
+                                                type="checkbox"
+                                                [checked]="borrador.generos.includes(genero.id)"
+                                                (change)="seleccionarGenero(genero.id)"
+                                            />
+
+                                            <span>{{ genero.nombre }}</span>
+                                        </label>
+                                    } @empty {
+                                        <p class="muted">
+                                            No hay géneros disponibles.
+                                            Cargá los géneros en Supabase antes de guardar.
+                                        </p>
+                                    }
+                                </div>
+                            </fieldset>
+
+                            <div class="campo">
+                                <label for="posterPelicula">Póster · Opcional</label>
+
+                                <input
+                                    id="posterPelicula"
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    (change)="seleccionarPoster($event)"
+                                />
+
+                                <small class="muted">
+                                    JPG, PNG o WEBP de hasta 5 MB.
+                                    Al editar, si no elegís otra imagen se conserva
+                                    el póster actual.
+                                </small>
+
+                                @if (vistaPoster()) {
+                                    <img
+                                        class="preview-poster"
+                                        [src]="vistaPoster()"
+                                        alt="Vista previa del póster de la película"
+                                    />
+                                }
+                            </div>
+
+                            <label class="opcion-genero">
+                                <input
+                                    name="activaPelicula"
+                                    type="checkbox"
+                                    [(ngModel)]="borrador.activa"
+                                />
+
+                                <span>Mostrar esta película en la cartelera</span>
+                            </label>
+                        </fieldset>
+
+                        @if (errorFormulario()) {
+                            <p class="error" role="alert">
+                                {{ errorFormulario() }}
+                            </p>
+                        }
+
+                        <div class="acciones-pelicula-admin">
+                            <button
+                                class="boton"
+                                type="submit"
+                                [disabled]="guardandoFormulario()"
+                            >
+                                {{
+                                    guardandoFormulario()
+                                        ? 'Guardando...'
+                                        : borrador.id
+                                            ? 'Guardar cambios'
+                                            : 'Crear película'
+                                }}
+                            </button>
+
+                            <button
+                                class="boton secundario"
+                                type="button"
+                                [disabled]="guardandoFormulario()"
+                                (click)="cancelarEdicion()"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </form>
+                </section>
+            }
+
+            @if (cargandoPeliculas()) {
+                <p role="status">Cargando películas...</p>
+            } @else {
+                <div class="lista-peliculas-admin">
+                    @for (pelicula of peliculas(); track pelicula.id) {
+                        <article class="pelicula-admin">
+                            @if (pelicula.imagen_url) {
+                                <img
+                                    class="poster-admin"
+                                    [src]="pelicula.imagen_url"
+                                    [alt]="'Póster de ' + pelicula.nombre"
+                                    loading="lazy"
+                                />
+                            } @else {
+                                <div class="poster-admin poster-pendiente">
+                                    Sin póster
+                                </div>
+                            }
+
+                            <div class="datos-pelicula-admin">
+                                <h3>{{ pelicula.nombre }}</h3>
+
+                                <span
+                                    class="insignia"
+                                    [class.pelicula-inactiva]="!pelicula.activa"
+                                >
+                                    {{ pelicula.activa ? 'Activa' : 'Desactivada' }}
+                                </span>
+
+                                <p>{{ pelicula.sinopsis }}</p>
+
+                                <p>
+                                    <strong>Duración:</strong>
+                                    {{ pelicula.duracion_minutos }} minutos
+                                </p>
+
+                                <p>
+                                    <strong>Edad mínima:</strong>
+                                    {{
+                                        pelicula.edad_minima === 0
+                                            ? 'Sin restricción'
+                                            : pelicula.edad_minima + ' años'
+                                    }}
+                                </p>
+
+                                <p>
+                                    <strong>Estreno:</strong>
+                                    {{
+                                        pelicula.fecha_estreno
+                                            ? (pelicula.fecha_estreno | date:'dd/MM/yyyy')
+                                            : 'Sin fecha cargada'
+                                    }}
+                                </p>
+
+                                <div class="generos-admin">
+                                    @for (genero of pelicula.generos; track genero.id) {
+                                        <span class="insignia">{{ genero.nombre }}</span>
+                                    } @empty {
+                                        <span class="muted">Sin géneros asignados</span>
+                                    }
+                                </div>
+
+                                <div class="acciones-pelicula-admin">
+                                    <button
+                                        class="boton"
+                                        type="button"
+                                        [disabled]="peliculasOcupadas() || editorAbierto()"
+                                        (click)="editarPelicula(pelicula)"
+                                    >
+                                        Editar
+                                    </button>
+
+                                    <button
+                                        class="boton secundario"
+                                        type="button"
+                                        [disabled]="peliculasOcupadas() || editorAbierto()"
+                                        (click)="cambiarEstadoPelicula(pelicula)"
+                                    >
+                                        {{
+                                            pelicula.activa
+                                                ? 'Desactivar película'
+                                                : 'Activar película'
+                                        }}
+                                    </button>
+
+                                    <button
+                                        class="boton peligro"
+                                        type="button"
+                                        [disabled]="peliculasOcupadas() || editorAbierto()"
+                                        (click)="eliminarPelicula(pelicula)"
+                                    >
+                                        Eliminar
+                                    </button>
+                                </div>
+
+                                @if (guardandoPelicula() === pelicula.id) {
+                                    <p role="status">Procesando...</p>
+                                }
+                            </div>
+                        </article>
+                    } @empty {
+                        <p>No hay películas cargadas.</p>
+                    }
+                </div>
+            }
+        </section>
+    }
+
+    @if (seccion() === 'codigos') {
+        <section class="tarjeta" aria-labelledby="tituloCodigos">
+            <h2 id="tituloCodigos">Códigos de prueba</h2>
+
+            <p class="muted">
+                Generá un código para probar la validación de entradas
+                o productos del candy desde el panel de empleados.
+            </p>
+
+            <form
+                class="formulario"
+                #formCodigo="ngForm"
+                (ngSubmit)="crearCodigo()"
+            >
+                <div class="campo">
+                    <label for="tipoCodigo">Tipo de código</label>
+
+                    <select
+                        id="tipoCodigo"
+                        name="tipoCodigo"
+                        [(ngModel)]="tipoCodigo"
+                        required
+                    >
+                        <option value="entrada">Entrada</option>
+                        <option value="candy">Candy</option>
+                    </select>
+                </div>
+
+                <div class="campo">
+                    <label for="descripcionCodigo">Descripción</label>
+
+                    <input
+                        id="descripcionCodigo"
+                        name="descripcionCodigo"
+                        type="text"
+                        placeholder="Por ejemplo, entrada de prueba"
+                        maxlength="160"
+                        [(ngModel)]="descripcion"
+                        required
+                    />
+                </div>
+
+                @if (errorCodigo()) {
+                    <p class="error" role="alert">{{ errorCodigo() }}</p>
+                }
+
+                <button
+                    class="boton"
+                    type="submit"
+                    [disabled]="formCodigo.invalid || !descripcion.trim() || creandoCodigo()"
+                >
+                    {{ creandoCodigo() ? 'Generando...' : 'Generar código' }}
+                </button>
+            </form>
+
+            @if (codigoCreado(); as codigo) {
+                <div class="codigo-creado">
+                    <h3>Código generado</h3>
+
+                    @if (imagenQr()) {
+                        <img
+                            class="qr"
+                            [src]="imagenQr()"
+                            alt="Código QR de prueba para validar en el panel de empleados"
+                            width="260"
+                            height="260"
+                        />
+                    }
+
+                    <p>
+                        <strong>Tipo:</strong>
+                        {{ codigo.tipo === 'entrada' ? 'Entrada' : 'Candy' }}
+                    </p>
+
+                    <p>
+                        <strong>Descripción:</strong>
+                        {{ codigo.descripcion }}
+                    </p>
+
+                    <p>
+                        <strong>Vencimiento:</strong>
+                        {{ codigo.vence_en | date:'dd/MM/yyyy HH:mm' }}
+                    </p>
+
+                    <div class="campo">
+                        <label for="codigoGenerado">
+                            Código para ingresar manualmente
+                        </label>
+
+                        <input
+                            id="codigoGenerado"
+                            type="text"
+                            [value]="codigo.codigo"
+                            readonly
+                        />
+                    </div>
+
+                    <p class="muted">
+                        Podés escanear el QR o copiar el código e ingresarlo
+                        en el panel de empleados. Cada código se puede
+                        validar una sola vez.
+                    </p>
+                </div>
+            }
+        </section>
+    }
+
+    @if (seccion() === 'actividad') {
+        <section class="tarjeta" aria-labelledby="tituloActividad">
+            <div class="cabecera-seccion">
+                <div>
+                    <h2 id="tituloActividad">Registro de actividades</h2>
+
+                    <p class="muted">
+                        Consultá las confirmaciones de registro y las
+                        operaciones realizadas en los paneles.
+                    </p>
+                </div>
+
+                <button
+                    class="boton secundario"
+                    type="button"
+                    [disabled]="cargandoActividad()"
+                    (click)="cargarActividad()"
+                >
+                    {{ cargandoActividad() ? 'Actualizando...' : 'Actualizar' }}
+                </button>
+            </div>
+
+            @if (errorActividad()) {
+                <p class="error" role="alert">{{ errorActividad() }}</p>
+            }
+
+            @if (cargandoActividad()) {
+                <p role="status">Cargando actividad...</p>
+            } @else {
+                <ul class="actividad">
+                    @for (registro of actividad(); track registro.id) {
+                        <li>
+                            <h3>{{ registro.accion }}</h3>
+
+                            <p>
+                                <strong>Usuario:</strong>
+                                {{ registro.actor_nombre }}
+                            </p>
+
+                            <p class="muted">
+                                {{ registro.creado_en | date:'dd/MM/yyyy HH:mm' }}
+                            </p>
+
+                            <details>
+                                <summary>Ver detalles</summary>
+                                <pre>{{ registro.detalle | json }}</pre>
+                            </details>
+                        </li>
+                    } @empty {
+                        <li>
+                            <p class="muted">
+                                Todavía no hay actividades registradas.
+                            </p>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    }
+</section>

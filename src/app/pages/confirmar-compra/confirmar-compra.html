@@ -1,0 +1,369 @@
+<section class="pagina">
+    @if (cargando()) {
+        <p role="status">Comprobando tu compra...</p>
+    } @else if (compra(); as actual) {
+        <header class="tarjeta">
+            <p class="etiqueta">CINEFILIA CLUB · COMPROBANTES</p>
+
+            <h1>
+                {{
+                    actual.estado === 'cancelada'
+                        ? 'Compra cancelada'
+                        : actual.modalidad === 'prueba'
+                            ? 'Compra de prueba confirmada'
+                            : 'Compra confirmada'
+                }}
+            </h1>
+
+            @if (actual.modalidad === 'prueba') {
+                <p>
+                    Esta operación es de prueba. No se cobró dinero real.
+                </p>
+            }
+
+            <h2>{{ actual.funcion.pelicula_nombre }}</h2>
+
+            <p>
+                {{ actual.funcion.sala_nombre }} ·
+                {{ actual.funcion.inicio | date:'dd/MM/yyyy HH:mm':'-0300' }}
+                · {{ actual.funcion.formato }}
+                ·
+                {{
+                    actual.funcion.idioma === 'castellano'
+                        ? 'Castellano'
+                        : 'Subtitulada'
+                }}
+            </p>
+
+            @if (actual.funcion.requiere_adulto) {
+                <p class="aviso">
+                    Edad mínima: {{ actual.funcion.edad_minima }} años.
+                    Para esta película se requiere acompañamiento de un adulto.
+                </p>
+            }
+
+            <p class="identificador">
+                Compra: {{ actual.compra_id }}
+            </p>
+        </header>
+
+        @if (avisoAcceso()) {
+            <p class="aviso" role="status">{{ avisoAcceso() }}</p>
+        }
+
+        <section class="tarjeta">
+            <h2>Tus entradas</h2>
+
+            <ul>
+                @for (entrada of actual.entradas; track entrada.id) {
+                    <li>
+                        <strong>
+                            {{ entrada.fila }} · {{ entrada.numero }}
+                        </strong>
+
+                        ·
+                        {{
+                            entrada.tipo === 'vip'
+                                ? 'VIP'
+                                : entrada.tipo === 'accesible'
+                                    ? 'Accesible'
+                                    : 'Estándar'
+                        }}
+
+                        · ARS {{ entrada.precio | number:'1.2-2' }}
+                    </li>
+                }
+            </ul>
+
+            @if (actual.candy.length > 0) {
+                <h2>Tu Candy</h2>
+
+                <ul>
+                    @for (item of actual.candy; track item.id) {
+                        <li>
+                            <strong>
+                                {{ item.cantidad }} × {{ item.nombre }}
+                            </strong>
+
+                            · ARS {{ item.subtotal | number:'1.2-2' }}
+
+                            @if (item.tipo === 'combo') {
+                                <ul>
+                                    @for (producto of item.componentes; track producto.producto_id) {
+                                        <li>
+                                            {{ producto.cantidad * item.cantidad }}
+                                            × {{ producto.nombre }}
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+
+            <p>
+                Entradas:
+                ARS {{ actual.total_entradas | number:'1.2-2' }}
+            </p>
+
+            <p>
+                Candy:
+                ARS {{ actual.total_candy | number:'1.2-2' }}
+            </p>
+
+            <p class="total">
+                Total: ARS {{ actual.total | number:'1.2-2' }}
+            </p>
+        </section>
+
+        @if (actual.estado === 'confirmada') {
+                        <section class="tarjeta">
+                <h2>Tu comprobante QR</h2>
+
+                <p>
+                    Usá este mismo QR para ingresar al cine y retirar
+                    el Candy de tu compra. Cada sector registra su
+                    validación por separado.
+                </p>
+
+                @if (comprobantes()[0]; as qr) {
+                    <div class="comprobantes">
+                        <article class="comprobante">
+                            <h3>Cinefilia Club · Tu compra</h3>
+
+                            <img
+                                [src]="qr.imagen"
+                                alt="QR de la compra para ingreso al cine y retiro de Candy"
+                                width="280"
+                                height="280"
+                            />
+
+                            <p class="codigo">{{ qr.codigo }}</p>
+
+                            <div class="estados-qr">
+                                @for (estado of actual.comprobantes; track estado.tipo) {
+                                    <p>
+                                        <strong>
+                                            {{
+                                                estado.tipo === 'entrada'
+                                                    ? 'Ingreso al cine'
+                                                    : 'Retiro de Candy'
+                                            }}:
+                                        </strong>
+
+                                        {{
+                                            estado.estado === 'utilizado'
+                                                ? 'Utilizado'
+                                                : estado.estado === 'cancelado'
+                                                    ? 'Cancelado'
+                                                    : 'Pendiente'
+                                        }}
+                                    </p>
+                                }
+                            </div>
+
+                            <a
+                                class="boton secundario"
+                                [href]="qr.imagen"
+                                [attr.download]="'cinefilia-' + actual.compra_id + '.png'"
+                            >
+                                Descargar QR
+                            </a>
+                        </article>
+                    </div>
+                }
+
+                @if (errorQr()) {
+                    <p class="error" role="alert">{{ errorQr() }}</p>
+
+                    <button type="button" (click)="generarQr()">
+                        Volver a generar la imagen
+                    </button>
+                }
+            </section>
+        } @else {
+            <p class="aviso">
+                Esta compra está cancelada. Sus comprobantes no son válidos.
+            </p>
+        }
+
+        <div class="acciones">
+            @if (actual.estado === 'confirmada') {
+                <button
+                    type="button"
+                    class="boton"
+                    [disabled]="descargandoPdf()"
+                    (click)="descargarPdf()"
+                >
+                    {{
+                        descargandoPdf()
+                            ? 'Generando PDF...'
+                            : 'Descargar comprobante PDF'
+                    }}
+                </button>
+            }
+
+            <a
+                class="boton"
+                routerLink="/mis-compras"
+            >
+                Ver mis compras
+            </a>
+
+            <a
+                class="boton secundario"
+                routerLink="/cartelera"
+            >
+                ← Volver a cartelera
+            </a>
+        </div>
+
+        @if (errorPdf()) {
+            <p
+                class="error"
+                role="alert"
+            >
+                {{ errorPdf() }}
+            </p>
+        }
+    } @else {
+        <section class="tarjeta">
+            <p class="etiqueta">CINEFILIA CLUB · CONFIRMACIÓN</p>
+            <h1>Confirmá tu compra de prueba</h1>
+
+            <p>
+                No se cobrará dinero real. Al confirmar, las butacas
+                quedarán vendidas en el sistema de prueba.
+            </p>
+
+            @if (reservaVigente()) {
+                <p>
+                    Tiempo restante:
+                    <strong class="contador">{{ tiempoRestante() }}</strong>
+                </p>
+            } @else {
+                <p class="aviso">
+                    La reserva no está vigente.
+                    Si enviaste una confirmación, comprobá primero
+                    si la compra quedó guardada.
+                </p>
+            }
+
+            @if (controlEdad(); as control) {
+                <div class="control-edad">
+                    <h2>Restricción de edad</h2>
+
+                    <p>
+                        {{
+                            control.edad_minima === 0
+                                ? 'Esta película no tiene restricción de edad.'
+                                : 'Edad mínima para comprar: ' + control.edad_minima + ' años.'
+                        }}
+                    </p>
+
+                    @if (control.invitado) {
+                        <div class="campo">
+                            <label for="fechaNacimientoCompra">
+                                Tu fecha de nacimiento
+                            </label>
+
+                            <input
+                                #campoFecha
+                                id="fechaNacimientoCompra"
+                                type="date"
+                                autocomplete="bday"
+                                [max]="control.fecha_hoy"
+                                [value]="fechaNacimiento()"
+                                [disabled]="confirmando() || comprobando() || (resultadoIncierto() && !!fechaNacimiento())"
+                                (input)="fechaNacimiento.set(campoFecha.value)"
+                                aria-describedby="ayudaEdadCompra"
+                                required
+                            />
+
+                            <small id="ayudaEdadCompra">
+                                Usamos este dato para comprobar si podés
+                                comprar entradas para esta película.
+                            </small>
+                        </div>
+                    } @else {
+                        <p>
+                            Comprobamos tu edad con la fecha de nacimiento
+                            registrada en tu perfil.
+                        </p>
+                    }
+
+                    @if (mensajeEdad() && (!control.invitado || fechaNacimiento())) {
+                        <p class="error" role="alert">{{ mensajeEdad() }}</p>
+                    }
+
+                    @if (control.requiere_adulto) {
+                        <p class="aviso">
+                            Para esta película se requiere acompañamiento
+                            de un adulto. El acompañamiento no permite
+                            comprar si no cumplís la edad mínima.
+                        </p>
+                    }
+                </div>
+            }
+
+            <p class="total">
+                Total revisado:
+                ARS {{ totalEsperado() | number:'1.2-2' }}
+            </p>
+
+            @if (error()) {
+                <p class="error" role="alert">{{ error() }}</p>
+            }
+
+            <div class="acciones">
+                <button
+                    type="button"
+                    [disabled]="confirmando() || comprobando() || !reservaVigente() || totalEsperado() <= 0 || !edadPermitida()"
+                    (click)="confirmar()"
+                >
+                    {{
+                        confirmando()
+                            ? 'Confirmando...'
+                            : resultadoIncierto()
+                                ? 'Reintentar la misma compra'
+                                : 'Confirmar compra de prueba'
+                    }}
+                </button>
+
+                @if (resultadoIncierto()) {
+                    <button
+                        class="secundario"
+                        type="button"
+                        [disabled]="confirmando() || comprobando()"
+                        (click)="comprobarCompra()"
+                    >
+                        {{
+                            comprobando()
+                                ? 'Comprobando...'
+                                : 'Comprobar compra'
+                        }}
+                    </button>
+                } @else if (!confirmando() && !comprobando()) {
+                    <a
+                        class="boton secundario"
+                        [routerLink]="['/compra', funcionId, 'candy']"
+                    >
+                        ← Volver al Candy
+                    </a>
+                }
+
+                @if (!controlEdad() && !resultadoIncierto()) {
+                    <button
+                        class="secundario"
+                        type="button"
+                        [disabled]="confirmando() || comprobando()"
+                        (click)="cargar()"
+                    >
+                        Volver a comprobar los datos
+                    </button>
+                }
+            </div>
+        </section>
+    }
+</section>

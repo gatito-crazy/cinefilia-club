@@ -1,0 +1,268 @@
+:host {
+    display: block;
+    color: #f5f5f7;
+}
+
+.pagina {
+    width: min(1200px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 32px 0 56px;
+}
+
+.cabecera,
+.acciones,
+.detalle li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.cabecera {
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+h1,
+h2,
+p {
+    margin-top: 0;
+}
+
+h1 {
+    margin-bottom: 12px;
+    font-size: clamp(2rem, 5vw, 3rem);
+}
+
+.etiqueta {
+    color: #e9b85b;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+}
+
+.cabecera p,
+.descripcion {
+    color: #c3c3cf;
+    line-height: 1.6;
+}
+
+.aviso,
+.mensaje {
+    padding: 16px;
+    border: 1px solid #41414e;
+    border-radius: 12px;
+    background: #20202a;
+    line-height: 1.6;
+}
+
+.error {
+    color: #ffb4b4;
+}
+
+.buscador {
+    display: grid;
+    gap: 10px;
+    margin: 28px 0;
+}
+
+input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px 16px;
+    border: 1px solid #484858;
+    border-radius: 12px;
+    background: #20202a;
+    color: #fff;
+    font: inherit;
+}
+
+.catalogo {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+}
+
+.tarjeta {
+    overflow: hidden;
+    border: 1px solid #383845;
+    border-radius: 18px;
+    background: #1b1b25;
+}
+
+.imagen {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 4 / 3;
+    background: #282833;
+    color: #c3c3cf;
+}
+
+.imagen img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.informacion {
+    display: flex;
+    flex-direction: column;
+    padding: 22px;
+}
+
+.informacion h2 {
+    margin-bottom: 12px;
+    font-size: 1.35rem;
+}
+
+.descripcion {
+    white-space: pre-line;
+}
+
+.precio,
+.total {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.cantidad {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.cantidad button {
+    width: 44px;
+    height: 44px;
+    border: 1px solid #5a5a6a;
+    border-radius: 10px;
+    background: #30303e;
+    color: #fff;
+    font-size: 1.3rem;
+    cursor: pointer;
+}
+
+.cantidad span {
+    min-width: 24px;
+    text-align: center;
+    font-weight: 700;
+}
+
+.resumen,
+.confirmacion {
+    margin-top: 32px;
+    padding: 28px;
+    border: 1px solid #48414a;
+    border-radius: 18px;
+    background: #20202a;
+}
+
+.detalle {
+    display: grid;
+    gap: 14px;
+    padding: 0;
+    list-style: none;
+}
+
+.detalle li {
+    padding-bottom: 12px;
+    border-bottom: 1px solid #3a3a47;
+}
+
+.detalle strong {
+    flex-shrink: 0;
+}
+
+.acciones {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+}
+
+.boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-height: 46px;
+    padding: 12px 20px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: #e9b85b;
+    color: #17171d;
+    font: inherit;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.boton.secundario {
+    border-color: #555564;
+    background: transparent;
+    color: #f5f5f7;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+    outline: 3px solid #e9b85b;
+    outline-offset: 4px;
+}
+
+.confirmacion {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    align-items: start;
+    gap: 32px;
+}
+
+.comprobante {
+    display: grid;
+    justify-items: center;
+    gap: 16px;
+}
+
+.comprobante img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+}
+
+@media (max-width: 900px) {
+    .catalogo {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .confirmacion {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .cabecera {
+        flex-direction: column;
+    }
+
+    .catalogo {
+        grid-template-columns: 1fr;
+    }
+
+    .resumen,
+    .confirmacion {
+        padding: 20px;
+    }
+
+    .detalle li {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .acciones .boton {
+        width: 100%;
+    }
+}

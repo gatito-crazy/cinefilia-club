@@ -1,0 +1,16 @@
+main {
+    min-width: 0;
+    padding: 2rem;
+}
+
+@media (max-width: 600px) {
+    main {
+        padding: 0.75rem;
+    }
+}
+
+@media (orientation: landscape) and (max-height: 600px) and (pointer: coarse) {
+    main {
+        padding: 0.75rem;
+    }
+}

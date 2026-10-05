@@ -1,0 +1,245 @@
+:host {
+    display: block;
+    padding: 2rem 1rem;
+    color: #f5f5fa;
+}
+
+.registro {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 2rem;
+    border: 1px solid #38384b;
+    border-radius: 20px;
+    background: #151522;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+}
+
+h1 {
+    margin: 0 0 0.5rem;
+    color: #ffffff;
+    font-size: clamp(1.6rem, 5vw, 2rem);
+}
+
+.registro > p {
+    color: #bcbccc;
+}
+
+form {
+    display: grid;
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+}
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.campo label {
+    color: #eeeeF5;
+    font-weight: 600;
+}
+
+input,
+select {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    padding: 0.85rem 1rem;
+    border: 1px solid #45455c;
+    border-radius: 10px;
+    background: #222233;
+    color: #ffffff;
+    font: inherit;
+    font-size: 1rem;
+    transition:
+        border-color 180ms ease,
+        background-color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+input::placeholder {
+    color: #aaaabd;
+}
+
+input:focus,
+select:focus {
+    border-color: #e34b61;
+    background: #28283a;
+    box-shadow: 0 0 0 3px rgba(183, 45, 64, 0.18);
+}
+
+small {
+    color: #bcbccc;
+    font-size: 0.85rem;
+    line-height: 1.6;
+}
+
+.entrada-password {
+    position: relative;
+}
+
+.entrada-password input {
+    padding-right: 3.75rem;
+}
+
+.boton-ojo {
+    position: absolute;
+    top: 50%;
+    right: 0.3rem;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #bcbccc;
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition:
+        background-color 180ms ease,
+        color 180ms ease;
+}
+
+.boton-ojo:active {
+    background: #38384b;
+    color: #ffffff;
+}
+
+.crear,
+.boton-reenvio {
+    width: 100%;
+    min-height: 48px;
+    padding: 0.9rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: #b72d40;
+    color: #ffffff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        transform 180ms ease,
+        background-color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+p.error,
+p.exito {
+    margin: 0;
+    padding: 1rem;
+    border: 1px solid;
+    border-radius: 10px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.error {
+    color: #ffb4b4;
+}
+
+p.error {
+    border-color: #75404b;
+    background: #34202a;
+}
+
+.exito {
+    color: #bcf0d7;
+}
+
+p.exito {
+    border-color: #386452;
+    background: #18372d;
+}
+
+.confirmacion-correo {
+    padding: 1rem;
+    border: 1px solid #50506a;
+    border-radius: 12px;
+    background: #222233;
+    color: #dedee9;
+}
+
+.confirmacion-correo p {
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.ayuda {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #38384b;
+    text-align: center;
+    line-height: 1.6;
+}
+
+a {
+    color: #ffb4c0;
+    text-underline-offset: 0.2rem;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible {
+    outline: 2px solid #ffb4c0;
+    outline-offset: 4px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .boton-ojo:hover {
+        background: #38384b;
+        color: #ffffff;
+    }
+
+    .crear:hover:not(:disabled),
+    .boton-reenvio:hover:not(:disabled) {
+        background: #d0374c;
+        box-shadow: 0 6px 20px rgba(183, 45, 64, 0.25);
+        transform: translateY(-2px);
+    }
+}
+
+.crear:active:not(:disabled),
+.boton-reenvio:active:not(:disabled) {
+    transform: scale(0.97);
+    box-shadow: none;
+}
+
+@media (max-width: 600px) {
+    :host {
+        padding: 1.25rem 0.75rem;
+    }
+
+    .registro {
+        padding: 1.25rem;
+        border-radius: 16px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    input,
+    select,
+    .boton-ojo,
+    .crear,
+    .boton-reenvio {
+        transition: none;
+    }
+
+    .crear:hover:not(:disabled),
+    .crear:active:not(:disabled),
+    .boton-reenvio:hover:not(:disabled),
+    .boton-reenvio:active:not(:disabled) {
+        transform: none;
+    }
+}
