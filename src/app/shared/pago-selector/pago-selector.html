@@ -1,0 +1,205 @@
+<section class="pago" aria-label="Resumen final y medio de pago">
+  <header class="cabecera-pago">
+    <div>
+      <p class="etiqueta">ÚLTIMO PASO</p>
+      <h2>Revisá y elegí cómo pagar</h2>
+    </div>
+    <span class="insignia-prueba">Compra de prueba</span>
+  </header>
+  <p class="aviso-prueba">No se realizan cobros reales ni se solicitan datos bancarios.</p>
+
+  <div class="distribucion-pago">
+    <fieldset class="opciones-pago" [disabled]="bloqueado()">
+      <legend>Medio de pago</legend>
+      @if (auth.usuario()) {
+        <div class="saldo-cuenta">
+          <span
+            >Tu crédito disponible<strong>ARS {{ saldo().credito | number: '1.2-2' }}</strong></span
+          >
+          <span
+            >Tus puntos<strong>{{ saldo().puntos | number: '1.0-0' }}</strong></span
+          >
+        </div>
+        <label>
+          Crédito a utilizar (ARS)
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            [max]="saldo().credito"
+            [(ngModel)]="opciones.credito"
+            (ngModelChange)="actualizar()"
+          />
+          <small>El crédito se descuenta del total. Dejá 0 para conservarlo.</small>
+        </label>
+      }
+      @if (canjes().length) {
+        <p class="ayuda">
+          Los canjes de entradas y Candy se aplican juntos. Para cambiarlos, volvé a la selección.
+        </p>
+      }
+      <label>
+        Elegí el medio de pago
+        <select [(ngModel)]="opciones.medio" (ngModelChange)="cambiarMedio()">
+          <option value="tarjeta">Tarjeta de crédito</option>
+          <option value="debito">Tarjeta de débito</option>
+          <option value="transferencia">Transferencia</option>
+          <option value="credito" [disabled]="!auth.usuario()">Solo crédito de la cuenta</option>
+        </select>
+      </label>
+      @if (auth.usuario()) {
+        <button
+          class="usar-credito"
+          type="button"
+          [disabled]="cargando() || !cotizacion() || saldo().credito <= 0"
+          (click)="usarCreditoDisponible()"
+        >
+          Usar crédito disponible
+        </button>
+        <p class="ayuda">
+          Si el crédito no cubre el total, elegí tarjeta, débito o transferencia para pagar la
+          diferencia.
+        </p>
+      }
+      @if (!cotizacion() || (cotizacion()?.a_pagar ?? 0) > 0) {
+        <label>
+          Resultado del pago de prueba
+          <select [(ngModel)]="opciones.resultado" (ngModelChange)="actualizar()">
+            <option value="aprobado">Aprobado</option>
+            <option value="rechazado">Rechazado</option>
+          </select>
+          <small>Permite probar una compra aprobada o un pago rechazado.</small>
+        </label>
+      } @else {
+        <p class="sin-pago" role="status">
+          No queda dinero por pagar. Podés confirmar con los beneficios y el crédito aplicado.
+        </p>
+      }
+      @if (auth.usuario(); as usuario) {
+        <div class="contacto">
+          <span>Correo de contacto</span><strong>{{ usuario.email }}</strong
+          ><small>Ahí recibirás los avisos de la compra.</small>
+        </div>
+      } @else if (auth.sesionLista()) {
+        <label>
+          Correo de contacto
+          <input
+            type="email"
+            maxlength="254"
+            [(ngModel)]="opciones.email"
+            (ngModelChange)="actualizar()"
+            autocomplete="email"
+            placeholder="tu@email.com"
+            required
+          />
+          <small>Usamos este correo para enviarte los avisos de la compra.</small>
+        </label>
+      }
+    </fieldset>
+
+    <section
+      class="resumen-final"
+      aria-label="Detalle e importe final"
+      [attr.aria-busy]="cargando()"
+    >
+      <h3>Resumen de tu compra</h3>
+      @if (cargando()) {
+        <p class="ayuda" role="status">Comprobando precios y saldo…</p>
+      }
+      @if (error()) {
+        <p role="alert" class="error">{{ error() }}</p>
+      }
+      @if (cotizacion(); as c) {
+        <dl class="detalle-importes">
+          @if (!soloCandy()) {
+            <div>
+              <dt>
+                Entradas
+                @if (butacas().length) {
+                  ({{ butacas().length }})
+                }
+              </dt>
+              <dd>ARS {{ c.entradas | number: '1.2-2' }}</dd>
+            </div>
+          }
+          @for (a of c.detalle_candy; track $index) {
+            <div>
+              <dt>{{ a.cantidad }} × {{ a.nombre }}</dt>
+              <dd>ARS {{ a.precio * a.cantidad | number: '1.2-2' }}</dd>
+            </div>
+          }
+          @if (c.descuento_cupones > 0) {
+            <div class="descuento">
+              <dt>Cupones</dt>
+              <dd>− ARS {{ c.descuento_cupones | number: '1.2-2' }}</dd>
+            </div>
+          }
+          @if (c.descuento_paquete > 0) {
+            <div class="descuento">
+              <dt>Combo con entrada</dt>
+              <dd>− ARS {{ c.descuento_paquete | number: '1.2-2' }}</dd>
+            </div>
+          }
+          @if (c.descuento_canje > 0 || c.puntos_canje > 0) {
+            <div class="descuento">
+              <dt>
+                Canjes<small>{{ c.puntos_canje | number: '1.0-0' }} puntos utilizados</small>
+              </dt>
+              <dd>− ARS {{ c.descuento_canje | number: '1.2-2' }}</dd>
+            </div>
+          }
+          <div class="total-compra">
+            <dt>Total de la compra</dt>
+            <dd>ARS {{ c.total | number: '1.2-2' }}</dd>
+          </div>
+          @if (c.credito > 0) {
+            <div class="descuento">
+              <dt>Crédito de tu cuenta</dt>
+              <dd>− ARS {{ c.credito | number: '1.2-2' }}</dd>
+            </div>
+          }
+        </dl>
+        @if ((c.canjes ?? []).length || c.paquete_butacas?.length) {
+          <details class="detalle-beneficios">
+            <summary>Ver detalle de canjes y combos</summary>
+            @for (canje of c.canjes ?? []; track $index) {
+              <p>
+                {{ canje.cantidad }} × {{ canje.nombre }} ·
+                {{ canje.puntos | number: '1.0-0' }} puntos
+                @if (canje.importe > 0) {
+                  + ARS {{ canje.importe | number: '1.2-2' }}
+                } @else {
+                  · Sin dinero adicional
+                }
+              </p>
+            }
+            @if (c.paquete_butacas?.length) {
+              <p>Entradas incluidas en el combo:</p>
+              <ul>
+                @for (id of c.paquete_butacas ?? []; track id) {
+                  <li>{{ descripcionButaca(id) }}</li>
+                }
+              </ul>
+            }
+          </details>
+        }
+        <div class="importe-final" [class.actualizando]="cargando()">
+          <span>Importe a pagar</span>
+          <strong>ARS {{ c.a_pagar | number: '1.2-2' }}</strong>
+          @if (cargando()) {
+            <small>Actualizando importe…</small>
+          }
+        </div>
+        @if (auth.usuario()) {
+          <p class="puntos-compra">
+            Esta compra suma <strong>{{ c.puntos_ganados | number: '1.0-0' }} puntos</strong>.
+          </p>
+        } @else {
+          <p class="ayuda">Las cuentas registradas pueden acumular puntos y usar crédito.</p>
+        }
+      } @else if (!cargando() && !error()) {
+        <p class="ayuda">Completá los datos para consultar el importe final.</p>
+      }
+    </section>
+  </div>
+</section>

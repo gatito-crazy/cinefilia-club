@@ -1,0 +1,456 @@
+<section class="beneficios">
+    <h2>
+        {{ titulo() }}
+    </h2>
+
+    @if (error()) {
+        <p
+            class="error"
+            role="alert"
+        >
+            {{ error() }}
+        </p>
+    }
+
+    @if (exito()) {
+        <p role="status">
+            {{ exito() }}
+        </p>
+    }
+
+    <button
+        type="button"
+        [disabled]="ocupado()"
+        (click)="cargar()"
+    >
+        Actualizar
+    </button>
+
+    @if (datos(); as d) {
+        @if (seccion() === 'puntos') {
+            <fieldset [disabled]="ocupado()">
+                <legend>
+                    Recompensas por puntos
+                </legend>
+
+                <button
+                    type="button"
+                    (click)="nuevaRecompensa()"
+                >
+                    Nueva recompensa
+                </button>
+
+                <label>
+                    Nombre
+
+                    <input
+                        type="text"
+                        maxlength="120"
+                        [(ngModel)]="recompensa.nombre"
+                    />
+                </label>
+
+                <label>
+                    Tipo
+
+                    <select
+                        [(ngModel)]="recompensa.tipo"
+                        (ngModelChange)="cambiarTipo()"
+                    >
+                        <option value="entrada">
+                            Entrada 2D · sin VIP
+                        </option>
+
+                        <option value="producto">
+                            Producto Candy
+                        </option>
+
+                        <option value="combo">
+                            Combo Candy
+                        </option>
+
+                        <option value="paquete">
+                            Combo con entrada 2D · sin VIP
+                        </option>
+                    </select>
+                </label>
+
+                @if (recompensa.tipo !== 'entrada') {
+                    <label>
+                        Artículo
+
+                        <select
+                            [(ngModel)]="recompensa.articulo_id"
+                        >
+                            <option [ngValue]="null">
+                                Seleccionar
+                            </option>
+
+                            @for (
+                                articulo of recompensa.tipo === 'producto'
+                                    ? d.productos
+                                    : recompensa.tipo === 'paquete'
+                                        ? d.paquetes
+                                        : d.combos;
+                                track articulo.id
+                            ) {
+                                <option [ngValue]="articulo.id">
+                                    {{ articulo.nombre }}
+                                </option>
+                            }
+                        </select>
+                    </label>
+                }
+
+                <label>
+                    Importe en dinero por unidad (ARS)
+
+                    <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        [(ngModel)]="recompensa.importe_canje"
+                    />
+                </label>
+
+                <p>
+                    Ingresá 0 para una recompensa gratis por puntos.
+                </p>
+
+                <label>
+                    Puntos por unidad
+
+                    <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        [(ngModel)]="recompensa.puntos"
+                    />
+                </label>
+
+                <label>
+                    <input
+                        type="checkbox"
+                        [(ngModel)]="recompensa.activa"
+                    />
+
+                    Activa
+                </label>
+
+                <button
+                    type="button"
+                    (click)="guardarRecompensa()"
+                >
+                    Guardar recompensa
+                </button>
+
+                <ul>
+                    @for (
+                        recompensaActual of d.recompensas;
+                        track recompensaActual.id
+                    ) {
+                        <li>
+                            <p>
+                                <strong>
+                                    {{ recompensaActual.nombre }}
+                                </strong>
+
+                                —
+                                {{ recompensaActual.puntos }}
+                                puntos
+
+                                @if (
+                                    recompensaActual.importe_canje > 0
+                                ) {
+                                    + ARS
+                                    {{
+                                        recompensaActual.importe_canje
+                                            | number:'1.2-2'
+                                    }}
+                                } @else {
+                                    · Sin dinero adicional
+                                }
+
+                                ·
+                                {{
+                                    recompensaActual.activa
+                                        ? 'Activa'
+                                        : 'Inactiva'
+                                }}
+                            </p>
+
+                            <button
+                                type="button"
+                                [disabled]="ocupado()"
+                                (click)="
+                                    editarRecompensa(recompensaActual)
+                                "
+                            >
+                                Editar
+                            </button>
+
+                            <button
+                                type="button"
+                                [disabled]="ocupado()"
+                                [attr.aria-label]="
+                                    'Eliminar recompensa ' +
+                                    recompensaActual.nombre
+                                "
+                                (click)="
+                                    eliminarRecompensa(recompensaActual)
+                                "
+                            >
+                                Eliminar
+                            </button>
+                        </li>
+                    } @empty {
+                        <li>
+                            Todavía no hay recompensas creadas.
+                        </li>
+                    }
+                </ul>
+            </fieldset>
+        }
+
+        @if (seccion() === 'paquetes') {
+            <p>
+                En Combos, elegí “Con entrada” para crear o editar
+                un combo. La entrada se agrega junto con los
+                productos que selecciones.
+            </p>
+
+            <app-candy-admin />
+        }
+
+        @if (seccion() === 'credito') {
+            <h3>
+                Cancelar una función y compensar compras
+            </h3>
+
+            <p>
+                La cancelación de una función devuelve crédito por
+                el importe pagado. Se conserva el historial de los
+                QR utilizados.
+            </p>
+
+            <ul>
+                @for (
+                    funcion of d.funciones;
+                    track funcion.id
+                ) {
+                    <li>
+                        {{ funcion.nombre }}
+                        ·
+                        {{
+                            funcion.inicio
+                                | date:'dd/MM/yyyy HH:mm'
+                        }}
+                        ·
+                        {{
+                            funcion.cancelada
+                                ? 'Cancelada'
+                                : funcion.activa
+                                    ? 'Activa'
+                                    : 'Inactiva'
+                        }}
+
+                        @if (!funcion.cancelada) {
+                            <button
+                                type="button"
+                                [disabled]="ocupado()"
+                                (click)="cancelar(funcion.id)"
+                            >
+                                Cancelar función
+                            </button>
+                        }
+                    </li>
+                }
+            </ul>
+
+            <h3>
+                Avisos por correo
+            </h3>
+
+            <ul>
+                @for (
+                    correo of d.correos;
+                    track correo.id
+                ) {
+                    <li>
+                        {{ correo.asunto }}
+                        ·
+                        {{ correo.estado }}
+                        ·
+                        {{ correo.intentos }}
+                        intentos
+
+                        @if (correo.ultimo_error) {
+                            <p class="error">
+                                {{ correo.ultimo_error }}
+                            </p>
+                        }
+                    </li>
+                } @empty {
+                    <li>
+                        No hay avisos registrados.
+                    </li>
+                }
+            </ul>
+        }
+
+        @if (seccion() === 'reportes') {
+            <fieldset [disabled]="ocupado()">
+                <legend>
+                    Reportes
+                </legend>
+
+                <label>
+                    Desde
+
+                    <input
+                        type="date"
+                        [(ngModel)]="desde"
+                    />
+                </label>
+
+                <label>
+                    Hasta
+
+                    <input
+                        type="date"
+                        [(ngModel)]="hasta"
+                    />
+                </label>
+
+                <button
+                    type="button"
+                    (click)="cargarReporte()"
+                >
+                    Consultar
+                </button>
+            </fieldset>
+
+            @if (reporte(); as reporteActual) {
+                <button
+                    type="button"
+                    (click)="exportarPdf()"
+                >
+                    Exportar PDF
+                </button>
+
+                <button
+                    type="button"
+                    (click)="exportarExcel()"
+                >
+                    Exportar Excel
+                </button>
+
+                <div class="tabla">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Día</th>
+                                <th>Facturación neta</th>
+                                <th>Entradas</th>
+                                <th>Descuentos</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @for (
+                                dia of reporteActual.dias;
+                                track dia.fecha
+                            ) {
+                                <tr>
+                                    <td>
+                                        {{ dia.fecha }}
+                                    </td>
+
+                                    <td>
+                                        ARS
+                                        {{
+                                            dia.facturacion
+                                                | number:'1.2-2'
+                                        }}
+                                    </td>
+
+                                    <td>
+                                        {{ dia.entradas }}
+                                    </td>
+
+                                    <td>
+                                        ARS
+                                        {{
+                                            dia.descuentos
+                                                | number:'1.2-2'
+                                        }}
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>
+                    Películas más vistas
+                </h3>
+
+                <select
+                    [ngModel]="periodo()"
+                    (ngModelChange)="periodo.set($event)"
+                >
+                    <option value="semanas">
+                        Por semana
+                    </option>
+
+                    <option value="meses">
+                        Por mes
+                    </option>
+                </select>
+
+                @for (
+                    barra of barras();
+                    track barra.periodo + ':' + barra.nombre
+                ) {
+                    <div>
+                        <p>
+                            {{ barra.periodo }}
+                            ·
+                            {{ barra.nombre }}:
+                            {{ barra.entradas }}
+                            entradas utilizadas
+                        </p>
+
+                        <div
+                            class="barra-estadistica"
+                            [style.width.%]="ancho(barra.entradas)"
+                        ></div>
+                    </div>
+                } @empty {
+                    <p>
+                        No hay entradas utilizadas en este período.
+                    </p>
+                }
+
+                <h3>
+                    Candy más vendido
+                </h3>
+
+                <ul>
+                    @for (
+                        articulo of reporteActual.candy;
+                        track $index
+                    ) {
+                        <li>
+                            {{ articulo.nombre }}
+                            ({{ articulo.tipo }})
+                            ·
+                            {{ articulo.unidades }}
+                            unidades
+                        </li>
+                    }
+                </ul>
+            }
+        }
+    }
+</section>

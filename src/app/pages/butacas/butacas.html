@@ -1,7 +1,5 @@
 <section class="pagina-butacas">
-    <a class="volver" routerLink="/cartelera">
-        ← Volver a cartelera
-    </a>
+    <a class="volver" routerLink="/cartelera"> ← Volver a cartelera </a>
 
     @if (cargando()) {
         <p role="status">Cargando mapa de butacas...</p>
@@ -9,9 +7,7 @@
         <div class="mensaje error" role="alert">
             <p>{{ error() }}</p>
 
-            <button type="button" (click)="cargar()">
-                Volver a intentar
-            </button>
+            <button type="button" (click)="cargar()">Volver a intentar</button>
         </div>
     } @else if (funcion(); as actual) {
         <header class="cabecera">
@@ -20,13 +16,8 @@
 
             <p>
                 {{ actual.sala.nombre }} ·
-                {{ actual.inicio | date:'dd/MM/yyyy HH:mm':'-0300' }} ·
-                {{ actual.formato }} ·
-                {{
-                    actual.idioma === 'castellano'
-                        ? 'Castellano'
-                        : 'Subtitulada'
-                }}
+                {{ actual.inicio | date: 'dd/MM/yyyy HH:mm' : '-0300' }} · {{ actual.formato }} ·
+                {{ actual.idioma === 'castellano' ? 'Castellano' : 'Subtitulada' }}
             </p>
         </header>
 
@@ -35,25 +26,17 @@
                 <div>
                     <strong>Tus ubicaciones están reservadas</strong>
 
-                    <p>
-                        Tiempo disponible para elegir Candy y confirmar
-                        la compra.
-                    </p>
+                    <p>Tiempo disponible para elegir Candy y confirmar la compra.</p>
                 </div>
 
-                <strong
-                    class="contador"
-                    role="timer"
-                    aria-label="Tiempo restante de la reserva"
-                >
+                <strong class="contador" role="timer" aria-label="Tiempo restante de la reserva">
                     {{ tiempoRestante() }}
                 </strong>
             </div>
         } @else {
             <p class="mensaje">
-                Elegí tus ubicaciones y presioná Continuar para
-                reservarlas durante 5 minutos.
-                La selección por sí sola todavía no las reserva.
+                Elegí tus ubicaciones y presioná Continuar para reservarlas durante 5 minutos. La
+                selección por sí sola todavía no las reserva.
             </p>
         }
 
@@ -88,17 +71,17 @@
         <div class="leyenda" aria-label="Tipos y estados de ubicaciones">
             <span>
                 <i class="muestra estandar" aria-hidden="true"></i>
-                Estándar · ARS {{ actual.precio_estandar | number:'1.2-2' }}
+                Estándar · ARS {{ actual.precio_estandar | number: '1.2-2' }}
             </span>
 
             <span>
                 <i class="muestra accesible" aria-hidden="true"></i>
-                Accesible · ARS {{ actual.precio_accesible | number:'1.2-2' }}
+                Accesible · ARS {{ actual.precio_accesible | number: '1.2-2' }}
             </span>
 
             <span>
                 <i class="muestra vip" aria-hidden="true"></i>
-                VIP · ARS {{ actual.precio_vip | number:'1.2-2' }}
+                VIP · ARS {{ actual.precio_vip | number: '1.2-2' }}
             </span>
 
             <span>
@@ -123,10 +106,9 @@
         </div>
 
         <p id="ayudaMapa" class="ayuda">
-            La pantalla está frente a la fila A.
-            En el teléfono, deslizá el mapa horizontalmente.
-            ACC identifica la fila accesible; las filas R, S y T son VIP.
-            Las ubicaciones reservadas por otros o vendidas están bloqueadas.
+            La pantalla está frente a la fila A. En el teléfono, deslizá el mapa horizontalmente.
+            ACC identifica la fila accesible; las filas R, S y T son VIP. Las ubicaciones reservadas
+            por otros o vendidas están bloqueadas.
         </p>
 
         <div
@@ -140,10 +122,7 @@
                 <div class="pantalla">PANTALLA</div>
 
                 @for (fila of filas(); track fila.nombre) {
-                    <div
-                        class="fila-butacas"
-                        [class.fila-accesible]="fila.nombre === 'ACC'"
-                    >
+                    <div class="fila-butacas" [class.fila-accesible]="fila.nombre === 'ACC'">
                         <span class="nombre-fila">{{ fila.nombre }}</span>
 
                         @for (bloque of fila.bloques; track bloque.nombre) {
@@ -152,6 +131,7 @@
                                     <button
                                         class="butaca"
                                         type="button"
+                                        [class.mantenimiento]="butaca.habilitada === false"
                                         [class.vip]="butaca.tipo === 'vip'"
                                         [class.accesible]="butaca.tipo === 'accesible'"
                                         [class.seleccionada]="seleccionadas().includes(butaca.id)"
@@ -191,34 +171,64 @@
 
         <section class="resumen" aria-labelledby="tituloSeleccion">
             <h2 id="tituloSeleccion">
-                {{
-                    reservaVigente()
-                        ? 'Tus ubicaciones reservadas'
-                        : 'Tu selección'
-                }}
+                {{ reservaVigente() ? 'Tus ubicaciones reservadas' : 'Tu selección' }}
             </h2>
 
             @if (detalleSeleccion().length > 0) {
+                <p>
+                    Tenés {{ fidelizacion.puntos() ?? 0 }} puntos. Esta selección usa
+                    {{ puntosCanje() }} puntos. Podés sumar canjes del Candy después.
+                </p>
                 <ul class="seleccion">
                     @for (butaca of detalleSeleccion(); track butaca.id) {
                         <li>
                             <div>
-                                <strong>
-                                    {{ butaca.fila }} · {{ butaca.numero }}
-                                </strong>
+                                <strong> {{ butaca.fila }} · {{ butaca.numero }} </strong>
 
                                 <span>{{ nombreTipo(butaca) }}</span>
                             </div>
 
-                            <span>
-                                ARS {{ precioButaca(butaca) | number:'1.2-2' }}
-                            </span>
+                            <span> ARS {{ precioButaca(butaca) | number: '1.2-2' }} </span>
 
+                            @if (
+                                fidelizacion.auth.usuario() &&
+                                recompensasEntradas().length &&
+                                butaca.tipo !== 'vip'
+                            ) {
+                                <label class="canje-butaca">
+                                    Forma de comprar esta butaca
+                                    <select
+                                        [ngModel]="canjeButaca(butaca.id)"
+                                        (ngModelChange)="elegirCanjeButaca(butaca.id, $event)"
+                                        [disabled]="reservando() || cancelando()"
+                                    >
+                                        <option [ngValue]="null">Pagar el precio normal</option>
+                                        @for (premio of recompensasEntradas(); track premio.id) {
+                                            <option
+                                                [ngValue]="premio.id"
+                                                [disabled]="
+                                                    premio.importe_canje >= precioButaca(butaca)
+                                                "
+                                            >
+                                                {{ premio.nombre }}: {{ premio.puntos }} puntos
+                                                {{
+                                                    premio.importe_canje > 0
+                                                        ? '+ ARS ' +
+                                                          (premio.importe_canje | number: '1.2-2')
+                                                        : '· Sin dinero adicional'
+                                                }}
+                                            </option>
+                                        }
+                                    </select>
+                                </label>
+                            }
                             @if (!reservaVigente() && !resultadoIncierto()) {
                                 <button
                                     type="button"
                                     [disabled]="reservando() || cancelando()"
-                                    [attr.aria-label]="'Quitar ubicación ' + butaca.fila + ' ' + butaca.numero"
+                                    [attr.aria-label]="
+                                        'Quitar ubicación ' + butaca.fila + ' ' + butaca.numero
+                                    "
                                     (click)="alternarButaca(butaca)"
                                 >
                                     Quitar
@@ -230,14 +240,13 @@
 
                 @if (tieneVip()) {
                     <p class="aviso-vip">
-                        Tu selección incluye butacas VIP con un precio
-                        superior al estándar.
+                        Tu selección incluye butacas VIP con un precio superior al estándar.
                     </p>
                 }
 
                 <p class="total">
-                    {{ detalleSeleccion().length }} ubicaciones ·
-                    Total: ARS {{ total() | number:'1.2-2' }}
+                    {{ detalleSeleccion().length }} ubicaciones · Total sin cupones: ARS
+                    {{ totalConCanjes() | number: '1.2-2' }}
                 </p>
             } @else {
                 <p>Seleccioná tus ubicaciones en el mapa.</p>
@@ -245,17 +254,16 @@
 
             @if (reservaVigente()) {
                 <p>
-                    Continuá al Candy para agregar productos o seguir
-                    solamente con tus entradas. El contador no se reinicia.
+                    Continuá al Candy para agregar productos o seguir solamente con tus entradas. El
+                    contador no se reinicia.
                 </p>
 
-                <p>
-                    Para cambiar las ubicaciones, cancelá primero
-                    esta reserva.
-                </p>
+                <p>Para cambiar las ubicaciones, cancelá primero esta reserva.</p>
 
                 <div class="acciones-reserva">
-                    @if (!cancelando() && !reservando() && !sincronizando() && !errorSincronizacion()) {
+                    @if (
+                        !cancelando() && !reservando() && !sincronizando() && !errorSincronizacion()
+                    ) {
                         <a
                             class="continuar enlace-candy"
                             [routerLink]="['/compra', actual.id, 'candy']"
@@ -263,13 +271,7 @@
                             Continuar al Candy
                         </a>
                     } @else {
-                        <button
-                            class="continuar"
-                            type="button"
-                            disabled
-                        >
-                            Continuar al Candy
-                        </button>
+                        <button class="continuar" type="button" disabled>Continuar al Candy</button>
                     }
 
                     <button
@@ -278,17 +280,13 @@
                         [disabled]="cancelando() || reservando() || sincronizando()"
                         (click)="cancelarReserva()"
                     >
-                        {{
-                            cancelando()
-                                ? 'Cancelando...'
-                                : 'Cancelar reserva'
-                        }}
+                        {{ cancelando() ? 'Cancelando...' : 'Cancelar reserva' }}
                     </button>
                 </div>
             } @else if (resultadoIncierto()) {
                 <p>
-                    Necesitamos comprobar el resultado de tu solicitud
-                    antes de permitir otra reserva.
+                    Necesitamos comprobar el resultado de tu solicitud antes de permitir otra
+                    reserva.
                 </p>
 
                 <button
@@ -297,25 +295,23 @@
                     [disabled]="reservando() || cancelando() || sincronizando() || ventaCerrada()"
                     (click)="continuar()"
                 >
-                    {{
-                        reservando()
-                            ? 'Comprobando...'
-                            : 'Comprobar reserva'
-                    }}
+                    {{ reservando() ? 'Comprobando...' : 'Comprobar reserva' }}
                 </button>
             } @else if (detalleSeleccion().length > 0) {
                 <div class="acciones-reserva">
                     <button
                         class="continuar"
                         type="button"
-                        [disabled]="reservando() || cancelando() || sincronizando() || ventaCerrada() || !!errorSincronizacion()"
+                        [disabled]="
+                            reservando() ||
+                            cancelando() ||
+                            sincronizando() ||
+                            ventaCerrada() ||
+                            !!errorSincronizacion()
+                        "
                         (click)="continuar()"
                     >
-                        {{
-                            reservando()
-                                ? 'Reservando...'
-                                : 'Continuar · Reservar 5 minutos'
-                        }}
+                        {{ reservando() ? 'Reservando...' : 'Continuar · Reservar 5 minutos' }}
                     </button>
 
                     <button

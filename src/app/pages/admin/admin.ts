@@ -1,34 +1,25 @@
 import { DatePipe, JsonPipe } from '@angular/common';
-import {
-    Component,
-    effect,
-    inject,
-    OnDestroy,
-    OnInit,
-    signal
-} from '@angular/core';
+import { Component, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import * as QRCode from 'qrcode';
 
+import { BeneficiosAdmin } from './beneficios-admin/beneficios-admin';
+import { CuponesAdmin } from './cupones-admin/cupones-admin';
 import { AuthService } from '../../base/service/auth.service';
+
 import {
     ActividadPanel,
     CodigoPrueba,
     mensajeOperacion,
     PanelService,
     TipoCodigo,
-    UsuarioPanel
+    UsuarioPanel,
 } from '../../base/service/panel.service';
-import {
-    DatosPelicula,
-    Pelicula,
-    PeliculasService
-} from '../../base/service/peliculas.service';
-import {
-    Genero,
-    GenerosService
-} from '../../base/service/generos.service';
+
+import { DatosPelicula, Pelicula, PeliculasService } from '../../base/service/peliculas.service';
+
+import { Genero, GenerosService } from '../../base/service/generos.service';
 
 import { SalasAdmin } from './salas-admin/salas-admin';
 import { FuncionesAdmin } from './funciones-admin/funciones-admin';
@@ -43,13 +34,12 @@ import { CandyAdmin } from './candy-admin/candy-admin';
         JsonPipe,
         SalasAdmin,
         FuncionesAdmin,
-        CandyAdmin
+        CandyAdmin,
+        CuponesAdmin,
+        BeneficiosAdmin,
     ],
     templateUrl: './admin.html',
-    styleUrls: [
-        './admin.scss',
-        './admin-peliculas.scss'
-    ]
+    styleUrls: ['./admin.scss', './admin-peliculas.scss'],
 })
 export class Admin implements OnInit, OnDestroy {
     readonly auth = inject(AuthService);
@@ -60,11 +50,15 @@ export class Admin implements OnInit, OnDestroy {
     private readonly generosService = inject(GenerosService);
 
     readonly seccion = signal<
-        'usuarios'
+        | 'usuarios'
         | 'peliculas'
         | 'salas'
         | 'funciones'
         | 'candy'
+        | 'puntos'
+        | 'credito'
+        | 'reportes'
+        | 'cupones'
         | 'codigos'
         | 'actividad'
     >('usuarios');
@@ -79,6 +73,10 @@ export class Admin implements OnInit, OnDestroy {
 
     readonly peliculas = signal<Pelicula[]>([]);
     readonly generos = signal<Genero[]>([]);
+    readonly creandoGenero = signal(false);
+    readonly errorGenero = signal('');
+    readonly exitoGenero = signal('');
+
     readonly cargandoPeliculas = signal(false);
     readonly guardandoPelicula = signal<string | null>(null);
     readonly errorPeliculas = signal('');
@@ -99,6 +97,7 @@ export class Admin implements OnInit, OnDestroy {
     readonly errorActividad = signal('');
 
     busqueda = '';
+    nombreGenero = '';
     tipoCodigo: TipoCodigo = 'entrada';
     descripcion = '';
 
@@ -144,10 +143,7 @@ export class Admin implements OnInit, OnDestroy {
         this.errorUsuarios.set('');
 
         try {
-            const resultado = await this.panel.listarUsuarios(
-                this.busquedaAplicada,
-                pagina
-            );
+            const resultado = await this.panel.listarUsuarios(this.busquedaAplicada, pagina);
 
             this.usuarios.set(resultado.usuarios);
             this.total.set(resultado.total);
@@ -165,6 +161,7 @@ export class Admin implements OnInit, OnDestroy {
         }
 
         const rol = usuario.rol === 'cliente' ? 'empleado' : 'cliente';
+
         const nombre = this.nombreCompleto(usuario);
 
         if (!window.confirm(`¿Querés cambiar a ${nombre} al rol ${rol}?`)) {
@@ -178,9 +175,7 @@ export class Admin implements OnInit, OnDestroy {
         try {
             await this.panel.cambiarRol(usuario.id, rol);
 
-            this.exitoUsuarios.set(
-                `El rol de ${nombre} ahora es ${rol}.`
-            );
+            this.exitoUsuarios.set(`El rol de ${nombre} ahora es ${rol}.`);
 
             await this.cargarUsuarios(this.pagina());
         } catch (error) {
@@ -211,17 +206,12 @@ export class Admin implements OnInit, OnDestroy {
             await this.panel.cambiarEstado(usuario.id, nuevoEstado);
 
             this.exitoUsuarios.set(
-                `La cuenta de ${nombre} quedó ${
-                    nuevoEstado ? 'activa' : 'desactivada'
-                }.`
+                `La cuenta de ${nombre} quedó ${nuevoEstado ? 'activa' : 'desactivada'}.`,
             );
 
             await this.cargarUsuarios(this.pagina());
         } catch (error) {
-            console.error(
-                'Error al cambiar el estado de la cuenta:',
-                error
-            );
+            console.error('Error al cambiar el estado de la cuenta:', error);
 
             this.errorUsuarios.set(this.detallarError(error));
         } finally {
@@ -238,8 +228,8 @@ export class Admin implements OnInit, OnDestroy {
 
         const confirmacion = window.prompt(
             `Vas a eliminar definitivamente la cuenta de ${nombre}.\n\n` +
-            'Esta acción no se puede deshacer.\n\n' +
-            'Escribí ELIMINAR para confirmar:'
+                'Esta acción no se puede deshacer.\n\n' +
+                'Escribí ELIMINAR para confirmar:',
         );
 
         if (confirmacion !== 'ELIMINAR') {
@@ -256,13 +246,9 @@ export class Admin implements OnInit, OnDestroy {
             const paginaActual = this.pagina();
 
             const paginaDestino =
-                this.usuarios().length === 1 && paginaActual > 0
-                    ? paginaActual - 1
-                    : paginaActual;
+                this.usuarios().length === 1 && paginaActual > 0 ? paginaActual - 1 : paginaActual;
 
-            this.exitoUsuarios.set(
-                `La cuenta de ${nombre} fue eliminada definitivamente.`
-            );
+            this.exitoUsuarios.set(`La cuenta de ${nombre} fue eliminada definitivamente.`);
 
             await this.cargarUsuarios(paginaDestino);
         } catch (error) {
@@ -289,10 +275,7 @@ export class Admin implements OnInit, OnDestroy {
         this.imagenQr.set('');
 
         try {
-            const codigo = await this.panel.emitirCodigo(
-                this.tipoCodigo,
-                this.descripcion
-            );
+            const codigo = await this.panel.emitirCodigo(this.tipoCodigo, this.descripcion);
 
             this.codigoCreado.set(codigo);
 
@@ -301,12 +284,12 @@ export class Admin implements OnInit, OnDestroy {
                     await QRCode.toDataURL(codigo.codigo, {
                         width: 260,
                         margin: 2,
-                        errorCorrectionLevel: 'M'
-                    })
+                        errorCorrectionLevel: 'M',
+                    }),
                 );
             } catch {
                 this.errorCodigo.set(
-                    'El código se creó, pero no se pudo dibujar el QR. Usá el código escrito.'
+                    'El código se creó, pero no se pudo dibujar el QR. Usá el código escrito.',
                 );
             }
         } catch (error) {
@@ -358,7 +341,7 @@ export class Admin implements OnInit, OnDestroy {
         try {
             const [peliculas, generos] = await Promise.all([
                 this.peliculasService.obtenerTodas(),
-                this.generosService.obtenerTodos()
+                this.generosService.obtenerTodos(),
             ]);
 
             this.peliculas.set(peliculas);
@@ -373,9 +356,12 @@ export class Admin implements OnInit, OnDestroy {
     }
 
     peliculasOcupadas(): boolean {
-        return this.cargandoPeliculas()
-            || this.guardandoPelicula() !== null
-            || this.guardandoFormulario();
+        return (
+            this.cargandoPeliculas() ||
+            this.guardandoPelicula() !== null ||
+            this.guardandoFormulario() ||
+            this.creandoGenero()
+        );
     }
 
     nuevaPelicula(): void {
@@ -400,15 +386,17 @@ export class Admin implements OnInit, OnDestroy {
             imagen_url: pelicula.imagen_url,
             edad_minima: pelicula.edad_minima,
             fecha_estreno: pelicula.fecha_estreno,
+            preventa_activa: pelicula.preventa_activa ?? false,
+            preventa_descuento: pelicula.preventa_descuento ?? 10,
             activa: pelicula.activa,
-            generos: pelicula.generos.map((genero) => genero.id)
+            generos: pelicula.generos.map((genero) => genero.id),
         };
 
         this.prepararEditor();
     }
 
     cancelarEdicion(): void {
-        if (this.guardandoFormulario()) {
+        if (this.guardandoFormulario() || this.creandoGenero()) {
             return;
         }
 
@@ -420,7 +408,7 @@ export class Admin implements OnInit, OnDestroy {
     }
 
     seleccionarGenero(generoId: string): void {
-        if (this.guardandoFormulario()) {
+        if (this.guardandoFormulario() || this.creandoGenero()) {
             return;
         }
 
@@ -431,8 +419,38 @@ export class Admin implements OnInit, OnDestroy {
             : [...seleccionados, generoId];
     }
 
+    async crearGenero(): Promise<void> {
+        if (this.peliculasOcupadas() || !this.editorAbierto()) {
+            return;
+        }
+
+        this.errorGenero.set('');
+        this.exitoGenero.set('');
+        this.creandoGenero.set(true);
+
+        try {
+            const genero = await this.generosService.crear(this.nombreGenero);
+
+            this.generos.update((actuales) =>
+                [...actuales.filter((actual) => actual.id !== genero.id), genero].sort((a, b) =>
+                    a.nombre.localeCompare(b.nombre, 'es'),
+                ),
+            );
+
+            this.borrador.generos = [...new Set([...this.borrador.generos, genero.id])];
+
+            this.nombreGenero = '';
+
+            this.exitoGenero.set('El género está disponible y quedó seleccionado.');
+        } catch (error) {
+            this.errorGenero.set(this.detallarError(error));
+        } finally {
+            this.creandoGenero.set(false);
+        }
+    }
+
     seleccionarPoster(evento: Event): void {
-        if (this.guardandoFormulario()) {
+        if (this.guardandoFormulario() || this.creandoGenero()) {
             return;
         }
 
@@ -445,22 +463,12 @@ export class Admin implements OnInit, OnDestroy {
 
         this.errorFormulario.set('');
 
-        const tipos = [
-            'image/jpeg',
-            'image/png',
-            'image/webp'
-        ];
+        const tipos = ['image/jpeg', 'image/png', 'image/webp'];
 
-        if (
-            !tipos.includes(archivo.type)
-            || archivo.size === 0
-            || archivo.size > 5 * 1024 * 1024
-        ) {
+        if (!tipos.includes(archivo.type) || archivo.size === 0 || archivo.size > 5 * 1024 * 1024) {
             entrada.value = '';
 
-            this.errorFormulario.set(
-                'Elegí una imagen JPG, PNG o WEBP de hasta 5 MB.'
-            );
+            this.errorFormulario.set('Elegí una imagen JPG, PNG o WEBP de hasta 5 MB.');
 
             return;
         }
@@ -480,17 +488,34 @@ export class Admin implements OnInit, OnDestroy {
         this.errorFormulario.set('');
 
         if (
-            formulario.invalid
-            || !this.borrador.nombre.trim()
-            || !this.borrador.sinopsis.trim()
-            || !Number.isInteger(this.borrador.duracion_minutos)
-            || !Number.isInteger(this.borrador.edad_minima)
-            || this.borrador.generos.length === 0
+            formulario.invalid ||
+            !this.borrador.nombre.trim() ||
+            !this.borrador.sinopsis.trim() ||
+            !Number.isInteger(this.borrador.duracion_minutos) ||
+            !Number.isInteger(this.borrador.edad_minima) ||
+            this.borrador.generos.length === 0
         ) {
             this.errorFormulario.set(
-                'Completá los campos obligatorios, usá números enteros y seleccioná al menos un género.'
+                'Completá los campos obligatorios, usá números enteros y seleccioná al menos un género.',
             );
 
+            return;
+        }
+
+
+
+        const descuento = Number(this.borrador.preventa_descuento ?? 10);
+        if (
+            this.borrador.preventa_activa &&
+            (!this.borrador.fecha_estreno ||
+                !Number.isFinite(descuento) ||
+                descuento <= 0 ||
+                descuento >= 100 ||
+                Math.abs(descuento * 100 - Math.round(descuento * 100)) > 0.000001)
+        ) {
+            this.errorFormulario.set(
+                'Indicá el estreno y un descuento válido de hasta dos decimales.',
+            );
             return;
         }
 
@@ -503,9 +528,7 @@ export class Admin implements OnInit, OnDestroy {
 
         try {
             if (this.archivoPoster) {
-                const url = await this.peliculasService.subirPoster(
-                    this.archivoPoster
-                );
+                const url = await this.peliculasService.subirPoster(this.archivoPoster);
 
                 this.borrador.imagen_url = url;
                 this.archivoPoster = null;
@@ -515,7 +538,7 @@ export class Admin implements OnInit, OnDestroy {
 
             await this.peliculasService.guardar({
                 ...this.borrador,
-                fecha_estreno: this.borrador.fecha_estreno || null
+                fecha_estreno: this.borrador.fecha_estreno || null,
             });
 
             guardada = true;
@@ -523,7 +546,7 @@ export class Admin implements OnInit, OnDestroy {
             this.exitoPeliculas.set(
                 esNueva
                     ? 'La película fue creada correctamente.'
-                    : 'Los cambios de la película fueron guardados.'
+                    : 'Los cambios de la película fueron guardados.',
             );
         } catch (error) {
             console.error('Error al guardar la película:', error);
@@ -557,29 +580,26 @@ export class Admin implements OnInit, OnDestroy {
         this.exitoPeliculas.set('');
 
         try {
-            await this.peliculasService.cambiarEstado(
-                pelicula.id,
-                nuevaActiva
-            );
+            await this.peliculasService.cambiarEstado(pelicula.id, nuevaActiva);
 
             this.peliculas.update((peliculas) =>
                 peliculas.map((actual) =>
                     actual.id === pelicula.id
-                        ? { ...actual, activa: nuevaActiva }
-                        : actual
-                )
+                        ? {
+                              ...actual,
+                              activa: nuevaActiva,
+                          }
+                        : actual,
+                ),
             );
 
             this.exitoPeliculas.set(
                 nuevaActiva
                     ? `"${pelicula.nombre}" ahora aparece en la cartelera.`
-                    : `"${pelicula.nombre}" dejó de aparecer en la cartelera.`
+                    : `"${pelicula.nombre}" dejó de aparecer en la cartelera.`,
             );
         } catch (error) {
-            console.error(
-                'Error al cambiar el estado de la película:',
-                error
-            );
+            console.error('Error al cambiar el estado de la película:', error);
 
             this.errorPeliculas.set(this.detallarError(error));
         } finally {
@@ -594,8 +614,8 @@ export class Admin implements OnInit, OnDestroy {
 
         const confirmacion = window.prompt(
             `Vas a eliminar definitivamente "${pelicula.nombre}".\n\n` +
-            'Esta acción no se puede deshacer.\n\n' +
-            'Escribí ELIMINAR para confirmar:'
+                'Esta acción no se puede deshacer.\n\n' +
+                'Escribí ELIMINAR para confirmar:',
         );
 
         if (confirmacion !== 'ELIMINAR') {
@@ -610,12 +630,10 @@ export class Admin implements OnInit, OnDestroy {
             await this.peliculasService.eliminar(pelicula.id);
 
             this.peliculas.update((peliculas) =>
-                peliculas.filter((actual) => actual.id !== pelicula.id)
+                peliculas.filter((actual) => actual.id !== pelicula.id),
             );
 
-            this.exitoPeliculas.set(
-                `"${pelicula.nombre}" fue eliminada correctamente.`
-            );
+            this.exitoPeliculas.set(`"${pelicula.nombre}" fue eliminada correctamente.`);
         } catch (error) {
             console.error('Error al eliminar la película:', error);
 
@@ -634,12 +652,17 @@ export class Admin implements OnInit, OnDestroy {
             imagen_url: null,
             edad_minima: 0,
             fecha_estreno: null,
+            preventa_activa: false,
+            preventa_descuento: 10,
             activa: false,
-            generos: []
+            generos: [],
         };
     }
 
     private prepararEditor(): void {
+        this.nombreGenero = '';
+        this.errorGenero.set('');
+        this.exitoGenero.set('');
         this.archivoPoster = null;
         this.liberarVistaPoster();
         this.vistaPoster.set(this.borrador.imagen_url ?? '');
@@ -657,16 +680,16 @@ export class Admin implements OnInit, OnDestroy {
     }
 
     private usuarioProtegidoOcupado(usuario: UsuarioPanel): boolean {
-        return this.guardando() !== null
-            || this.cargando()
-            || usuario.rol === 'admin'
-            || usuario.id === this.auth.usuario()?.id;
+        return (
+            this.guardando() !== null ||
+            this.cargando() ||
+            usuario.rol === 'admin' ||
+            usuario.id === this.auth.usuario()?.id
+        );
     }
 
     private nombreCompleto(usuario: UsuarioPanel): string {
-        return [usuario.nombre, usuario.apellido]
-            .filter(Boolean)
-            .join(' ') || 'este usuario';
+        return [usuario.nombre, usuario.apellido].filter(Boolean).join(' ') || 'este usuario';
     }
 
     private detallarError(error: unknown): string {
@@ -686,7 +709,7 @@ export class Admin implements OnInit, OnDestroy {
                 detalle.code ? `Código: ${detalle.code}` : '',
                 detalle.message,
                 detalle.details,
-                detalle.hint
+                detalle.hint,
             ]
                 .filter(Boolean)
                 .join(' — ');

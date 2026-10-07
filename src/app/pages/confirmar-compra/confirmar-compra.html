@@ -10,41 +10,33 @@
                     actual.estado === 'cancelada'
                         ? 'Compra cancelada'
                         : actual.modalidad === 'prueba'
-                            ? 'Compra de prueba confirmada'
-                            : 'Compra confirmada'
+                          ? 'Compra de prueba confirmada'
+                          : 'Compra confirmada'
                 }}
             </h1>
 
             @if (actual.modalidad === 'prueba') {
-                <p>
-                    Esta operación es de prueba. No se cobró dinero real.
-                </p>
+                <p>Esta operación es de prueba. No se cobró dinero real.</p>
             }
 
             <h2>{{ actual.funcion.pelicula_nombre }}</h2>
 
             <p>
                 {{ actual.funcion.sala_nombre }} ·
-                {{ actual.funcion.inicio | date:'dd/MM/yyyy HH:mm':'-0300' }}
+                {{ actual.funcion.inicio | date: 'dd/MM/yyyy HH:mm' : '-0300' }}
                 · {{ actual.funcion.formato }}
                 ·
-                {{
-                    actual.funcion.idioma === 'castellano'
-                        ? 'Castellano'
-                        : 'Subtitulada'
-                }}
+                {{ actual.funcion.idioma === 'castellano' ? 'Castellano' : 'Subtitulada' }}
             </p>
 
             @if (actual.funcion.requiere_adulto) {
                 <p class="aviso">
-                    Edad mínima: {{ actual.funcion.edad_minima }} años.
-                    Para esta película se requiere acompañamiento de un adulto.
+                    Edad mínima: {{ actual.funcion.edad_minima }} años. Para esta película se
+                    requiere acompañamiento de un adulto.
                 </p>
             }
 
-            <p class="identificador">
-                Compra: {{ actual.compra_id }}
-            </p>
+            <p class="identificador">Compra: {{ actual.compra_id }}</p>
         </header>
 
         @if (avisoAcceso()) {
@@ -57,20 +49,18 @@
             <ul>
                 @for (entrada of actual.entradas; track entrada.id) {
                     <li>
-                        <strong>
-                            {{ entrada.fila }} · {{ entrada.numero }}
-                        </strong>
+                        <strong> {{ entrada.fila }} · {{ entrada.numero }} </strong>
 
                         ·
                         {{
                             entrada.tipo === 'vip'
                                 ? 'VIP'
                                 : entrada.tipo === 'accesible'
-                                    ? 'Accesible'
-                                    : 'Estándar'
+                                  ? 'Accesible'
+                                  : 'Estándar'
                         }}
 
-                        · ARS {{ entrada.precio | number:'1.2-2' }}
+                        · ARS {{ entrada.precio | number: '1.2-2' }}
                     </li>
                 }
             </ul>
@@ -81,15 +71,16 @@
                 <ul>
                     @for (item of actual.candy; track item.id) {
                         <li>
-                            <strong>
-                                {{ item.cantidad }} × {{ item.nombre }}
-                            </strong>
+                            <strong> {{ item.cantidad }} × {{ item.nombre }} </strong>
 
-                            · ARS {{ item.subtotal | number:'1.2-2' }}
+                            · ARS {{ item.subtotal | number: '1.2-2' }}
 
                             @if (item.tipo === 'combo') {
                                 <ul>
-                                    @for (producto of item.componentes; track producto.producto_id) {
+                                    @for (
+                                        producto of item.componentes;
+                                        track producto.producto_id
+                                    ) {
                                         <li>
                                             {{ producto.cantidad * item.cantidad }}
                                             × {{ producto.nombre }}
@@ -102,29 +93,36 @@
                 </ul>
             }
 
-            <p>
-                Entradas:
-                ARS {{ actual.total_entradas | number:'1.2-2' }}
-            </p>
+            <p>Entradas: ARS {{ actual.total_entradas | number: '1.2-2' }}</p>
 
-            <p>
-                Candy:
-                ARS {{ actual.total_candy | number:'1.2-2' }}
-            </p>
+            <p>Candy: ARS {{ actual.total_candy | number: '1.2-2' }}</p>
 
-            <p class="total">
-                Total: ARS {{ actual.total | number:'1.2-2' }}
-            </p>
+            @if ((actual.descuento ?? 0) > 0) {
+                <p>
+                    Subtotal: ARS
+                    {{ actual.total_entradas + actual.total_candy | number: '1.2-2' }}
+                </p>
+
+                @for (cupon of actual.cupones ?? []; track cupon.id) {
+                    <p>
+                        Cupón {{ cupon.codigo }} ({{ cupon.porcentaje | number: '1.0-2' }}
+                        %)
+                    </p>
+                }
+
+                <p>Descuento total: − ARS {{ actual.descuento ?? 0 | number: '1.2-2' }}</p>
+            }
+
+            <p class="total">Total: ARS {{ actual.total | number: '1.2-2' }}</p>
         </section>
 
         @if (actual.estado === 'confirmada') {
-                        <section class="tarjeta">
+            <section class="tarjeta">
                 <h2>Tu comprobante QR</h2>
 
                 <p>
-                    Usá este mismo QR para ingresar al cine y retirar
-                    el Candy de tu compra. Cada sector registra su
-                    validación por separado.
+                    Usá este mismo QR para ingresar al cine y retirar el Candy de tu compra. Cada
+                    sector registra su validación por separado.
                 </p>
 
                 @if (comprobantes()[0]; as qr) {
@@ -156,8 +154,8 @@
                                             estado.estado === 'utilizado'
                                                 ? 'Utilizado'
                                                 : estado.estado === 'cancelado'
-                                                    ? 'Cancelado'
-                                                    : 'Pendiente'
+                                                  ? 'Cancelado'
+                                                  : 'Pendiente'
                                         }}
                                     </p>
                                 }
@@ -177,15 +175,11 @@
                 @if (errorQr()) {
                     <p class="error" role="alert">{{ errorQr() }}</p>
 
-                    <button type="button" (click)="generarQr()">
-                        Volver a generar la imagen
-                    </button>
+                    <button type="button" (click)="generarQr()">Volver a generar la imagen</button>
                 }
             </section>
         } @else {
-            <p class="aviso">
-                Esta compra está cancelada. Sus comprobantes no son válidos.
-            </p>
+            <p class="aviso">Esta compra está cancelada. Sus comprobantes no son válidos.</p>
         }
 
         <div class="acciones">
@@ -196,34 +190,17 @@
                     [disabled]="descargandoPdf()"
                     (click)="descargarPdf()"
                 >
-                    {{
-                        descargandoPdf()
-                            ? 'Generando PDF...'
-                            : 'Descargar comprobante PDF'
-                    }}
+                    {{ descargandoPdf() ? 'Generando PDF...' : 'Descargar comprobante PDF' }}
                 </button>
             }
 
-            <a
-                class="boton"
-                routerLink="/mis-compras"
-            >
-                Ver mis compras
-            </a>
+            <a class="boton" routerLink="/mis-compras"> Ver mis compras </a>
 
-            <a
-                class="boton secundario"
-                routerLink="/cartelera"
-            >
-                ← Volver a cartelera
-            </a>
+            <a class="boton secundario" routerLink="/cartelera"> ← Volver a cartelera </a>
         </div>
 
         @if (errorPdf()) {
-            <p
-                class="error"
-                role="alert"
-            >
+            <p class="error" role="alert">
                 {{ errorPdf() }}
             </p>
         }
@@ -233,8 +210,8 @@
             <h1>Confirmá tu compra de prueba</h1>
 
             <p>
-                No se cobrará dinero real. Al confirmar, las butacas
-                quedarán vendidas en el sistema de prueba.
+                No se cobrará dinero real. Al confirmar, las butacas quedarán vendidas en el sistema
+                de prueba.
             </p>
 
             @if (reservaVigente()) {
@@ -244,9 +221,8 @@
                 </p>
             } @else {
                 <p class="aviso">
-                    La reserva no está vigente.
-                    Si enviaste una confirmación, comprobá primero
-                    si la compra quedó guardada.
+                    La reserva no está vigente. Si enviaste una confirmación, comprobá primero si la
+                    compra quedó guardada.
                 </p>
             }
 
@@ -264,9 +240,7 @@
 
                     @if (control.invitado) {
                         <div class="campo">
-                            <label for="fechaNacimientoCompra">
-                                Tu fecha de nacimiento
-                            </label>
+                            <label for="fechaNacimientoCompra"> Tu fecha de nacimiento </label>
 
                             <input
                                 #campoFecha
@@ -275,21 +249,24 @@
                                 autocomplete="bday"
                                 [max]="control.fecha_hoy"
                                 [value]="fechaNacimiento()"
-                                [disabled]="confirmando() || comprobando() || (resultadoIncierto() && !!fechaNacimiento())"
+                                [disabled]="
+                                    confirmando() ||
+                                    comprobando() ||
+                                    (resultadoIncierto() && !!fechaNacimiento())
+                                "
                                 (input)="fechaNacimiento.set(campoFecha.value)"
                                 aria-describedby="ayudaEdadCompra"
                                 required
                             />
 
                             <small id="ayudaEdadCompra">
-                                Usamos este dato para comprobar si podés
-                                comprar entradas para esta película.
+                                Usamos este dato para comprobar si podés comprar entradas para esta
+                                película.
                             </small>
                         </div>
                     } @else {
                         <p>
-                            Comprobamos tu edad con la fecha de nacimiento
-                            registrada en tu perfil.
+                            Comprobamos tu edad con la fecha de nacimiento registrada en tu perfil.
                         </p>
                     }
 
@@ -299,18 +276,33 @@
 
                     @if (control.requiere_adulto) {
                         <p class="aviso">
-                            Para esta película se requiere acompañamiento
-                            de un adulto. El acompañamiento no permite
-                            comprar si no cumplís la edad mínima.
+                            Para esta película se requiere acompañamiento de un adulto. El
+                            acompañamiento no permite comprar si no cumplís la edad mínima.
                         </p>
                     }
                 </div>
             }
 
-            <p class="total">
-                Total revisado:
-                ARS {{ totalEsperado() | number:'1.2-2' }}
-            </p>
+            <app-cupon-selector
+                [entradas]="subtotalEntradas()"
+                [candy]="subtotalCandy()"
+                [elegidos]="cuponesElegidos()"
+                [bloqueado]="cargando() || confirmando() || comprobando() || resultadoIncierto()"
+                (cambio)="cuponesElegidos.set($event)"
+            />
+
+            <app-pago-selector
+                [butacas]="reserva()?.butacas ?? []"
+                [paquete]="paqueteElegido()"
+                [cantidadPaquete]="cantidadPaquete()"
+                [canjes]="canjesElegidos()"
+                [clave]="clavePago"
+                [candy]="articulosPago()"
+                [cupones]="cuponesElegidos()"
+                [guardado]="pagoGuardado()"
+                [bloqueado]="cargando() || confirmando() || comprobando() || resultadoIncierto()"
+                (cambio)="pagoElegido.set($event)"
+            />
 
             @if (error()) {
                 <p class="error" role="alert">{{ error() }}</p>
@@ -319,15 +311,23 @@
             <div class="acciones">
                 <button
                     type="button"
-                    [disabled]="confirmando() || comprobando() || !reservaVigente() || totalEsperado() <= 0 || !edadPermitida()"
+                    [disabled]="
+                        cargando() ||
+                        confirmando() ||
+                        comprobando() ||
+                        !reservaVigente() ||
+                        totalEsperado() <= 0 ||
+                        !edadPermitida() ||
+                        (!resultadoIncierto() && !pagoElegido())
+                    "
                     (click)="confirmar()"
                 >
                     {{
                         confirmando()
                             ? 'Confirmando...'
                             : resultadoIncierto()
-                                ? 'Reintentar la misma compra'
-                                : 'Confirmar compra de prueba'
+                              ? 'Reintentar la misma compra'
+                              : 'Confirmar compra de prueba'
                     }}
                 </button>
 
@@ -338,17 +338,10 @@
                         [disabled]="confirmando() || comprobando()"
                         (click)="comprobarCompra()"
                     >
-                        {{
-                            comprobando()
-                                ? 'Comprobando...'
-                                : 'Comprobar compra'
-                        }}
+                        {{ comprobando() ? 'Comprobando...' : 'Comprobar compra' }}
                     </button>
                 } @else if (!confirmando() && !comprobando()) {
-                    <a
-                        class="boton secundario"
-                        [routerLink]="['/compra', funcionId, 'candy']"
-                    >
+                    <a class="boton secundario" [routerLink]="['/compra', funcionId, 'candy']">
                         ← Volver al Candy
                     </a>
                 }

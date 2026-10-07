@@ -1,401 +1,345 @@
 <section class="pagina">
-    <header class="cabecera">
-        <div>
-            <p class="etiqueta">
-                CINEFILIA CLUB · CANDY
-            </p>
+  <header class="cabecera">
+    <div>
+      <p class="etiqueta">CINEFILIA CLUB · CANDY</p>
 
-            <h1>
-                Algo rico para disfrutar
-            </h1>
+      <h1>Algo rico para disfrutar</h1>
 
-            <p>
-                Elegí productos y combos. Podés comprar Candy
-                sin reservar entradas y retirarlo con tu QR.
-            </p>
-        </div>
+      <p>
+        Elegí productos y combos. Podés comprar Candy sin reservar entradas y retirarlo con tu QR.
+      </p>
+    </div>
 
-        <a
-            class="boton secundario"
-            routerLink="/"
-        >
-            ← Volver al inicio
-        </a>
-    </header>
+    <a class="boton secundario" routerLink="/"> ← Volver al inicio </a>
+  </header>
 
-    <p class="aviso">
-        Compra de prueba: no se realiza un cobro real.
+  <p class="aviso">Compra de prueba: no se realiza un cobro real.</p>
+
+  @if (error()) {
+    <p class="mensaje error" role="alert">
+      {{ error() }}
     </p>
+  }
 
-    @if (error()) {
-        <p
-            class="mensaje error"
-            role="alert"
-        >
-            {{ error() }}
-        </p>
-    }
+  @if (aviso()) {
+    <p class="mensaje" role="status">
+      {{ aviso() }}
+    </p>
+  }
 
-    @if (aviso()) {
-        <p
-            class="mensaje"
-            role="status"
-        >
-            {{ aviso() }}
-        </p>
-    }
+  @if (compra(); as confirmada) {
+    <section class="confirmacion" aria-labelledby="titulo-confirmacion">
+      <div>
+        <p class="etiqueta">COMPRA CONFIRMADA</p>
 
-    @if (compra(); as confirmada) {
-        <section
-            class="confirmacion"
-            aria-labelledby="titulo-confirmacion"
-        >
-            <div>
-                <p class="etiqueta">
-                    COMPRA CONFIRMADA
-                </p>
+        <h2 id="titulo-confirmacion">Tu Candy ya tiene comprobante</h2>
 
-                <h2 id="titulo-confirmacion">
-                    Tu Candy ya tiene comprobante
-                </h2>
+        <ul class="detalle">
+          @for (articulo of confirmada.candy; track articulo.id) {
+            <li>
+              <span>
+                {{ articulo.cantidad }} ×
+                {{ articulo.nombre }}
+              </span>
 
-                <ul class="detalle">
-                    @for (
-                        articulo of confirmada.candy;
-                        track articulo.id
-                    ) {
-                        <li>
-                            <span>
-                                {{ articulo.cantidad }} ×
-                                {{ articulo.nombre }}
-                            </span>
+              <strong>
+                ARS
+                {{ articulo.subtotal | number: '1.2-2' }}
+              </strong>
+            </li>
+          }
+        </ul>
 
-                            <strong>
-                                ARS
-                                {{ articulo.subtotal | number:'1.2-2' }}
-                            </strong>
-                        </li>
-                    }
-                </ul>
-
-                <p class="total">
-                    Total:
-                    ARS {{ confirmada.total | number:'1.2-2' }}
-                </p>
-
-                <p>
-                    Presentá este QR en el sector Candy
-                    para retirar tu compra.
-                </p>
-
-                <div class="acciones">
-                    <a
-                        class="boton"
-                        routerLink="/mis-compras"
-                    >
-                        Ver mis compras
-                    </a>
-
-                    <button
-                        class="boton secundario"
-                        type="button"
-                        [disabled]="descargandoPdf()"
-                        (click)="descargarPdf()"
-                    >
-                        {{
-                            descargandoPdf()
-                                ? 'Generando PDF...'
-                                : 'Descargar comprobante PDF'
-                        }}
-                    </button>
-
-                    <button
-                        class="boton secundario"
-                        type="button"
-                        [disabled]="
-                            procesando() ||
-                            preparandoQr() ||
-                            descargandoPdf()
-                        "
-                        (click)="nuevaCompra()"
-                    >
-                        Hacer otra compra
-                    </button>
-                </div>
-
-                @if (errorPdf()) {
-                    <p
-                        class="error"
-                        role="alert"
-                    >
-                        {{ errorPdf() }}
-                    </p>
-                }
-            </div>
-
-            <div class="comprobante">
-                @if (preparandoQr()) {
-                    <p role="status">
-                        Preparando el QR…
-                    </p>
-                } @else if (imagenQr()) {
-                    <img
-                        [src]="imagenQr()"
-                        alt="QR para retirar la compra de Candy"
-                        width="280"
-                        height="280"
-                    >
-
-                    <a
-                        class="boton secundario"
-                        [href]="imagenQr()"
-                        [attr.download]="
-                            'cinefilia-candy-' +
-                            confirmada.compra_id +
-                            '.png'
-                        "
-                    >
-                        Descargar QR
-                    </a>
-                }
-
-                @if (errorQr()) {
-                    <p
-                        class="error"
-                        role="alert"
-                    >
-                        {{ errorQr() }}
-                    </p>
-
-                    <button
-                        class="boton secundario"
-                        type="button"
-                        [disabled]="preparandoQr()"
-                        (click)="prepararQr()"
-                    >
-                        Reintentar QR
-                    </button>
-                }
-            </div>
-        </section>
-    } @else {
-        @if (cargando()) {
-            <p role="status">
-                Cargando el catálogo…
+        @if ((confirmada.descuento ?? 0) > 0) {
+          <p>
+            Subtotal: ARS
+            {{ confirmada.total_entradas + confirmada.total_candy | number: '1.2-2' }}
+          </p>
+          @for (cupon of confirmada.cupones ?? []; track cupon.id) {
+            <p>
+              Cupón {{ cupon.codigo }} ({{ cupon.porcentaje | number: '1.0-2' }}
+              %)
             </p>
-        } @else {
-            <div class="buscador">
-                <label for="buscar-candy">
-                    Buscar productos y combos
-                </label>
-
-                <input
-                    id="buscar-candy"
-                    type="search"
-                    placeholder="Por ejemplo: pochoclos"
-                    [ngModel]="busqueda()"
-                    (ngModelChange)="busqueda.set($event)"
-                >
-            </div>
-
-            <div class="catalogo">
-                @for (
-                    articulo of articulosFiltrados();
-                    track articulo.clave
-                ) {
-                    <article class="tarjeta">
-                        <div class="imagen">
-                            @if (
-                                articulo.imagen_url &&
-                                !imagenesFallidas().includes(articulo.clave)
-                            ) {
-                                <img
-                                    [src]="articulo.imagen_url"
-                                    [alt]="articulo.nombre"
-                                    loading="lazy"
-                                    (error)="marcarImagenFallida(articulo.clave)"
-                                >
-                            } @else {
-                                <span>
-                                    Imagen no disponible
-                                </span>
-                            }
-                        </div>
-
-                        <div class="informacion">
-                            <p class="etiqueta">
-                                {{
-                                    articulo.tipo === 'combo'
-                                        ? 'COMBO'
-                                        : 'PRODUCTO'
-                                }}
-                            </p>
-
-                            <h2>
-                                {{ articulo.nombre }}
-                            </h2>
-
-                            <p class="descripcion">
-                                {{ articulo.descripcion }}
-                            </p>
-
-                            <p class="precio">
-                                ARS
-                                {{ articulo.precio | number:'1.2-2' }}
-                            </p>
-
-                            <div
-                                class="cantidad"
-                                [attr.aria-label]="
-                                    'Cantidad de ' + articulo.nombre
-                                "
-                            >
-                                <button
-                                    type="button"
-                                    [disabled]="
-                                        edicionBloqueada() ||
-                                        (cantidades()[articulo.clave] ?? 0) === 0
-                                    "
-                                    [attr.aria-label]="
-                                        'Quitar una unidad de ' +
-                                        articulo.nombre
-                                    "
-                                    (click)="
-                                        cambiarCantidad(
-                                            articulo.clave,
-                                            (cantidades()[articulo.clave] ?? 0) - 1
-                                        )
-                                    "
-                                >
-                                    −
-                                </button>
-
-                                <span aria-live="polite">
-                                    {{ cantidades()[articulo.clave] ?? 0 }}
-                                </span>
-
-                                <button
-                                    type="button"
-                                    [disabled]="
-                                        edicionBloqueada() ||
-                                        (cantidades()[articulo.clave] ?? 0) >= 20
-                                    "
-                                    [attr.aria-label]="
-                                        'Agregar una unidad de ' +
-                                        articulo.nombre
-                                    "
-                                    (click)="
-                                        cambiarCantidad(
-                                            articulo.clave,
-                                            (cantidades()[articulo.clave] ?? 0) + 1
-                                        )
-                                    "
-                                >
-                                    +
-                                </button>
-                            </div>
-                        </div>
-                    </article>
-                } @empty {
-                    <p class="mensaje">
-                        No encontramos productos o combos disponibles
-                        con esa búsqueda.
-                    </p>
-                }
-            </div>
+          }
+          <p>
+            Descuento total: − ARS
+            {{ confirmada.descuento ?? 0 | number: '1.2-2' }}
+          </p>
         }
 
-        <section
-            class="resumen"
-            aria-labelledby="titulo-resumen"
-        >
-            <h2 id="titulo-resumen">
-                Tu compra de Candy
-            </h2>
+        <p class="total">Total: ARS {{ confirmada.total | number: '1.2-2' }}</p>
 
-            @if (pendiente(); as solicitud) {
-                <p>
-                    Se mantiene la selección enviada hasta comprobar
-                    el resultado de la compra.
-                </p>
+        <p>Presentá este QR en el sector Candy para retirar tu compra.</p>
 
-                <p class="total">
-                    Total enviado:
-                    ARS {{ solicitud.total | number:'1.2-2' }}
-                </p>
-            } @else {
-                <ul class="detalle">
-                    @for (
-                        articulo of seleccion();
-                        track articulo.clave
-                    ) {
-                        <li>
-                            <span>
-                                {{ articulo.cantidad }} ×
-                                {{ articulo.nombre }}
-                            </span>
+        <div class="acciones">
+          <a class="boton" routerLink="/mis-compras"> Ver mis compras </a>
 
-                            <strong>
-                                ARS
-                                {{
-                                    articulo.precio * articulo.cantidad
-                                        | number:'1.2-2'
-                                }}
-                            </strong>
-                        </li>
-                    } @empty {
-                        <li>
-                            Todavía no agregaste productos.
-                        </li>
-                    }
-                </ul>
+          <button
+            class="boton secundario"
+            type="button"
+            [disabled]="descargandoPdf()"
+            (click)="descargarPdf()"
+          >
+            {{ descargandoPdf() ? 'Generando PDF...' : 'Descargar comprobante PDF' }}
+          </button>
 
-                <p class="total">
-                    Total:
-                    ARS {{ total() | number:'1.2-2' }}
-                </p>
-            }
+          <button
+            class="boton secundario"
+            type="button"
+            [disabled]="procesando() || preparandoQr() || descargandoPdf()"
+            (click)="nuevaCompra()"
+          >
+            Hacer otra compra
+          </button>
+        </div>
 
-            <div class="acciones">
-                <button
-                    class="boton"
-                    type="button"
-                    [disabled]="
-                        cargando() ||
-                        procesando() ||
-                        (!pendiente() && total() <= 0)
-                    "
-                    (click)="confirmar()"
-                >
-                    {{
-                        procesando()
-                            ? 'Procesando…'
-                            : pendiente()
-                                ? 'Reintentar la misma compra'
-                                : 'Confirmar compra de prueba'
-                    }}
-                </button>
+        @if (errorPdf()) {
+          <p class="error" role="alert">
+            {{ errorPdf() }}
+          </p>
+        }
+      </div>
 
-                @if (pendiente()) {
+      <div class="comprobante">
+        @if (preparandoQr()) {
+          <p role="status">Preparando el QR…</p>
+        } @else if (imagenQr()) {
+          <img
+            [src]="imagenQr()"
+            alt="QR para retirar la compra de Candy"
+            width="280"
+            height="280"
+          />
+
+          <a
+            class="boton secundario"
+            [href]="imagenQr()"
+            [attr.download]="'cinefilia-candy-' + confirmada.compra_id + '.png'"
+          >
+            Descargar QR
+          </a>
+        }
+
+        @if (errorQr()) {
+          <p class="error" role="alert">
+            {{ errorQr() }}
+          </p>
+
+          <button
+            class="boton secundario"
+            type="button"
+            [disabled]="preparandoQr()"
+            (click)="prepararQr()"
+          >
+            Reintentar QR
+          </button>
+        }
+      </div>
+    </section>
+  } @else {
+    @if (cargando()) {
+      <p role="status">Cargando el catálogo…</p>
+    } @else {
+      <div class="buscador">
+        <label for="buscar-candy"> Buscar productos y combos </label>
+
+        <input
+          id="buscar-candy"
+          type="search"
+          placeholder="Por ejemplo: pochoclos"
+          [ngModel]="busqueda()"
+          (ngModelChange)="busqueda.set($event)"
+        />
+      </div>
+
+      <p>
+        Podés combinar canjes y ajustar sus unidades. Las demás unidades se compran al precio
+        habitual.
+      </p>
+      @for (tipo of tiposArticulos; track tipo) {
+        <h2>{{ tipo === 'combo' ? 'Combos' : 'Productos' }}</h2>
+        <div class="catalogo">
+          @for (articulo of articulosPorTipo(tipo); track articulo.clave) {
+            <div class="articulo-catalogo">
+              <article class="tarjeta">
+                <div class="imagen">
+                  @if (articulo.imagen_url && !imagenesFallidas().includes(articulo.clave)) {
+                    <img
+                      [src]="articulo.imagen_url"
+                      [alt]="articulo.nombre"
+                      loading="lazy"
+                      (error)="marcarImagenFallida(articulo.clave)"
+                    />
+                  } @else {
+                    <span> Imagen no disponible </span>
+                  }
+                </div>
+
+                <div class="informacion">
+                  <p class="etiqueta">
+                    {{ articulo.tipo === 'combo' ? 'COMBO' : 'PRODUCTO' }}
+                  </p>
+
+                  <h3>
+                    {{ articulo.nombre }}
+                  </h3>
+
+                  <p class="descripcion">
+                    {{ articulo.descripcion }}
+                  </p>
+
+                  <p class="precio">
+                    ARS
+                    {{ articulo.precio | number: '1.2-2' }}
+                  </p>
+
+                  <div class="cantidad" [attr.aria-label]="'Cantidad de ' + articulo.nombre">
                     <button
-                        class="boton secundario"
-                        type="button"
-                        [disabled]="cargando() || procesando()"
-                        (click)="comprobarCompra()"
+                      type="button"
+                      [disabled]="edicionBloqueada() || (cantidades()[articulo.clave] ?? 0) === 0"
+                      [attr.aria-label]="'Quitar una unidad de ' + articulo.nombre"
+                      (click)="
+                        cambiarCantidad(articulo.clave, (cantidades()[articulo.clave] ?? 0) - 1)
+                      "
                     >
-                        Comprobar compra
+                      −
                     </button>
-                } @else {
+
+                    <span aria-live="polite">
+                      {{ cantidades()[articulo.clave] ?? 0 }}
+                    </span>
+
                     <button
-                        class="boton secundario"
-                        type="button"
-                        [disabled]="cargando() || procesando()"
-                        (click)="cargar()"
+                      type="button"
+                      [disabled]="edicionBloqueada() || cantidadTotalArticulo(articulo) >= 20"
+                      [attr.aria-label]="'Agregar una unidad de ' + articulo.nombre"
+                      (click)="
+                        cambiarCantidad(articulo.clave, (cantidades()[articulo.clave] ?? 0) + 1)
+                      "
                     >
-                        Actualizar catálogo
+                      +
                     </button>
-                }
+                  </div>
+                </div>
+              </article>
+              @if (recompensasArticulo(articulo.tipo, articulo.id).length > 0) {
+                <details class="canjes-articulo">
+                  <summary>Canjear con puntos</summary>
+                  @for (
+                    premio of recompensasArticulo(articulo.tipo, articulo.id);
+                    track premio.id
+                  ) {
+                    <app-canje-articulo
+                      [compacto]="true"
+                      [recompensa]="premio"
+                      [cantidadNormal]="cantidades()[articulo.clave] ?? 0"
+                      [nombre]="articulo.nombre"
+                      [imagen]="articulo.imagen_url"
+                      [descripcion]="articulo.descripcion"
+                      [elegidos]="canjesElegidos()"
+                      [bloqueado]="edicionBloqueada()"
+                      (cambio)="elegirCanje($event)"
+                    />
+                  }
+                </details>
+              }
             </div>
-        </section>
+          } @empty {
+            <p class="mensaje">No encontramos productos o combos disponibles con esa búsqueda.</p>
+          }
+        </div>
+      }
     }
+
+    <section class="resumen checkout-candy" aria-labelledby="titulo-resumen">
+      <h2 id="titulo-resumen">Tu compra de Candy</h2>
+
+      @if (pendiente(); as solicitud) {
+        <p>Se mantiene la selección enviada hasta comprobar el resultado de la compra.</p>
+
+        <p class="total">
+          Total enviado: ARS
+          {{ solicitud.totalFinal ?? solicitud.total | number: '1.2-2' }}
+        </p>
+      } @else {
+        <details class="productos-elegidos">
+          <summary>Ver productos seleccionados</summary>
+          <ul class="detalle">
+            @for (articulo of seleccion(); track articulo.clave) {
+              <li>
+                <span>
+                  {{ articulo.cantidad }} ×
+                  {{ articulo.nombre }}
+                </span>
+
+                <strong>
+                  ARS
+                  {{ articulo.precio * articulo.cantidad | number: '1.2-2' }}
+                </strong>
+              </li>
+            } @empty {
+              <li>Todavía no agregaste productos.</li>
+            }
+          </ul>
+        </details>
+      }
+
+      <app-cupon-selector
+        [entradas]="0"
+        [candy]="pendiente()?.total ?? total()"
+        [elegidos]="cuponesElegidos()"
+        [bloqueado]="edicionBloqueada()"
+        (cambio)="cuponesElegidos.set($event)"
+      />
+
+      <app-pago-selector
+        [canjes]="canjesElegidos()"
+        [clave]="pendiente()?.clave ?? clavePago"
+        [candy]="articulosPago()"
+        [cupones]="cuponesElegidos()"
+        [soloCandy]="true"
+        [guardado]="pendiente()?.pago ?? null"
+        [bloqueado]="cargando() || procesando() || !!pendiente()"
+        (cambio)="pagoElegido.set($event)"
+      />
+      <div class="acciones">
+        <button
+          class="boton"
+          type="button"
+          [disabled]="
+            cargando() || procesando() || (!pendiente() && (total() <= 0 || !pagoElegido()))
+          "
+          (click)="confirmar()"
+        >
+          {{
+            procesando()
+              ? 'Procesando…'
+              : pendiente()
+                ? 'Reintentar la misma compra'
+                : 'Confirmar compra de prueba'
+          }}
+        </button>
+
+        @if (pendiente()) {
+          <button
+            class="boton secundario"
+            type="button"
+            [disabled]="cargando() || procesando()"
+            (click)="comprobarCompra()"
+          >
+            Comprobar compra
+          </button>
+        } @else {
+          <button
+            class="boton secundario"
+            type="button"
+            [disabled]="cargando() || procesando()"
+            (click)="cargar()"
+          >
+            Actualizar catálogo
+          </button>
+        }
+      </div>
+    </section>
+  }
 </section>

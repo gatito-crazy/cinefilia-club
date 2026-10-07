@@ -38,7 +38,6 @@
             >
                 Comprar solo Candy
             </a>
-
         </div>
     </div>
 
@@ -51,7 +50,7 @@
             alt=""
             width="360"
             height="360"
-        >
+        />
 
         <p>
             Películas · Butacas · Candy
@@ -130,7 +129,7 @@
                                 [alt]="'Póster de ' + pelicula.nombre"
                                 loading="lazy"
                                 (error)="marcarImagenFallida(pelicula.id)"
-                            >
+                            />
                         } @else {
                             <div class="sin-imagen">
                                 Póster no disponible
@@ -149,21 +148,13 @@
 
                         <p class="datos">
                             {{ pelicula.duracion_minutos }} min
-                            ·
-                            {{ pelicula.entradas_vendidas }}
+                            · {{ pelicula.entradas_vendidas }}
                             entradas vendidas
                         </p>
 
                         <p class="sinopsis">
                             {{ pelicula.sinopsis }}
                         </p>
-
-                        <a
-                            class="boton"
-                            routerLink="/cartelera"
-                        >
-                            Ir a la cartelera
-                        </a>
                     </div>
                 </article>
             } @empty {
@@ -176,13 +167,6 @@
                         Cuando haya compras confirmadas,
                         aparecerán acá las películas más vendidas.
                     </p>
-
-                    <a
-                        class="boton"
-                        routerLink="/cartelera"
-                    >
-                        Elegir una película
-                    </a>
                 </div>
             }
         </div>

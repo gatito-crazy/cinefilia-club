@@ -2,17 +2,13 @@
     <header class="cabecera">
         <div>
             <p class="etiqueta">CINEFILIA CLUB</p>
+
             <h1>Panel de administración</h1>
 
-            <p>
-                Administrá los usuarios, las películas, las salas,
-                las funciones y la actividad.
-            </p>
+            <p>Administrá los usuarios, las películas, las salas, las funciones y la actividad.</p>
         </div>
 
-        <a class="boton secundario" routerLink="/empleado">
-            Abrir panel de empleados
-        </a>
+        <a class="boton secundario" routerLink="/empleado"> Abrir panel de empleados </a>
     </header>
 
     <nav class="secciones" aria-label="Secciones del administrador">
@@ -78,7 +74,55 @@
         >
             Actividad
         </button>
+
+        <button
+            type="button"
+            [class.activo]="seccion() === 'cupones'"
+            [attr.aria-pressed]="seccion() === 'cupones'"
+            (click)="seccion.set('cupones')"
+        >
+            Cupones
+        </button>
+
+        <button
+            type="button"
+            [class.activo]="seccion() === 'puntos'"
+            [attr.aria-pressed]="seccion() === 'puntos'"
+            (click)="seccion.set('puntos')"
+        >
+            Puntos y recompensas
+        </button>
+
+        <button
+            type="button"
+            [class.activo]="seccion() === 'credito'"
+            [attr.aria-pressed]="seccion() === 'credito'"
+            (click)="seccion.set('credito')"
+        >
+            Crédito y cancelaciones
+        </button>
+
+        <button
+            type="button"
+            [class.activo]="seccion() === 'reportes'"
+            [attr.aria-pressed]="seccion() === 'reportes'"
+            (click)="seccion.set('reportes')"
+        >
+            Reportes
+        </button>
     </nav>
+
+    @if (seccion() === 'puntos') {
+        <app-beneficios-admin seccion="puntos" />
+    }
+
+    @if (seccion() === 'credito') {
+        <app-beneficios-admin seccion="credito" />
+    }
+
+    @if (seccion() === 'reportes') {
+        <app-beneficios-admin seccion="reportes" />
+    }
 
     @if (seccion() === 'salas') {
         <app-salas-admin />
@@ -92,21 +136,22 @@
         <app-candy-admin />
     }
 
+    @if (seccion() === 'cupones') {
+        <app-cupones-admin />
+    }
+
     @if (seccion() === 'usuarios') {
         <section class="tarjeta" aria-labelledby="tituloUsuarios">
             <h2 id="tituloUsuarios">Usuarios registrados</h2>
 
             <p class="muted">
-                Podés cambiar el rol de clientes y empleados,
-                administrar sus cuentas o eliminarlas.
+                Podés cambiar el rol de clientes y empleados, administrar sus cuentas o eliminarlas.
                 Las cuentas de administradores están protegidas.
             </p>
 
             <form class="busqueda" (ngSubmit)="buscar()">
                 <div class="campo">
-                    <label for="buscarUsuario">
-                        Buscar por nombre o apellido
-                    </label>
+                    <label for="buscarUsuario"> Buscar por nombre o apellido </label>
 
                     <input
                         id="buscarUsuario"
@@ -118,21 +163,21 @@
                     />
                 </div>
 
-                <button
-                    class="boton"
-                    type="submit"
-                    [disabled]="cargando() || guardando() !== null"
-                >
+                <button class="boton" type="submit" [disabled]="cargando() || guardando() !== null">
                     Buscar
                 </button>
             </form>
 
             @if (errorUsuarios()) {
-                <p class="error" role="alert">{{ errorUsuarios() }}</p>
+                <p class="error" role="alert">
+                    {{ errorUsuarios() }}
+                </p>
             }
 
             @if (exitoUsuarios()) {
-                <p class="exito" role="status">{{ exitoUsuarios() }}</p>
+                <p class="exito" role="status">
+                    {{ exitoUsuarios() }}
+                </p>
             }
 
             @if (cargando()) {
@@ -149,8 +194,11 @@
                         <thead>
                             <tr>
                                 <th scope="col">Nombre y apellido</th>
+
                                 <th scope="col">Rol</th>
+
                                 <th scope="col">Registro</th>
+
                                 <th scope="col">Acción</th>
                             </tr>
                         </thead>
@@ -159,7 +207,8 @@
                             @for (usuario of usuarios(); track usuario.id) {
                                 <tr>
                                     <td>
-                                        {{ usuario.nombre }} {{ usuario.apellido }}
+                                        {{ usuario.nombre }}
+                                        {{ usuario.apellido }}
 
                                         <small class="identificador">
                                             {{ usuario.id }}
@@ -167,7 +216,9 @@
                                     </td>
 
                                     <td>
-                                        <span class="insignia">{{ usuario.rol }}</span>
+                                        <span class="insignia">
+                                            {{ usuario.rol }}
+                                        </span>
 
                                         <span
                                             class="estado-cuenta"
@@ -178,15 +229,15 @@
                                     </td>
 
                                     <td>
-                                        {{ usuario.creado_en | date:'dd/MM/yyyy HH:mm' }}
+                                        {{ usuario.creado_en | date: 'dd/MM/yyyy HH:mm' }}
                                     </td>
 
                                     <td>
                                         @if (
-                                            usuario.rol === 'admin'
-                                            || usuario.id === auth.usuario()?.id
+                                            usuario.rol === 'admin' ||
+                                            usuario.id === auth.usuario()?.id
                                         ) {
-                                            <span class="muted">Cuenta protegida</span>
+                                            <span class="muted"> Cuenta protegida </span>
                                         } @else {
                                             <div class="acciones-usuario">
                                                 <button
@@ -225,7 +276,7 @@
                                                 </button>
 
                                                 @if (guardando() === usuario.id) {
-                                                    <small role="status">Procesando...</small>
+                                                    <small role="status"> Procesando... </small>
                                                 }
                                             </div>
                                         }
@@ -252,12 +303,14 @@
                         Anterior
                     </button>
 
-                    <span>Página {{ pagina() + 1 }}</span>
+                    <span> Página {{ pagina() + 1 }} </span>
 
                     <button
                         class="boton secundario"
                         type="button"
-                        [disabled]="(pagina() + 1) * 20 >= total() || cargando() || guardando() !== null"
+                        [disabled]="
+                            (pagina() + 1) * 20 >= total() || cargando() || guardando() !== null
+                        "
                         (click)="cargarUsuarios(pagina() + 1)"
                     >
                         Siguiente
@@ -272,6 +325,7 @@
             <div class="cabecera-seccion">
                 <div>
                     <h2 id="tituloPeliculas">Películas</h2>
+
                     <p>Administrá las películas disponibles en la cartelera.</p>
                 </div>
 
@@ -297,11 +351,15 @@
             </div>
 
             @if (exitoPeliculas()) {
-                <p class="exito" role="status">{{ exitoPeliculas() }}</p>
+                <p class="exito" role="status">
+                    {{ exitoPeliculas() }}
+                </p>
             }
 
             @if (errorPeliculas()) {
-                <p class="error" role="alert">{{ errorPeliculas() }}</p>
+                <p class="error" role="alert">
+                    {{ errorPeliculas() }}
+                </p>
             }
 
             @if (editorAbierto()) {
@@ -310,16 +368,13 @@
                         {{ borrador.id ? 'Editar película' : 'Agregar película' }}
                     </h3>
 
-                    <form
-                        #formPelicula="ngForm"
-                        (ngSubmit)="guardarPelicula(formPelicula)"
-                    >
+                    <form #formPelicula="ngForm" (ngSubmit)="guardarPelicula(formPelicula)">
                         <fieldset
                             class="campos-pelicula"
-                            [disabled]="guardandoFormulario()"
+                            [disabled]="guardandoFormulario() || creandoGenero()"
                         >
                             <div class="campo">
-                                <label for="nombrePelicula">Nombre</label>
+                                <label for="nombrePelicula"> Nombre </label>
 
                                 <input
                                     id="nombrePelicula"
@@ -332,7 +387,7 @@
                             </div>
 
                             <div class="campo">
-                                <label for="sinopsisPelicula">Sinopsis</label>
+                                <label for="sinopsisPelicula"> Sinopsis </label>
 
                                 <textarea
                                     id="sinopsisPelicula"
@@ -346,9 +401,7 @@
 
                             <div class="fila-pelicula">
                                 <div class="campo">
-                                    <label for="duracionPelicula">
-                                        Duración en minutos
-                                    </label>
+                                    <label for="duracionPelicula"> Duración en minutos </label>
 
                                     <input
                                         id="duracionPelicula"
@@ -363,7 +416,7 @@
                                 </div>
 
                                 <div class="campo">
-                                    <label for="edadPelicula">Edad mínima</label>
+                                    <label for="edadPelicula"> Edad mínima </label>
 
                                     <input
                                         id="edadPelicula"
@@ -383,9 +436,7 @@
                             </div>
 
                             <div class="campo">
-                                <label for="estrenoPelicula">
-                                    Fecha de estreno · Opcional
-                                </label>
+                                <label for="estrenoPelicula"> Fecha de estreno · Opcional </label>
 
                                 <input
                                     id="estrenoPelicula"
@@ -394,6 +445,43 @@
                                     [(ngModel)]="borrador.fecha_estreno"
                                 />
                             </div>
+
+                            <fieldset class="selector-generos">
+                                <legend>Preventa de esta película</legend>
+
+                                <label class="opcion-genero">
+                                    <input
+                                        type="checkbox"
+                                        name="preventaPelicula"
+                                        [(ngModel)]="borrador.preventa_activa"
+                                    />
+
+                                    Habilitar preventa
+                                </label>
+
+                                @if (borrador.preventa_activa) {
+                                    <label for="descuentoPreventa">
+                                        Descuento de preventa (%)
+                                    </label>
+                                    <input
+                                        id="descuentoPreventa"
+                                        name="descuentoPreventa"
+                                        type="number"
+                                        min="0.01"
+                                        max="99.99"
+                                        step="0.01"
+                                        [(ngModel)]="borrador.preventa_descuento"
+                                        required
+                                    />
+                                }
+
+                                <p class="muted">
+                                    Abre 7 días antes del estreno y termina al comenzar el día del
+                                    estreno. Aplica el porcentaje configurado a la tarifa de cada
+                                    función 2D, 3D, 4D o 5D. Las butacas VIP conservan su precio
+                                    habitual. Requiere fecha de estreno.
+                                </p>
+                            </fieldset>
 
                             <fieldset class="selector-generos">
                                 <legend>Géneros · Elegí al menos uno</legend>
@@ -407,19 +495,65 @@
                                                 (change)="seleccionarGenero(genero.id)"
                                             />
 
-                                            <span>{{ genero.nombre }}</span>
+                                            <span>
+                                                {{ genero.nombre }}
+                                            </span>
                                         </label>
                                     } @empty {
                                         <p class="muted">
-                                            No hay géneros disponibles.
-                                            Cargá los géneros en Supabase antes de guardar.
+                                            No hay géneros disponibles. Creá uno usando el campo de
+                                            abajo.
                                         </p>
                                     }
                                 </div>
                             </fieldset>
 
                             <div class="campo">
-                                <label for="posterPelicula">Póster · Opcional</label>
+                                <label for="nuevoGenero"> Crear un género </label>
+
+                                <input
+                                    id="nuevoGenero"
+                                    name="nuevoGenero"
+                                    type="text"
+                                    maxlength="80"
+                                    placeholder="Por ejemplo: Artes marciales"
+                                    [(ngModel)]="nombreGenero"
+                                />
+
+                                <button
+                                    class="boton secundario"
+                                    type="button"
+                                    [disabled]="peliculasOcupadas() || !nombreGenero.trim()"
+                                    (click)="crearGenero()"
+                                >
+                                    {{
+                                        creandoGenero()
+                                            ? 'Creando...'
+                                            : 'Crear y seleccionar género'
+                                    }}
+                                </button>
+
+                                <small class="muted">
+                                    Podés crear tus propios géneros y seleccionar varios para la
+                                    misma película. Si el nombre ya existe, se selecciona el género
+                                    existente.
+                                </small>
+
+                                @if (errorGenero()) {
+                                    <p class="error" role="alert">
+                                        {{ errorGenero() }}
+                                    </p>
+                                }
+
+                                @if (exitoGenero()) {
+                                    <p class="exito" role="status">
+                                        {{ exitoGenero() }}
+                                    </p>
+                                }
+                            </div>
+
+                            <div class="campo">
+                                <label for="posterPelicula"> Póster · Opcional </label>
 
                                 <input
                                     id="posterPelicula"
@@ -429,9 +563,8 @@
                                 />
 
                                 <small class="muted">
-                                    JPG, PNG o WEBP de hasta 5 MB.
-                                    Al editar, si no elegís otra imagen se conserva
-                                    el póster actual.
+                                    JPG, PNG o WEBP de hasta 5 MB. Al editar, si no elegís otra
+                                    imagen se conserva el póster actual.
                                 </small>
 
                                 @if (vistaPoster()) {
@@ -450,7 +583,7 @@
                                     [(ngModel)]="borrador.activa"
                                 />
 
-                                <span>Mostrar esta película en la cartelera</span>
+                                <span> Mostrar esta película en la cartelera </span>
                             </label>
                         </fieldset>
 
@@ -464,21 +597,21 @@
                             <button
                                 class="boton"
                                 type="submit"
-                                [disabled]="guardandoFormulario()"
+                                [disabled]="guardandoFormulario() || creandoGenero()"
                             >
                                 {{
                                     guardandoFormulario()
                                         ? 'Guardando...'
                                         : borrador.id
-                                            ? 'Guardar cambios'
-                                            : 'Crear película'
+                                          ? 'Guardar cambios'
+                                          : 'Crear película'
                                 }}
                             </button>
 
                             <button
                                 class="boton secundario"
                                 type="button"
-                                [disabled]="guardandoFormulario()"
+                                [disabled]="guardandoFormulario() || creandoGenero()"
                                 (click)="cancelarEdicion()"
                             >
                                 Cancelar
@@ -502,30 +635,39 @@
                                     loading="lazy"
                                 />
                             } @else {
-                                <div class="poster-admin poster-pendiente">
-                                    Sin póster
-                                </div>
+                                <div class="poster-admin poster-pendiente">Sin póster</div>
                             }
 
                             <div class="datos-pelicula-admin">
-                                <h3>{{ pelicula.nombre }}</h3>
+                                <h3>
+                                    {{ pelicula.nombre }}
+                                </h3>
 
-                                <span
-                                    class="insignia"
-                                    [class.pelicula-inactiva]="!pelicula.activa"
-                                >
+                                <span class="insignia" [class.pelicula-inactiva]="!pelicula.activa">
                                     {{ pelicula.activa ? 'Activa' : 'Desactivada' }}
                                 </span>
 
-                                <p>{{ pelicula.sinopsis }}</p>
+                                <p>
+                                    {{ pelicula.sinopsis }}
+                                </p>
+
+                                @if (pelicula.preventa_activa) {
+                                    <p class="muted">
+                                        Preventa: {{ pelicula.preventa_descuento ?? 10 }} % de
+                                        descuento desde 7 días antes del estreno · sin VIP.
+                                    </p>
+                                }
 
                                 <p>
-                                    <strong>Duración:</strong>
-                                    {{ pelicula.duracion_minutos }} minutos
+                                    <strong> Duración: </strong>
+
+                                    {{ pelicula.duracion_minutos }}
+                                    minutos
                                 </p>
 
                                 <p>
-                                    <strong>Edad mínima:</strong>
+                                    <strong> Edad mínima: </strong>
+
                                     {{
                                         pelicula.edad_minima === 0
                                             ? 'Sin restricción'
@@ -534,19 +676,22 @@
                                 </p>
 
                                 <p>
-                                    <strong>Estreno:</strong>
+                                    <strong> Estreno: </strong>
+
                                     {{
                                         pelicula.fecha_estreno
-                                            ? (pelicula.fecha_estreno | date:'dd/MM/yyyy')
+                                            ? (pelicula.fecha_estreno | date: 'dd/MM/yyyy')
                                             : 'Sin fecha cargada'
                                     }}
                                 </p>
 
                                 <div class="generos-admin">
                                     @for (genero of pelicula.generos; track genero.id) {
-                                        <span class="insignia">{{ genero.nombre }}</span>
+                                        <span class="insignia">
+                                            {{ genero.nombre }}
+                                        </span>
                                     } @empty {
-                                        <span class="muted">Sin géneros asignados</span>
+                                        <span class="muted"> Sin géneros asignados </span>
                                     }
                                 </div>
 
@@ -601,31 +746,23 @@
             <h2 id="tituloCodigos">Códigos de prueba</h2>
 
             <p class="muted">
-                Generá un código para probar la validación de entradas
-                o productos del candy desde el panel de empleados.
+                Generá un código para probar la validación de entradas o productos del candy desde
+                el panel de empleados.
             </p>
 
-            <form
-                class="formulario"
-                #formCodigo="ngForm"
-                (ngSubmit)="crearCodigo()"
-            >
+            <form class="formulario" #formCodigo="ngForm" (ngSubmit)="crearCodigo()">
                 <div class="campo">
-                    <label for="tipoCodigo">Tipo de código</label>
+                    <label for="tipoCodigo"> Tipo de código </label>
 
-                    <select
-                        id="tipoCodigo"
-                        name="tipoCodigo"
-                        [(ngModel)]="tipoCodigo"
-                        required
-                    >
+                    <select id="tipoCodigo" name="tipoCodigo" [(ngModel)]="tipoCodigo" required>
                         <option value="entrada">Entrada</option>
+
                         <option value="candy">Candy</option>
                     </select>
                 </div>
 
                 <div class="campo">
-                    <label for="descripcionCodigo">Descripción</label>
+                    <label for="descripcionCodigo"> Descripción </label>
 
                     <input
                         id="descripcionCodigo"
@@ -639,7 +776,9 @@
                 </div>
 
                 @if (errorCodigo()) {
-                    <p class="error" role="alert">{{ errorCodigo() }}</p>
+                    <p class="error" role="alert">
+                        {{ errorCodigo() }}
+                    </p>
                 }
 
                 <button
@@ -666,37 +805,32 @@
                     }
 
                     <p>
-                        <strong>Tipo:</strong>
+                        <strong> Tipo: </strong>
+
                         {{ codigo.tipo === 'entrada' ? 'Entrada' : 'Candy' }}
                     </p>
 
                     <p>
-                        <strong>Descripción:</strong>
+                        <strong> Descripción: </strong>
+
                         {{ codigo.descripcion }}
                     </p>
 
                     <p>
-                        <strong>Vencimiento:</strong>
-                        {{ codigo.vence_en | date:'dd/MM/yyyy HH:mm' }}
+                        <strong> Vencimiento: </strong>
+
+                        {{ codigo.vence_en | date: 'dd/MM/yyyy HH:mm' }}
                     </p>
 
                     <div class="campo">
-                        <label for="codigoGenerado">
-                            Código para ingresar manualmente
-                        </label>
+                        <label for="codigoGenerado"> Código para ingresar manualmente </label>
 
-                        <input
-                            id="codigoGenerado"
-                            type="text"
-                            [value]="codigo.codigo"
-                            readonly
-                        />
+                        <input id="codigoGenerado" type="text" [value]="codigo.codigo" readonly />
                     </div>
 
                     <p class="muted">
-                        Podés escanear el QR o copiar el código e ingresarlo
-                        en el panel de empleados. Cada código se puede
-                        validar una sola vez.
+                        Podés escanear el QR o copiar el código e ingresarlo en el panel de
+                        empleados. Cada código se puede validar una sola vez.
                     </p>
                 </div>
             }
@@ -710,8 +844,8 @@
                     <h2 id="tituloActividad">Registro de actividades</h2>
 
                     <p class="muted">
-                        Consultá las confirmaciones de registro y las
-                        operaciones realizadas en los paneles.
+                        Consultá las confirmaciones de registro y las operaciones realizadas en los
+                        paneles.
                     </p>
                 </div>
 
@@ -726,7 +860,9 @@
             </div>
 
             @if (errorActividad()) {
-                <p class="error" role="alert">{{ errorActividad() }}</p>
+                <p class="error" role="alert">
+                    {{ errorActividad() }}
+                </p>
             }
 
             @if (cargandoActividad()) {
@@ -735,27 +871,29 @@
                 <ul class="actividad">
                     @for (registro of actividad(); track registro.id) {
                         <li>
-                            <h3>{{ registro.accion }}</h3>
+                            <h3>
+                                {{ registro.accion }}
+                            </h3>
 
                             <p>
-                                <strong>Usuario:</strong>
+                                <strong> Usuario: </strong>
+
                                 {{ registro.actor_nombre }}
                             </p>
 
                             <p class="muted">
-                                {{ registro.creado_en | date:'dd/MM/yyyy HH:mm' }}
+                                {{ registro.creado_en | date: 'dd/MM/yyyy HH:mm' }}
                             </p>
 
                             <details>
                                 <summary>Ver detalles</summary>
+
                                 <pre>{{ registro.detalle | json }}</pre>
                             </details>
                         </li>
                     } @empty {
                         <li>
-                            <p class="muted">
-                                Todavía no hay actividades registradas.
-                            </p>
+                            <p class="muted">Todavía no hay actividades registradas.</p>
                         </li>
                     }
                 </ul>

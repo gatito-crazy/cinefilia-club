@@ -1,5 +1,6 @@
 :host {
   display: block;
+  min-width: 0;
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 1rem;
@@ -53,6 +54,14 @@ button {
   font: inherit;
 }
 
+button,
+a,
+input,
+select,
+textarea {
+  overflow-wrap: anywhere;
+}
+
 input,
 select {
   width: 100%;
@@ -91,9 +100,32 @@ button:disabled {
 
 button:focus-visible,
 input:focus-visible,
-select:focus-visible {
+select:focus-visible,
+a.elegir-butacas:focus-visible {
   outline: 2px solid #ffb4c0;
   outline-offset: 4px;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.seccion-cartelera {
+  margin-top: 2rem;
+}
+
+.cabecera-seccion {
+  margin-bottom: 1rem;
+}
+
+.cabecera-seccion h2 {
+  margin: 0 0 0.5rem;
+  color: #ffffff;
+}
+
+.cabecera-seccion p {
+  color: #bcbccc;
+  line-height: 1.6;
 }
 
 .peliculas {
@@ -139,7 +171,7 @@ select:focus-visible {
   overflow-wrap: anywhere;
 }
 
-.informacion h2 {
+.informacion h3 {
   margin: 0 0 0.85rem;
   color: #ffffff;
   font-size: 1.25rem;
@@ -153,6 +185,11 @@ select:focus-visible {
 
 .informacion strong {
   color: #eeeef5;
+}
+
+.estreno-pelicula {
+  color: #ffb4c0;
+  font-weight: 700;
 }
 
 .generos {
@@ -184,7 +221,7 @@ select:focus-visible {
   line-height: 1;
 }
 
-.ver-funciones[aria-expanded="true"] {
+.ver-funciones[aria-expanded='true'] {
   border-color: #ffb4c0;
   background: #782535;
 }
@@ -216,6 +253,11 @@ select:focus-visible {
   flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 1.25rem;
+}
+
+.cabecera-funciones > div {
+  min-width: 0;
+  flex: 1 1 220px;
 }
 
 .etiqueta-funciones {
@@ -355,6 +397,64 @@ select:focus-visible {
   line-height: 1.6;
 }
 
+.aviso-funciones {
+  grid-column: 1 / -1;
+  padding: 1.25rem;
+  border: 1px solid #50506a;
+  border-radius: 12px;
+  background: #222233;
+}
+
+.aviso-funciones p {
+  color: #bcbccc;
+  line-height: 1.6;
+}
+
+.aviso-funciones button {
+  max-width: 100%;
+  margin-top: 1rem;
+}
+
+.aviso-funciones .exito-alerta {
+  color: #bcf0d7;
+}
+
+.aviso-funciones .error-funciones {
+  color: #ffb4b4;
+}
+
+a.elegir-butacas {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #e34b61;
+  border-radius: 10px;
+  background: #b72d40;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    background-color 180ms ease,
+    transform 180ms ease;
+}
+
+a.elegir-butacas:active {
+  transform: scale(0.98);
+}
+
+.resenas-publicas {
+  margin: 20px 0;
+  padding: 20px;
+  border: 1px solid #464155;
+  border-radius: 14px;
+}
+
 @media (hover: hover) and (pointer: fine) {
   button:hover:not(:disabled) {
     background: #d0374c;
@@ -369,10 +469,11 @@ select:focus-visible {
     border-color: #86505b;
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
   }
-}
 
-button:active:not(:disabled) {
-  transform: scale(0.97);
+  a.elegir-butacas:hover {
+    background: #d0374c;
+    transform: translateY(-2px);
+  }
 }
 
 @media (max-width: 600px) {
@@ -412,7 +513,7 @@ button:active:not(:disabled) {
     padding: 0;
   }
 
-  .informacion h2 {
+  .informacion h3 {
     font-size: 1.05rem;
   }
 
@@ -487,12 +588,15 @@ button:active:not(:disabled) {
   input,
   select,
   button,
-  .pelicula {
+  .pelicula,
+  a.elegir-butacas {
     transition: none;
   }
 
   button:hover,
-  button:active {
+  button:active,
+  a.elegir-butacas:hover,
+  a.elegir-butacas:active {
     transform: none;
   }
 
@@ -500,86 +604,38 @@ button:active:not(:disabled) {
     animation: none;
   }
 }
-
-a.elegir-butacas {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 48px;
-  margin-top: 1rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid #e34b61;
-  border-radius: 10px;
-  background: #b72d40;
-  color: #ffffff;
+.ver-resenas {
+  min-height: 44px;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ffb4c0;
+  border-radius: 8px;
+  background: #28283a;
+  color: #fff;
   font: inherit;
-  font-weight: 700;
-  text-align: center;
-  text-decoration: none;
-  transition:
-    background-color 180ms ease,
-    transform 180ms ease;
+  font-weight: 600;
+  cursor: pointer;
 }
-
-a.elegir-butacas:focus-visible {
+.ver-resenas:focus-visible,
+.resenas-publicas summary:focus-visible {
   outline: 2px solid #ffb4c0;
-  outline-offset: 4px;
+  outline-offset: 3px;
 }
-
-@media (hover: hover) and (pointer: fine) {
-  a.elegir-butacas:hover {
-    background: #d0374c;
-    transform: translateY(-2px);
-  }
-}
-
-a.elegir-butacas:active {
-  transform: scale(0.98);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  a.elegir-butacas {
-    transition: none;
-  }
-
-  a.elegir-butacas:hover,
-  a.elegir-butacas:active {
-    transform: none;
-  }
-}
-/* Contenedores y controles adaptables. */
-:host {
+.resenas-publicas {
   min-width: 0;
-}
-button,
-a,
-input,
-select,
-textarea {
+  scroll-margin-top: 1.5rem;
   overflow-wrap: anywhere;
 }
-
-.cabecera-funciones > div {
-  min-width: 0;
-  flex: 1 1 220px;
+.resenas-publicas summary {
+  cursor: pointer;
+  padding: 0.5rem 0;
 }
-
-@media (prefers-reduced-motion: reduce) {
-  button,
-  .boton,
-  .volver,
-  a.elegir-butacas {
-    transition: none;
-  }
-  button:hover,
-  button:active,
-  .boton:hover,
-  .boton:active,
-  .volver:hover,
-  .volver:active,
-  a.elegir-butacas:hover,
-  a.elegir-butacas:active {
-    transform: none;
+.resenas-publicas article {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #50506a;
+}
+@media (max-width: 600px) {
+  .ver-resenas {
+    width: 100%;
   }
 }

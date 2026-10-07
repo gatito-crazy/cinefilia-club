@@ -1,125 +1,79 @@
-<section
-    class="destacados"
-    aria-labelledby="titulo-candy-destacado"
-    [attr.aria-busy]="cargando()"
->
-    <header class="cabecera">
-        <div>
-            <p class="etiqueta">
-                LOS FAVORITOS DEL CANDY
-            </p>
+<section class="destacados" aria-labelledby="titulo-candy-destacado" [attr.aria-busy]="cargando()">
+  <header class="cabecera">
+    <div>
+      <p class="etiqueta">LOS FAVORITOS DEL CANDY</p>
 
-            <h2 id="titulo-candy-destacado">
-                Los más vendidos para acompañar tu película
-            </h2>
+      <h2 id="titulo-candy-destacado">Los más vendidos para acompañar tu película</h2>
 
-            <p>
-                Descubrí los productos que más elige el público.
-                También podés comprar Candy sin entradas.
-            </p>
-        </div>
+      <p>Descubrí los productos y combos más vendidos. También podés comprar Candy sin entradas.</p>
+    </div>
 
-        <a
-            class="boton secundario"
-            routerLink="/candy"
-        >
-            Explorar Candy →
-        </a>
-    </header>
+    <a class="boton secundario" routerLink="/candy"> Explorar Candy → </a>
+  </header>
 
-    @if (cargando()) {
-        <p role="status">
-            Cargando los favoritos del Candy…
-        </p>
-    } @else if (error()) {
-        <div role="alert">
-            <p>
-                {{ error() }}
-            </p>
+  @if (cargando()) {
+    <p role="status">Cargando los favoritos del Candy…</p>
+  } @else if (error()) {
+    <div role="alert">
+      <p>
+        {{ error() }}
+      </p>
 
-            <button
-                class="boton"
-                type="button"
-                (click)="cargar()"
-            >
-                Reintentar
-            </button>
-        </div>
-    } @else {
-        <div class="productos">
-            @for (
-                producto of productos();
-                track producto.id;
-                let posicion = $index
+      <button class="boton" type="button" (click)="cargar()">Reintentar</button>
+    </div>
+  } @else {
+    <div class="productos">
+      @for (
+        producto of productos();
+        track producto.tipo + ':' + producto.id;
+        let posicion = $index
+      ) {
+        <article class="producto">
+          <div class="imagen">
+            @if (
+              producto.imagen_url && !imagenesFallidas().includes(producto.tipo + ':' + producto.id)
             ) {
-                <article class="producto">
-                    <div class="imagen">
-                        @if (
-                            producto.imagen_url &&
-                            !imagenesFallidas().includes(producto.id)
-                        ) {
-                            <img
-                                [src]="producto.imagen_url"
-                                [alt]="producto.nombre"
-                                loading="lazy"
-                                (error)="marcarImagenFallida(producto.id)"
-                            >
-                        } @else {
-                            <span>
-                                Imagen no disponible
-                            </span>
-                        }
-
-                        <span class="puesto">
-                            #{{ posicion + 1 }}
-                        </span>
-                    </div>
-
-                    <div class="informacion">
-                        <h3>
-                            {{ producto.nombre }}
-                        </h3>
-
-                        <p>
-                            {{ producto.descripcion }}
-                        </p>
-
-                        <p class="ventas">
-                            {{ producto.unidades_vendidas }}
-                            unidades vendidas
-                        </p>
-
-                        <p class="precio">
-                            ARS {{ producto.precio | number:'1.2-2' }}
-                        </p>
-
-                        <a
-                            class="boton"
-                            routerLink="/candy"
-                        >
-                            Ver productos y combos
-                        </a>
-                    </div>
-                </article>
-            } @empty {
-                <div class="vacio">
-                    <h3>
-                        Los favoritos están por descubrirse
-                    </h3>
-
-                    <p>
-                        Cuando haya ventas confirmadas,
-                        aparecerán acá los productos más vendidos.
-                    </p>
-
-                    <a
-                        class="boton"
-                        routerLink="/candy"
-                    >
-                        Explorar Candy
-                    </a>
-                </div>
+              <img
+                [src]="producto.imagen_url"
+                [alt]="producto.nombre"
+                loading="lazy"
+                (error)="marcarImagenFallida(producto.tipo + ':' + producto.id)"
+              />
+            } @else {
+              <span> Imagen no disponible </span>
             }
+
+            <span class="puesto"> #{{ posicion + 1 }} </span>
+          </div>
+
+          <div class="informacion">
+            <p class="etiqueta">
+              {{ producto.tipo === 'combo' ? 'COMBO' : 'PRODUCTO' }}
+            </p>
+
+            <h3>
+              {{ producto.nombre }}
+            </h3>
+
+            <p class="descripcion">
+              {{ producto.descripcion }}
+            </p>
+
+            <p class="ventas">
+              {{ producto.unidades_vendidas }}
+              unidades vendidas
+            </p>
+
+            <p class="precio">ARS {{ producto.precio | number: '1.2-2' }}</p>
+          </div>
+        </article>
+      } @empty {
+        <div class="vacio">
+          <h3>Los favoritos están por descubrirse</h3>
+
+          <p>Cuando haya ventas confirmadas, aparecerán acá los productos y combos más vendidos.</p>
         </div>
-    }
+      }
+    </div>
+  }
 </section>

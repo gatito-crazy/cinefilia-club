@@ -18,6 +18,8 @@ export interface Funcion {
     precio_accesible: number;
     precio_vip: number;
     activa: boolean;
+    cancelada: boolean;
+    archivada: boolean;
     creado_en: string;
 }
 
@@ -52,6 +54,8 @@ export class FuncionesService {
                 precio_accesible,
                 precio_vip,
                 activa,
+                cancelada,
+                archivada,
                 creado_en
             `)
             .order('inicio', { ascending: false })
@@ -129,13 +133,36 @@ export class FuncionesService {
 
     async eliminar(funcionId: string): Promise<void> {
         const { error } = await this.supabase.cliente
-            .rpc('cine_eliminar_funcion', {
+            .rpc('cine_cancelar_funcion_credito', {
                 p_funcion: funcionId
             });
 
         if (error) {
             throw error;
         }
+    }
+
+    async archivar(
+        funcionId: string,
+        archivada: boolean
+    ): Promise<Funcion> {
+        const { data, error } = await this.supabase.cliente
+            .rpc('cine_archivar_funcion', {
+                p_funcion: funcionId,
+                p_archivada: archivada
+            });
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data) {
+            throw new Error(
+                'No se recibió la función actualizada.'
+            );
+        }
+
+        return data as Funcion;
     }
 
     private validar(

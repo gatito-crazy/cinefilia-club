@@ -9,6 +9,7 @@ import { RouterLink } from '@angular/router';
 import { SupabaseService } from '../../../base/service/supabase.service';
 
 interface CandyDestacado {
+    tipo: 'producto' | 'combo';
     id: string;
     nombre: string;
     descripcion: string;
@@ -64,7 +65,7 @@ export class CandyDestacados implements OnInit {
             );
         } catch {
             this.error.set(
-                'No pudimos cargar los productos más vendidos.'
+                'No pudimos cargar los productos y combos más vendidos.'
             );
         } finally {
             this.cargando.set(false);

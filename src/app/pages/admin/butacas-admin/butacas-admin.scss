@@ -1,0 +1,309 @@
+:host {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    margin: 1.5rem 0;
+    padding: 1.25rem;
+    border: 1px solid #50506a;
+    border-radius: 12px;
+    background: #202030;
+    color: #ffffff;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+h3 {
+    margin-top: 0;
+    line-height: 1.4;
+}
+
+p {
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+button {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+    border: 1px solid #76768c;
+    border-radius: 8px;
+    background: #782535;
+    color: #ffffff;
+    font: inherit;
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+button:focus-visible,
+.mapa:focus-visible {
+    outline: 2px solid #ffb4c0;
+    outline-offset: 3px;
+}
+
+.leyenda,
+.ayuda-mapa {
+    color: #d7d7e5;
+}
+
+.leyenda {
+    margin: 1.25rem 0;
+}
+
+.ayuda-mapa {
+    margin: 0.75rem 0;
+    font-size: 0.95rem;
+}
+
+.mapa {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    padding: 1rem 0;
+    border: 1px solid #38384b;
+    border-radius: 16px;
+    background: #11111d;
+    overscroll-behavior-x: contain;
+    scrollbar-color: #72728e #11111d;
+}
+
+.mapa-interior {
+    width: 100%;
+    min-width: 980px;
+    padding: 1rem;
+}
+
+.pantalla {
+    width: 70%;
+    margin: 0 auto 1.5rem;
+    padding: 0.65rem;
+    border-top: 3px solid #bcbccc;
+    border-radius: 50%;
+    color: #bcbccc;
+    text-align: center;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+}
+
+.fila {
+    display: grid;
+    grid-template-columns:
+        32px
+        minmax(0, 4fr)
+        minmax(0, 20fr)
+        minmax(0, 4fr)
+        32px;
+    align-items: center;
+    column-gap: 12px;
+    margin-bottom: 0.4rem;
+}
+
+.nombre-fila {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.bloque {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 3px;
+    min-width: 0;
+}
+
+.bloque:nth-child(2)::after,
+.bloque:nth-child(3)::after {
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    right: -7px;
+    width: 1px;
+    background: #64647d;
+    content: '';
+}
+
+.fila-accesible {
+    margin: 1.25rem 0;
+}
+
+.fila-accesible .bloque {
+    justify-content: space-around;
+}
+
+.fila-accesible .nombre-fila {
+    font-size: 0.65rem;
+    white-space: nowrap;
+}
+
+.butaca {
+    display: inline-flex;
+    flex: 1 1 0;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    min-width: 0;
+    max-width: 32px;
+    height: 32px;
+    min-height: 32px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid #72728e;
+    border-radius: 6px;
+    background: #303044;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.butaca.accesible {
+    border-color: #68c5df;
+    border-bottom: 3px solid #68c5df;
+    background: #164b60;
+}
+
+.butaca.vip {
+    border-color: #e5c56e;
+    border-bottom: 3px solid #e5c56e;
+    background: #685122;
+    color: #fff0b8;
+}
+
+.butaca.inhabilitada {
+    border-color: #888895;
+    background: #4a4a55;
+    color: #ccccd5;
+    text-decoration: line-through;
+}
+
+.butaca.seleccionada {
+    border-color: #ffc1ca;
+    background: #b72d40;
+    color: #ffffff;
+    box-shadow: 0 0 0 2px #ffc1ca;
+}
+
+.seleccion {
+    margin-top: 1rem;
+    padding: 1rem;
+    border: 1px solid #86505b;
+    border-radius: 10px;
+    background: #282438;
+}
+
+.seleccion p {
+    margin-top: 0;
+}
+
+.error {
+    padding: 0.85rem;
+    border: 1px solid #a64a5a;
+    border-radius: 8px;
+    background: #3b202a;
+    color: #ffb4b4;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    button:hover:not(:disabled) {
+        filter: brightness(1.15);
+    }
+}
+
+@media (max-width: 600px) {
+    :host {
+        padding: 0;
+        border: none;
+        background: transparent;
+    }
+
+    .acciones {
+        flex-direction: column;
+    }
+
+    .acciones button,
+    .seleccion button {
+        width: 100%;
+        min-height: 48px;
+    }
+}
+
+@media (max-width: 600px),
+    (orientation: landscape) and (max-height: 600px) and (pointer: coarse) {
+    .mapa {
+        max-height: min(65dvh, 380px);
+        overflow: auto;
+        padding: 0.5rem 0;
+        border-radius: 12px;
+    }
+
+    .mapa-interior {
+        width: max-content;
+        min-width: 0;
+        padding: 0.75rem;
+    }
+
+    .fila {
+        grid-template-columns: 28px 113px 577px 113px 28px;
+        column-gap: 10px;
+        margin-bottom: 0.45rem;
+    }
+
+    .bloque {
+        justify-content: flex-start;
+        gap: 3px;
+    }
+
+    .butaca {
+        flex: 0 0 26px;
+        width: 26px;
+        min-width: 26px;
+        max-width: 26px;
+        height: 28px;
+        min-height: 28px;
+        border-radius: 5px;
+        font-size: 0.7rem;
+    }
+
+    .nombre-fila {
+        font-size: 0.75rem;
+    }
+
+    .bloque:nth-child(2)::after,
+    .bloque:nth-child(3)::after {
+        right: -6px;
+    }
+
+    .pantalla {
+        margin-bottom: 1rem;
+        padding: 0.4rem;
+        font-size: 0.75rem;
+    }
+
+    .fila-accesible {
+        margin: 0.85rem 0;
+    }
+
+    .fila-accesible .bloque {
+        justify-content: space-around;
+    }
+}
+
+@media (orientation: landscape) and (max-height: 600px) and (pointer: coarse) {
+    .mapa {
+        max-height: 280px;
+    }
+}

@@ -1,24 +1,13 @@
 <section class="pagina">
-    <a
-        class="boton secundario"
-        routerLink="/"
-    >
-        ← Volver al inicio
-    </a>
+    <a class="boton secundario" routerLink="/"> ← Volver al inicio </a>
 
     <header class="cabecera">
         <div>
-            <p class="etiqueta">
-                CINEFILIA CLUB · TU HISTORIAL
-            </p>
+            <p class="etiqueta">CINEFILIA CLUB · TU HISTORIAL</p>
 
-            <h1>
-                Mis compras
-            </h1>
+            <h1>Mis compras</h1>
 
-            <p>
-                Consultá tus entradas, el Candy y sus comprobantes.
-            </p>
+            <p>Consultá tus entradas, el Candy y sus comprobantes.</p>
         </div>
 
         <div class="acciones">
@@ -34,87 +23,56 @@
             <button
                 class="boton peligro"
                 type="button"
-                [disabled]="
-                    cargando() ||
-                    modificando() ||
-                    total() === 0
-                "
+                [disabled]="cargando() || modificando() || total() === 0"
                 (click)="limpiarHistorial()"
             >
-                {{
-                    modificando()
-                        ? 'Guardando...'
-                        : 'Limpiar historial'
-                }}
+                {{ modificando() ? 'Guardando...' : 'Limpiar historial' }}
             </button>
         </div>
     </header>
 
     <p class="aviso">
-        Ocultar compras no cancela las entradas ni el Candy
-        y no genera un reintegro. Descargá los QR que necesites
-        antes de ocultarlas.
+        Ocultar compras no cancela las entradas ni el Candy y no genera un reintegro. Descargá los
+        QR que necesites antes de ocultarlas.
     </p>
 
     @if (invitado()) {
         <p class="aviso">
-            Estas compras de invitado están vinculadas a este
-            navegador. El historial se oculta solamente en este
-            dispositivo. Descargá los QR para conservarlos si
-            borrás los datos del sitio.
+            Estas compras de invitado están vinculadas a este navegador. El historial se oculta
+            solamente en este dispositivo. Descargá los QR para conservarlos si borrás los datos del
+            sitio.
         </p>
     }
 
     @if (exito()) {
-        <p
-            class="exito"
-            role="status"
-        >
+        <p class="exito" role="status">
             {{ exito() }}
         </p>
     }
 
     @if (error()) {
-        <p
-            class="error"
-            role="alert"
-        >
+        <p class="error" role="alert">
             {{ error() }}
         </p>
     }
 
     @if (cargando()) {
-        <p role="status">
-            Consultando compras...
-        </p>
+        <p role="status">Consultando compras...</p>
     } @else {
         <div class="lista">
-            @for (
-                compra of compras();
-                track compra.compra_id
-            ) {
+            @for (compra of compras(); track compra.compra_id) {
                 <article class="tarjeta">
                     <h2>
-                        {{
-                            compra.solo_candy
-                                ? 'Compra de Candy'
-                                : compra.funcion.pelicula_nombre
-                        }}
+                        {{ compra.solo_candy ? 'Compra de Candy' : compra.funcion.pelicula_nombre }}
                     </h2>
 
                     @if (compra.solo_candy) {
-                        <p>
-                            Productos y combos para retirar
-                            en el sector Candy.
-                        </p>
+                        <p>Productos y combos para retirar en el sector Candy.</p>
                     } @else {
                         <p>
                             {{ compra.funcion.sala_nombre }}
                             ·
-                            {{
-                                compra.funcion.inicio
-                                    | date:'dd/MM/yyyy HH:mm':'-0300'
-                            }}
+                            {{ compra.funcion.inicio | date: 'dd/MM/yyyy HH:mm' : '-0300' }}
                             ·
                             {{ compra.funcion.formato }}
                         </p>
@@ -122,42 +80,30 @@
 
                     <p>
                         Compra realizada:
-                        {{
-                            compra.creado_en
-                                | date:'dd/MM/yyyy HH:mm':'-0300'
-                        }}
+                        {{ compra.creado_en | date: 'dd/MM/yyyy HH:mm' : '-0300' }}
                     </p>
 
                     <p>
                         @if (!compra.solo_candy) {
                             {{ compra.entradas.length }}
-                            {{
-                                compra.entradas.length === 1
-                                    ? 'entrada'
-                                    : 'entradas'
-                            }}
+                            {{ compra.entradas.length === 1 ? 'entrada' : 'entradas' }}
                             ·
                         }
 
-                        ARS {{ compra.total | number:'1.2-2' }}
+                        ARS {{ compra.total | number: '1.2-2' }}
                     </p>
 
                     <p>
                         Estado:
-                        {{
-                            compra.estado === 'confirmada'
-                                ? 'Confirmada'
-                                : 'Cancelada'
-                        }}
+                        {{ compra.estado === 'confirmada' ? 'Confirmada' : 'Cancelada' }}
                         ·
-                        {{
-                            compra.modalidad === 'prueba'
-                                ? 'Compra de prueba'
-                                : 'Compra'
-                        }}
+                        {{ compra.modalidad === 'prueba' ? 'Compra de prueba' : 'Compra' }}
                     </p>
 
                     <div class="acciones">
+                        @if (compra.estado === 'confirmada' && compra.funcion_id) {
+                            <button type="button" class="boton secundario" [disabled]="modificando() || cargando()" (click)="cancelarCompra(compra)">Cancelar y recibir crédito</button>
+                        }
                         <button
                             class="boton"
                             type="button"
@@ -178,58 +124,33 @@
                     </div>
                 </article>
             } @empty {
-                <p>
-                    No hay compras visibles en tu historial.
-                </p>
+                <p>No hay compras visibles en tu historial.</p>
 
                 <div class="acciones">
-                    <a
-                        class="boton"
-                        routerLink="/cartelera"
-                    >
-                        Ver cartelera
-                    </a>
+                    <a class="boton" routerLink="/cartelera"> Ver cartelera </a>
 
-                    <a
-                        class="boton secundario"
-                        routerLink="/candy"
-                    >
-                        Comprar Candy
-                    </a>
+                    <a class="boton secundario" routerLink="/candy"> Comprar Candy </a>
                 </div>
             }
         </div>
 
         @if (total() > 10) {
-            <div
-                class="acciones"
-                aria-label="Paginación del historial"
-            >
+            <div class="acciones" aria-label="Paginación del historial">
                 <button
                     class="boton secundario"
                     type="button"
-                    [disabled]="
-                        pagina() === 0 ||
-                        modificando() ||
-                        dibujando()
-                    "
+                    [disabled]="pagina() === 0 || modificando() || dibujando()"
                     (click)="cargar(pagina() - 1)"
                 >
                     Anterior
                 </button>
 
-                <span>
-                    Página {{ pagina() + 1 }}
-                </span>
+                <span> Página {{ pagina() + 1 }} </span>
 
                 <button
                     class="boton secundario"
                     type="button"
-                    [disabled]="
-                        (pagina() + 1) * 10 >= total() ||
-                        modificando() ||
-                        dibujando()
-                    "
+                    [disabled]="(pagina() + 1) * 10 >= total() || modificando() || dibujando()"
                     (click)="cargar(pagina() + 1)"
                 >
                     Siguiente
@@ -239,25 +160,13 @@
     }
 
     @if (seleccionada(); as compra) {
-        <section
-            id="detalle-compra"
-            class="detalle"
-            aria-labelledby="titulo-detalle-compra"
-        >
+        <section id="detalle-compra" class="detalle" aria-labelledby="titulo-detalle-compra">
             <div class="cabecera">
                 <h2 id="titulo-detalle-compra">
-                    {{
-                        compra.solo_candy
-                            ? 'Compra de Candy'
-                            : compra.funcion.pelicula_nombre
-                    }}
+                    {{ compra.solo_candy ? 'Compra de Candy' : compra.funcion.pelicula_nombre }}
                 </h2>
 
-                <button
-                    class="boton secundario"
-                    type="button"
-                    (click)="cerrarDetalle()"
-                >
+                <button class="boton secundario" type="button" (click)="cerrarDetalle()">
                     Cerrar detalle
                 </button>
             </div>
@@ -265,54 +174,34 @@
             <div class="detalle-columnas">
                 <div class="detalle-informacion">
                     @if (compra.solo_candy) {
-                        <p>
-                            Esta compra corresponde únicamente
-                            a productos y combos de Candy.
-                        </p>
+                        <p>Esta compra corresponde únicamente a productos y combos de Candy.</p>
 
-                        <p>
-                            Presentá el QR en el sector Candy
-                            para retirar tu pedido.
-                        </p>
+                        <p>Presentá el QR en el sector Candy para retirar tu pedido.</p>
                     } @else {
                         <p>
                             {{ compra.funcion.sala_nombre }}
                             ·
-                            {{
-                                compra.funcion.inicio
-                                    | date:'dd/MM/yyyy HH:mm':'-0300'
-                            }}
+                            {{ compra.funcion.inicio | date: 'dd/MM/yyyy HH:mm' : '-0300' }}
                             ·
                             {{ compra.funcion.formato }}
                         </p>
 
-                        <h3>
-                            Entradas
-                        </h3>
+                        <h3>Entradas</h3>
 
                         <ul>
-                            @for (
-                                entrada of compra.entradas;
-                                track entrada.id
-                            ) {
+                            @for (entrada of compra.entradas; track entrada.id) {
                                 <li>
-                                    Fila {{ entrada.fila }}
-                                    ·
-                                    Butaca {{ entrada.numero }}
+                                    Fila {{ entrada.fila }} · Butaca {{ entrada.numero }}
                                     ·
                                     {{
                                         entrada.tipo === 'vip'
                                             ? 'VIP'
                                             : entrada.tipo === 'accesible'
-                                                ? 'Accesible'
-                                                : 'Estándar'
+                                              ? 'Accesible'
+                                              : 'Estándar'
                                     }}
-                                    ·
-                                    ARS
-                                    {{
-                                        entrada.precio
-                                            | number:'1.2-2'
-                                    }}
+                                    · ARS
+                                    {{ entrada.precio | number: '1.2-2' }}
                                 </li>
                             }
                         </ul>
@@ -321,47 +210,31 @@
                             <p class="aviso">
                                 Edad mínima:
                                 {{ compra.funcion.edad_minima }}
-                                años. Se requiere acompañamiento
-                                de un adulto.
+                                años. Se requiere acompañamiento de un adulto.
                             </p>
                         }
                     }
 
                     @if (compra.candy.length > 0) {
-                        <h3>
-                            Candy
-                        </h3>
+                        <h3>Candy</h3>
 
                         <ul>
-                            @for (
-                                item of compra.candy;
-                                track item.id
-                            ) {
+                            @for (item of compra.candy; track item.id) {
                                 <li>
                                     {{ item.cantidad }}
                                     ×
                                     {{ item.nombre }}
-                                    ·
-                                    ARS
-                                    {{
-                                        item.subtotal
-                                            | number:'1.2-2'
-                                    }}
+                                    · ARS
+                                    {{ item.subtotal | number: '1.2-2' }}
 
-                                    @if (
-                                        item.tipo === 'combo' &&
-                                        item.componentes.length > 0
-                                    ) {
+                                    @if (item.tipo === 'combo' && item.componentes.length > 0) {
                                         <ul>
                                             @for (
                                                 producto of item.componentes;
                                                 track producto.producto_id
                                             ) {
                                                 <li>
-                                                    {{
-                                                        producto.cantidad *
-                                                        item.cantidad
-                                                    }}
+                                                    {{ producto.cantidad * item.cantidad }}
                                                     ×
                                                     {{ producto.nombre }}
                                                 </li>
@@ -375,35 +248,41 @@
 
                     @if (!compra.solo_candy) {
                         <p>
-                            Subtotal entradas:
-                            ARS
-                            {{
-                                compra.total_entradas
-                                    | number:'1.2-2'
-                            }}
+                            Subtotal entradas: ARS
+                            {{ compra.total_entradas | number: '1.2-2' }}
                         </p>
                     }
 
                     @if (compra.candy.length > 0) {
                         <p>
-                            Subtotal Candy:
-                            ARS
-                            {{
-                                compra.total_candy
-                                    | number:'1.2-2'
-                            }}
+                            Subtotal Candy: ARS
+                            {{ compra.total_candy | number: '1.2-2' }}
                         </p>
                     }
 
-                    <p class="total">
-                        Total:
-                        ARS {{ compra.total | number:'1.2-2' }}
-                    </p>
+                    @if ((compra.descuento ?? 0) > 0) {
+                        <p>
+                            Subtotal: ARS
+                            {{ compra.total_entradas + compra.total_candy | number: '1.2-2' }}
+                        </p>
+
+                        @for (cupon of compra.cupones ?? []; track cupon.id) {
+                            <p>
+                                Cupón {{ cupon.codigo }} ({{
+                                    cupon.porcentaje | number: '1.0-2'
+                                }}
+                                %)
+                            </p>
+                        }
+
+                        <p>Descuento total: − ARS {{ compra.descuento ?? 0 | number: '1.2-2' }}</p>
+                    }
+
+                    <p class="total">Total: ARS {{ compra.total | number: '1.2-2' }}</p>
 
                     @if (compra.modalidad === 'prueba') {
                         <p class="aviso">
-                            Esta es una compra de prueba.
-                            No se realizó un cobro real.
+                            Esta es una compra de prueba. No se realizó un cobro real.
                         </p>
                     }
                 </div>
@@ -411,13 +290,10 @@
                 <div class="detalle-qr">
                     @if (compra.estado === 'cancelada') {
                         <p class="aviso">
-                            Esta compra está cancelada.
-                            Sus comprobantes no son válidos.
+                            Esta compra está cancelada. Sus comprobantes no son válidos.
                         </p>
                     } @else if (dibujando()) {
-                        <p role="status">
-                            Preparando el QR...
-                        </p>
+                        <p role="status">Preparando el QR...</p>
                     } @else {
                         @if (comprobantes()[0]; as qr) {
                             <div class="comprobantes">
@@ -439,17 +315,14 @@
                                         "
                                         width="280"
                                         height="280"
-                                    >
+                                    />
 
                                     <p class="codigo">
                                         {{ qr.codigo }}
                                     </p>
 
                                     <div class="estados-qr">
-                                        @for (
-                                            estado of compra.comprobantes;
-                                            track estado.tipo
-                                        ) {
+                                        @for (estado of compra.comprobantes; track estado.tipo) {
                                             <p>
                                                 <strong>
                                                     {{
@@ -463,8 +336,8 @@
                                                     estado.estado === 'utilizado'
                                                         ? 'Utilizado'
                                                         : estado.estado === 'cancelado'
-                                                            ? 'Cancelado'
-                                                            : 'Pendiente'
+                                                          ? 'Cancelado'
+                                                          : 'Pendiente'
                                                 }}
                                             </p>
                                         }
@@ -473,11 +346,7 @@
                                     <a
                                         class="boton secundario"
                                         [href]="qr.imagen"
-                                        [attr.download]="
-                                            'cinefilia-' +
-                                            compra.compra_id +
-                                            '.png'
-                                        "
+                                        [attr.download]="'cinefilia-' + compra.compra_id + '.png'"
                                     >
                                         Descargar QR
                                     </a>
@@ -486,10 +355,7 @@
                         }
 
                         @if (errorQr()) {
-                            <p
-                                class="error"
-                                role="alert"
-                            >
+                            <p class="error" role="alert">
                                 {{ errorQr() }}
                             </p>
 

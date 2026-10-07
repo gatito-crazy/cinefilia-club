@@ -1,0 +1,96 @@
+<section class="recuperacion" aria-labelledby="tituloRecuperacion">
+  <h1 id="tituloRecuperacion">
+    {{ restablecer ? 'Elegí tu nueva contraseña' : '¿Olvidaste tu contraseña?' }}
+  </h1>
+  @if (comprobando()) {
+    <p role="status">Comprobando el enlace…</p>
+  } @else if (exito()) {
+    <p class="exito" role="status">{{ exito() }}</p>
+    <a class="boton secundario volver" routerLink="/">Volver al inicio</a>
+  } @else {
+    @if (error()) {
+      <p class="error" role="alert">{{ error() }}</p>
+    }
+    @if (!restablecer || enlaceValido()) {
+      <p>
+        {{
+          restablecer
+            ? 'Escribí la contraseña nueva dos veces para confirmarla.'
+            : 'Ingresá el correo de tu cuenta y te enviaremos un enlace para recuperarla.'
+        }}
+      </p>
+      <form #formulario="ngForm" (ngSubmit)="enviar(formulario)">
+        @if (restablecer) {
+          <div class="campo">
+            <label for="nuevaPassword">Nueva contraseña</label>
+            <input
+              id="nuevaPassword"
+              name="password"
+              [type]="mostrar() ? 'text' : 'password'"
+              autocomplete="new-password"
+              [(ngModel)]="password"
+              required
+              minlength="8"
+              maxlength="16"
+              [pattern]="patronPassword"
+              [disabled]="enviando()"
+              aria-describedby="requisitosPassword"
+            />
+            <small id="requisitosPassword"
+              >Entre 8 y 16 caracteres, con mayúscula, minúscula, número y símbolo, sin
+              espacios.</small
+            >
+          </div>
+          <div class="campo">
+            <label for="confirmarPassword">Confirmar contraseña</label>
+            <input
+              id="confirmarPassword"
+              name="confirmarPassword"
+              [type]="mostrar() ? 'text' : 'password'"
+              autocomplete="new-password"
+              [(ngModel)]="confirmarPassword"
+              required
+              [disabled]="enviando()"
+            />
+          </div>
+          <button
+            class="secundario"
+            type="button"
+            [attr.aria-pressed]="mostrar()"
+            [disabled]="enviando()"
+            (click)="mostrar.set(!mostrar())"
+          >
+            {{ mostrar() ? 'Ocultar contraseñas' : 'Mostrar contraseñas' }}
+          </button>
+        } @else {
+          <div class="campo">
+            <label for="correoRecuperacion">Correo electrónico</label>
+            <input
+              id="correoRecuperacion"
+              name="email"
+              type="email"
+              autocomplete="email"
+              [(ngModel)]="email"
+              required
+              email
+              [disabled]="enviando()"
+            />
+          </div>
+        }
+        <button class="boton" type="submit" [disabled]="enviando()">
+          {{
+            enviando()
+              ? 'Procesando…'
+              : restablecer
+                ? 'Guardar contraseña'
+                : 'Enviar enlace de recuperación'
+          }}
+        </button>
+      </form>
+    }
+    @if (restablecer) {
+      <a class="nuevo-enlace" routerLink="/recuperar-contrasena">Solicitar un enlace nuevo</a>
+    }
+    <a class="boton secundario volver" routerLink="/">Volver al inicio</a>
+  }
+</section>

@@ -258,3 +258,11 @@ input:focus-visible {
         transform: none;
     }
 }
+
+@media (max-width: 600px) {
+    .panel-salas {
+        padding: 0;
+        border: none;
+        background: transparent;
+    }
+}

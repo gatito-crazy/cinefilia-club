@@ -1,0 +1,19 @@
+{
+    "id": "/",
+    "name": "Cinefilia Club",
+    "short_name": "Cinefilia",
+    "lang": "es-AR",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#151420",
+    "theme_color": "#b72843",
+    "icons": [
+        {
+            "src": "/cinefili-club-icono.png",
+            "sizes": "1254x1254",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ]
+}

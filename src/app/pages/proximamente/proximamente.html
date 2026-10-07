@@ -1,0 +1,60 @@
+<section class="beneficios">
+    <header>
+        <p class="etiqueta">LAS HISTORIAS QUE VIENEN</p>
+        <h1>Próximamente</h1>
+        <p>
+            Estrenos de las próximas seis semanas. Activá una alerta y te avisaremos
+            cuando haya entradas disponibles.
+        </p>
+    </header>
+    @if (error()) {
+        <p role="alert" class="error">{{ error() }}</p>
+        <button (click)="cargar()" [disabled]="cargando()">Reintentar</button>
+    }
+    @if (exito()) {
+        <p role="status">{{ exito() }}</p>
+    }
+    @if (cargando()) {
+        <p role="status">Cargando estrenos…</p>
+    }
+    <div class="grilla">
+        @for (p of peliculas(); track p.id) {
+            <article class="tarjeta">
+                @if (p.imagen_url) {
+                    <img
+                        [src]="p.imagen_url"
+                        [alt]="'Póster de ' + p.nombre"
+                        loading="lazy"
+                    />
+                }
+                <h2>{{ p.nombre }}</h2>
+                <p>Estreno: {{ p.fecha_estreno | date: 'dd/MM/yyyy' : 'UTC' }}</p>
+                <p>{{ p.sinopsis }}</p>
+                @if (p.venta.preventa) {
+                    <p class="etiqueta">
+                        Preventa: 10 % de descuento en 2D, 3D, 4D y 5D, excepto VIP ·
+                        hasta
+                        {{ p.venta.fin | date: 'dd/MM/yyyy HH:mm' }}
+                    </p>
+                }
+                @if (p.venta.abierta) {
+                    <a
+                        class="boton"
+                        routerLink="/cartelera"
+                        [queryParams]="{ pelicula: p.id }"
+                        >Elegir función</a
+                    >
+                } @else {
+                    <p>La venta todavía no está habilitada.</p>
+                }
+                <button [disabled]="!!ocupada()" (click)="alerta(p)">
+                    {{ p.alerta ? 'Desactivar alerta' : 'Avisarme cuando haya entradas' }}
+                </button>
+            </article>
+        } @empty {
+            @if (!cargando()) {
+                <p>No hay estrenos anunciados para las próximas semanas.</p>
+            }
+        }
+    </div>
+</section>

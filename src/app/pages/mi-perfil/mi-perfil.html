@@ -1,0 +1,113 @@
+<section class="beneficios">
+  <h1>Mi perfil</h1>
+  <button (click)="cargar()" [disabled]="cargando() || !!guardando()">Actualizar</button>
+  <nav class="secciones-perfil" aria-label="Secciones de mi perfil">
+    <button
+      type="button"
+      [class.activo]="seccion() === 'beneficios'"
+      [attr.aria-pressed]="seccion() === 'beneficios'"
+      (click)="seccion.set('beneficios')"
+    >
+      Puntos y crédito
+    </button>
+    <button
+      type="button"
+      [class.activo]="seccion() === 'peliculas'"
+      [attr.aria-pressed]="seccion() === 'peliculas'"
+      (click)="seccion.set('peliculas')"
+    >
+      Mis películas y reseñas
+    </button>
+  </nav>
+  @if (error()) {
+    <p role="alert" class="error">{{ error() }}</p>
+  }
+  @if (exito()) {
+    <p role="status">{{ exito() }}</p>
+  }
+  @if (cargando()) {
+    <p role="status">Cargando tu cuenta…</p>
+  }
+  @if (seccion() === 'beneficios') {
+    @if (billetera(); as b) {
+      <div class="resumen">
+        <h2>Puntos y crédito</h2>
+        <p>
+          <strong>{{ b.puntos }} puntos</strong>
+        </p>
+        <p>
+          Crédito disponible: <strong>ARS {{ b.credito | number: '1.2-2' }}</strong>
+        </p>
+        <p>Ganás 1 punto por peso gastado. Los puntos no se pueden transferir.</p>
+      </div>
+      <details class="historial-desplegable">
+        <summary>Historial de compras, canjes y crédito ({{ b.historial.length }})</summary>
+        <div class="tabla">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Movimiento</th>
+                <th>Puntos</th>
+                <th>Crédito</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (m of b.historial; track m.id) {
+                <tr>
+                  <td>{{ m.creado_en | date: 'dd/MM/yyyy HH:mm' }}</td>
+                  <td>{{ m.concepto }}</td>
+                  <td>{{ m.puntos }}</td>
+                  <td>ARS {{ m.credito | number: '1.2-2' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4">Todavía no hay movimientos.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </details>
+    }
+    <fieldset [disabled]="cargando() || !!guardando()">
+      <legend>Crédito de una compra como invitado</legend>
+      <p>
+        Si cancelaste una compra como invitado, registrate con el correo de esa compra y confirmalo.
+        Después ingresá el código del QR para recibir el crédito.
+      </p>
+      <label>Código del comprobante<input [(ngModel)]="codigoCompensacion" maxlength="36" /></label
+      ><button (click)="reclamar()" [disabled]="!codigoCompensacion">Reclamar crédito</button>
+    </fieldset>
+  }
+  @if (seccion() === 'peliculas') {
+    <h2>Mis películas y reseñas</h2>
+    <p>Películas cuyas entradas fueron utilizadas en el cine.</p>
+    <div class="grilla">
+      @for (p of peliculas(); track p.id) {
+        <article class="tarjeta">
+          @if (p.imagen_url) {
+            <img [src]="p.imagen_url" [alt]="p.nombre" loading="lazy" />
+          }
+          <h3>{{ p.nombre }}</h3>
+          @for (fecha of p.fechas; track fecha) {
+            <p>{{ fecha | date: 'dd/MM/yyyy HH:mm' }}</p>
+          }
+          <label
+            >Tu calificación<select [(ngModel)]="estrellas[p.id]">
+              @for (n of [1, 2, 3, 4, 5]; track n) {
+                <option [ngValue]="n">{{ n }} estrellas</option>
+              }
+            </select></label
+          >
+          <label
+            >Comentario<textarea maxlength="500" [(ngModel)]="comentarios[p.id]"></textarea>
+          </label>
+          <button [disabled]="!!guardando()" (click)="calificar(p)">Guardar reseña</button>
+        </article>
+      } @empty {
+        <p>Cuando uses una entrada, la película aparecerá acá.</p>
+      }
+    </div>
+  }
+</section>

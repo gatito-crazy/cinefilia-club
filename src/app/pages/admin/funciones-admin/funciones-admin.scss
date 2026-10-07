@@ -68,9 +68,19 @@ small {
     background: #28283a;
 }
 
+.boton.peligro {
+    border-color: #a83b49;
+    background: #702332;
+    color: #ffffff;
+}
+
 .boton:disabled {
     opacity: 0.55;
     cursor: not-allowed;
+}
+
+.boton:active:not(:disabled) {
+    transform: scale(0.97);
 }
 
 .editor-funcion {
@@ -142,6 +152,41 @@ small {
     height: 18px;
     margin: 0;
     accent-color: #b72d40;
+}
+
+.filtro-archivadas {
+    width: fit-content;
+    max-width: 100%;
+    gap: 0.75rem;
+    margin: 0 0 1.5rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #50506a;
+    border-radius: 10px;
+    background: #222233;
+    color: #dedee9;
+}
+
+.filtro-archivadas input {
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.filtro-archivadas span {
+    min-width: 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.filtro-archivadas input:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.filtro-archivadas input:disabled + span {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
 .lista-funciones {
@@ -223,53 +268,6 @@ input:focus-visible,
 select:focus-visible {
     outline: 2px solid #ffb4c0;
     outline-offset: 4px;
-}
-
-@media (hover: hover) and (pointer: fine) {
-    .boton:hover:not(:disabled) {
-        background: #d0374c;
-        transform: translateY(-2px);
-    }
-
-    .boton.secundario:hover:not(:disabled) {
-        background: #38384b;
-    }
-}
-
-.boton:active:not(:disabled) {
-    transform: scale(0.97);
-}
-
-@media (max-width: 600px) {
-    .panel-funciones,
-    .editor-funcion,
-    .tarjeta-funcion {
-        padding: 1rem;
-    }
-
-    .fila,
-    .precios-formulario {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .cabecera-funciones > .acciones {
-        width: 100%;
-    }
-
-    .acciones .boton {
-        flex: 1 1 130px;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .boton {
-        transition: none;
-    }
-
-    .boton:hover:not(:disabled),
-    .boton:active:not(:disabled) {
-        transform: none;
-    }
 }
 
 .estado-temporal {
@@ -372,17 +370,6 @@ select:focus-visible {
     line-height: 1.5;
 }
 
-@media (max-width: 600px) {
-    .solapas-modulo {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .grupo-sala {
-        padding: 0.85rem;
-    }
-}
-
 .resumen-tarifas {
     display: grid;
     grid-template-columns: repeat(
@@ -417,12 +404,6 @@ select:focus-visible {
 .tarjeta-tarifa > .boton {
     width: 100%;
     margin-top: auto;
-}
-
-@media (max-width: 600px) {
-    .resumen-tarifas {
-        grid-template-columns: minmax(0, 1fr);
-    }
 }
 
 .programacion-multiple {
@@ -518,7 +499,58 @@ select:focus-visible {
     line-height: 1.5;
 }
 
+@media (hover: hover) and (pointer: fine) {
+    .boton:hover:not(:disabled) {
+        background: #d0374c;
+        transform: translateY(-2px);
+    }
+
+    .boton.secundario:hover:not(:disabled) {
+        background: #38384b;
+    }
+
+    .boton.peligro:hover:not(:disabled) {
+        background: #922d40;
+    }
+}
+
 @media (max-width: 600px) {
+    .panel-funciones,
+    .editor-funcion,
+    .tarjeta-funcion {
+        padding: 1rem;
+    }
+
+    .fila,
+    .precios-formulario {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .cabecera-funciones > .acciones {
+        width: 100%;
+    }
+
+    .acciones .boton {
+        flex: 1 1 130px;
+    }
+
+    .solapas-modulo {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .filtro-archivadas {
+        width: 100%;
+    }
+
+    .grupo-sala {
+        padding: 0.85rem;
+    }
+
+    .resumen-tarifas {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
     .programacion-multiple {
         padding: 1rem;
     }
@@ -532,14 +564,13 @@ select:focus-visible {
     }
 }
 
-.boton.peligro {
-    border-color: #a83b49;
-    background: #702332;
-    color: #ffffff;
-}
+@media (prefers-reduced-motion: reduce) {
+    .boton {
+        transition: none;
+    }
 
-@media (hover: hover) and (pointer: fine) {
-    .boton.peligro:hover:not(:disabled) {
-        background: #922d40;
+    .boton:hover:not(:disabled),
+    .boton:active:not(:disabled) {
+        transform: none;
     }
 }

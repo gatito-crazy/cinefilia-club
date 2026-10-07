@@ -25,6 +25,7 @@ export interface ComponenteComboCandy {
 }
 
 export interface ComboCandy {
+    incluye_entrada?: boolean;
     id: string;
     nombre: string;
     descripcion: string;
@@ -45,6 +46,7 @@ export interface DatosProductoCandy {
 }
 
 export interface DatosComboCandy {
+    incluye_entrada?: boolean;
     nombre: string;
     descripcion: string;
     precio: number;
@@ -76,10 +78,12 @@ export class CandyService {
     async obtenerProductos(): Promise<ProductoCandy[]> {
         const { data, error } = await this.supabase.cliente
             .from('candy_productos')
-            .select(`
+            .select(
+                `
                 id, categoria_id, nombre, descripcion,
                 precio, imagen_url, activo, creado_en
-            `)
+            `
+            )
             .order('nombre')
             .overrideTypes<ProductoCandy[], { merge: false }>();
 
@@ -93,13 +97,15 @@ export class CandyService {
     async obtenerCombos(): Promise<ComboCandy[]> {
         const { data, error } = await this.supabase.cliente
             .from('candy_combos')
-            .select(`
+            .select(
+                `
                 id, nombre, descripcion, precio,
                 imagen_url, activo, creado_en,
                 componentes:candy_combo_productos (
                     producto_id, cantidad
                 )
-            `)
+            `
+            )
             .order('nombre')
             .overrideTypes<ComboCandy[], { merge: false }>();
 
@@ -125,14 +131,13 @@ export class CandyService {
 
         const valores = { nombre: nombreLimpio, activa };
 
-        const consulta = categoriaId === null
-            ? this.supabase.cliente
-                .from('candy_categorias')
-                .insert(valores)
-            : this.supabase.cliente
-                .from('candy_categorias')
-                .update(valores)
-                .eq('id', categoriaId);
+        const consulta =
+            categoriaId === null
+                ? this.supabase.cliente.from('candy_categorias').insert(valores)
+                : this.supabase.cliente
+                      .from('candy_categorias')
+                      .update(valores)
+                      .eq('id', categoriaId);
 
         const { data, error } = await consulta
             .select('id, nombre, activa, creado_en')
@@ -158,20 +163,21 @@ export class CandyService {
             imagen_url: datos.imagen_url?.trim() || null
         };
 
-        const consulta = productoId === null
-            ? this.supabase.cliente
-                .from('candy_productos')
-                .insert(valores)
-            : this.supabase.cliente
-                .from('candy_productos')
-                .update(valores)
-                .eq('id', productoId);
+        const consulta =
+            productoId === null
+                ? this.supabase.cliente.from('candy_productos').insert(valores)
+                : this.supabase.cliente
+                      .from('candy_productos')
+                      .update(valores)
+                      .eq('id', productoId);
 
         const { data, error } = await consulta
-            .select(`
+            .select(
+                `
                 id, categoria_id, nombre, descripcion,
                 precio, imagen_url, activo, creado_en
-            `)
+            `
+            )
             .single<ProductoCandy>();
 
         if (error) {
@@ -181,10 +187,7 @@ export class CandyService {
         return data;
     }
 
-    async cambiarEstadoProducto(
-        productoId: string,
-        activo: boolean
-    ): Promise<void> {
+    async cambiarEstadoProducto(productoId: string, activo: boolean): Promise<void> {
         const { error } = await this.supabase.cliente
             .from('candy_productos')
             .update({ activo })
@@ -197,22 +200,22 @@ export class CandyService {
         }
     }
 
-    async guardarCombo(
-        comboId: string | null,
-        datos: DatosComboCandy
-    ): Promise<string> {
+    async guardarCombo(comboId: string | null, datos: DatosComboCandy): Promise<string> {
         this.validarCombo(datos);
 
-        const { data, error } = await this.supabase.cliente
-            .rpc('cine_guardar_combo', {
-                p_id: comboId,
-                p_nombre: datos.nombre.trim(),
-                p_descripcion: datos.descripcion.trim(),
-                p_precio: datos.precio,
-                p_imagen_url: datos.imagen_url?.trim() || null,
-                p_activo: datos.activo,
-                p_componentes: datos.componentes
-            });
+        if (datos.incluye_entrada) {
+            return this.guardarComboEntrada(comboId, datos);
+        }
+
+        const { data, error } = await this.supabase.cliente.rpc('cine_guardar_combo', {
+            p_id: comboId,
+            p_nombre: datos.nombre.trim(),
+            p_descripcion: datos.descripcion.trim(),
+            p_precio: datos.precio,
+            p_imagen_url: datos.imagen_url?.trim() || null,
+            p_activo: datos.activo,
+            p_componentes: datos.componentes
+        });
 
         if (error) {
             throw error;
@@ -227,15 +230,37 @@ export class CandyService {
         return data;
     }
 
+    private async guardarComboEntrada(
+        comboId: string | null,
+        datos: DatosComboCandy
+    ): Promise<string> {
+        const { data, error } = await this.supabase.cliente.rpc('cine_guardar_paquete', {
+            p_datos: {
+                id: comboId,
+                nombre: datos.nombre.trim(),
+                descripcion: datos.descripcion.trim(),
+                imagen_url: datos.imagen_url?.trim() || null,
+                precio: datos.precio,
+                activo: datos.activo,
+                componentes: datos.componentes
+            }
+        });
+        if (error) {
+            throw error;
+        }
+        if (typeof data !== 'string') {
+            throw new Error('No se recibió la identificación del combo con entrada.');
+        }
+        return data;
+    }
+
     validarImagen(archivo: File): void {
         if (!['image/jpeg', 'image/png', 'image/webp'].includes(archivo.type)) {
             throw new Error('Elegí una imagen JPG, PNG o WEBP.');
         }
 
         if (archivo.size === 0 || archivo.size > 5 * 1024 * 1024) {
-            throw new Error(
-                'La imagen debe pesar como máximo 5 MB y no estar vacía.'
-            );
+            throw new Error('La imagen debe pesar como máximo 5 MB y no estar vacía.');
         }
     }
 
@@ -248,8 +273,7 @@ export class CandyService {
             'image/webp': 'webp'
         };
 
-        const ruta =
-            `gestion/${crypto.randomUUID()}.${extensiones[archivo.type]}`;
+        const ruta = `gestion/${crypto.randomUUID()}.${extensiones[archivo.type]}`;
 
         const { error } = await this.supabase.cliente.storage
             .from('candy-imagenes')
@@ -281,10 +305,7 @@ export class CandyService {
     validarCombo(datos: DatosComboCandy): void {
         this.validarDatosGenerales(datos);
 
-        if (
-            datos.componentes.length === 0 ||
-            datos.componentes.length > 50
-        ) {
+        if (datos.componentes.length === 0 || datos.componentes.length > 50) {
             throw new Error(
                 'Seleccioná entre 1 y 50 productos diferentes para el combo.'
             );
@@ -293,10 +314,7 @@ export class CandyService {
         const ids = new Set<string>();
 
         for (const componente of datos.componentes) {
-            if (
-                !componente.producto_id ||
-                ids.has(componente.producto_id)
-            ) {
+            if (!componente.producto_id || ids.has(componente.producto_id)) {
                 throw new Error(
                     'La composición contiene un producto inválido o repetido.'
                 );
@@ -305,10 +323,12 @@ export class CandyService {
             if (
                 !Number.isInteger(componente.cantidad) ||
                 componente.cantidad < 1 ||
-                componente.cantidad > 100
+                componente.cantidad > (datos.incluye_entrada ? 20 : 100)
             ) {
                 throw new Error(
-                    'Las cantidades deben ser enteros entre 1 y 100.'
+                    datos.incluye_entrada
+                        ? 'Usá entre 1 y 20 unidades por producto en el combo con entrada.'
+                        : 'Las cantidades deben ser enteros entre 1 y 100.'
                 );
             }
 
@@ -325,15 +345,11 @@ export class CandyService {
         const nombre = datos.nombre.trim();
 
         if (!nombre || nombre.length > 120) {
-            throw new Error(
-                'El nombre debe tener entre 1 y 120 caracteres.'
-            );
+            throw new Error('El nombre debe tener entre 1 y 120 caracteres.');
         }
 
         if (datos.descripcion.trim().length > 1500) {
-            throw new Error(
-                'La descripción no puede superar los 1500 caracteres.'
-            );
+            throw new Error('La descripción no puede superar los 1500 caracteres.');
         }
 
         if (
@@ -344,11 +360,7 @@ export class CandyService {
             throw new Error('Ingresá un precio válido mayor a cero.');
         }
 
-        if (
-            Math.abs(
-                datos.precio * 100 - Math.round(datos.precio * 100)
-            ) > 0.0001
-        ) {
+        if (Math.abs(datos.precio * 100 - Math.round(datos.precio * 100)) > 0.0001) {
             throw new Error('El precio puede tener hasta dos decimales.');
         }
 
@@ -366,9 +378,7 @@ export class CandyService {
                     throw new Error();
                 }
             } catch {
-                throw new Error(
-                    'La imagen debe tener una dirección HTTPS válida.'
-                );
+                throw new Error('La imagen debe tener una dirección HTTPS válida.');
             }
         }
     }

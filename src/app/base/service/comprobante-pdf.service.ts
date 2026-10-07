@@ -13,15 +13,10 @@ export class ComprobantePdfService {
         }
 
         if (compra.comprobantes.length === 0) {
-            throw new Error(
-                'La compra no tiene un código QR disponible.'
-            );
+            throw new Error('La compra no tiene un código QR disponible.');
         }
 
-        const [
-            moduloPdf,
-            moduloQr
-        ] = await Promise.all([
+        const [moduloPdf, moduloQr] = await Promise.all([
             import('jspdf'),
             import('qrcode')
         ]);
@@ -36,12 +31,11 @@ export class ComprobantePdfService {
         });
 
         const soloCandy =
-            compra.solo_candy === true ||
-            compra.funcion.solo_candy === true;
+            compra.solo_candy === true || compra.funcion.solo_candy === true;
 
         const tituloCompra = soloCandy
             ? 'Compra de Candy'
-            : compra.funcion.pelicula_nombre ?? 'Compra de entradas';
+            : (compra.funcion.pelicula_nombre ?? 'Compra de entradas');
 
         const margen = 18;
         const anchoPagina = documento.internal.pageSize.getWidth();
@@ -52,15 +46,16 @@ export class ComprobantePdfService {
         let posicionY = 25;
 
         const moneda = (valor: number): string => {
-            return 'ARS ' + Number(valor).toLocaleString('es-AR', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
+            return (
+                'ARS ' +
+                Number(valor).toLocaleString('es-AR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                })
+            );
         };
 
-        const formatearFecha = (
-            valor: string | undefined
-        ): string => {
+        const formatearFecha = (valor: string | undefined): string => {
             if (!valor) {
                 return 'No disponible';
             }
@@ -94,28 +89,18 @@ export class ComprobantePdfService {
             destacado: boolean = false,
             tamanio: number = 11
         ): void => {
-            documento.setFont(
-                'helvetica',
-                destacado ? 'bold' : 'normal'
-            );
+            documento.setFont('helvetica', destacado ? 'bold' : 'normal');
 
             documento.setFontSize(tamanio);
 
-            const lineas = documento.splitTextToSize(
-                texto,
-                anchoTexto
-            ) as string[];
+            const lineas = documento.splitTextToSize(texto, anchoTexto) as string[];
 
             const altoLinea = tamanio * 0.3528 * 1.4;
 
             for (const linea of lineas) {
                 asegurarEspacio(altoLinea);
 
-                documento.text(
-                    linea,
-                    margen,
-                    posicionY
-                );
+                documento.text(linea, margen, posicionY);
 
                 posicionY += altoLinea;
             }
@@ -128,19 +113,12 @@ export class ComprobantePdfService {
 
             documento.setDrawColor(210, 210, 220);
 
-            documento.line(
-                margen,
-                posicionY,
-                anchoPagina - margen,
-                posicionY
-            );
+            documento.line(margen, posicionY, anchoPagina - margen, posicionY);
 
             posicionY += 9;
         };
 
-        const fechaFuncion = soloCandy
-            ? ''
-            : formatearFecha(compra.funcion.inicio);
+        const fechaFuncion = soloCandy ? '' : formatearFecha(compra.funcion.inicio);
 
         documento.setProperties({
             title: 'Comprobante de compra - Cinefilia Club',
@@ -155,64 +133,41 @@ export class ComprobantePdfService {
         escribir('Comprobante de compra', true, 14);
 
         if (compra.modalidad === 'prueba') {
-            escribir(
-                'COMPRA DE PRUEBA: no se cobró dinero real.',
-                true
-            );
+            escribir('COMPRA DE PRUEBA: no se cobró dinero real.', true);
         }
 
         escribir('Compra: ' + compra.compra_id);
 
-        escribir(
-            'Fecha de compra: ' +
-            formatearFecha(compra.creado_en)
-        );
+        escribir('Fecha de compra: ' + formatearFecha(compra.creado_en));
 
         separar();
 
         escribir(tituloCompra, true, 16);
 
         if (soloCandy) {
-            escribir(
-                'Compra de productos y combos sin entradas.'
-            );
+            escribir('Compra de productos y combos sin entradas.');
 
-            escribir(
-                'Presentá el QR en el sector Candy para retirar tu compra.'
-            );
+            escribir('Presentá el QR en el sector Candy para retirar tu compra.');
         } else {
-            escribir(
-                'Sala: ' +
-                (compra.funcion.sala_nombre ?? 'No disponible')
-            );
+            escribir('Sala: ' + (compra.funcion.sala_nombre ?? 'No disponible'));
 
             escribir('Fecha y horario: ' + fechaFuncion);
 
-            escribir(
-                'Formato: ' +
-                (compra.funcion.formato ?? 'No disponible')
-            );
+            escribir('Formato: ' + (compra.funcion.formato ?? 'No disponible'));
 
             const idioma = compra.funcion.idioma;
 
             escribir(
                 'Idioma: ' +
-                (
-                    idioma === 'castellano'
+                    (idioma === 'castellano'
                         ? 'Castellano'
                         : idioma === 'subtitulada'
-                            ? 'Subtitulada'
-                            : idioma ?? 'No disponible'
-                )
+                          ? 'Subtitulada'
+                          : (idioma ?? 'No disponible'))
             );
 
             if ((compra.funcion.edad_minima ?? 0) > 0) {
-                escribir(
-                    'Edad mínima: ' +
-                    compra.funcion.edad_minima +
-                    ' años.',
-                    true
-                );
+                escribir('Edad mínima: ' + compra.funcion.edad_minima + ' años.', true);
             }
 
             if (compra.funcion.requiere_adulto) {
@@ -227,17 +182,22 @@ export class ComprobantePdfService {
             escribir('ENTRADAS', true, 14);
 
             for (const entrada of compra.entradas) {
-                const tipo = entrada.tipo === 'vip'
-                    ? 'VIP'
-                    : entrada.tipo === 'accesible'
-                        ? 'Accesible'
-                        : 'Estándar';
+                const tipo =
+                    entrada.tipo === 'vip'
+                        ? 'VIP'
+                        : entrada.tipo === 'accesible'
+                          ? 'Accesible'
+                          : 'Estándar';
 
                 escribir(
-                    'Fila ' + entrada.fila +
-                    ' - Butaca ' + entrada.numero +
-                    ' - ' + tipo +
-                    ' - ' + moneda(entrada.precio)
+                    'Fila ' +
+                        entrada.fila +
+                        ' - Butaca ' +
+                        entrada.numero +
+                        ' - ' +
+                        tipo +
+                        ' - ' +
+                        moneda(entrada.precio)
                 );
             }
         }
@@ -249,9 +209,7 @@ export class ComprobantePdfService {
 
             for (const item of compra.candy) {
                 escribir(
-                    item.cantidad + ' x ' +
-                    item.nombre + ' - ' +
-                    moneda(item.subtotal),
+                    item.cantidad + ' x ' + item.nombre + ' - ' + moneda(item.subtotal),
                     true
                 );
 
@@ -259,9 +217,9 @@ export class ComprobantePdfService {
                     for (const producto of item.componentes) {
                         escribir(
                             '    ' +
-                            producto.cantidad * item.cantidad +
-                            ' x ' +
-                            producto.nombre
+                                producto.cantidad * item.cantidad +
+                                ' x ' +
+                                producto.nombre
                         );
                     }
                 }
@@ -271,35 +229,73 @@ export class ComprobantePdfService {
         separar();
 
         if (!soloCandy) {
-            escribir(
-                'Subtotal entradas: ' +
-                moneda(compra.total_entradas)
-            );
+            escribir('Subtotal entradas: ' + moneda(compra.total_entradas));
         }
 
         if (soloCandy || compra.candy.length > 0) {
-            escribir(
-                'Subtotal Candy: ' +
-                moneda(compra.total_candy)
-            );
+            escribir('Subtotal Candy: ' + moneda(compra.total_candy));
         }
 
-        escribir(
-            'TOTAL: ' + moneda(compra.total),
-            true,
-            15
-        );
+        const cupones = compra.cupones ?? (compra.cupon ? [compra.cupon] : []);
+
+        if (cupones.length > 0) {
+            escribir('Subtotal: ' + moneda(compra.total_entradas + compra.total_candy));
+
+            for (const cupon of cupones) {
+                const destino =
+                    cupon.aplica_a === 'entradas'
+                        ? 'solo entradas'
+                        : cupon.aplica_a === 'candy'
+                          ? 'solo Candy'
+                          : 'toda la compra';
+
+                escribir(
+                    'Cupón ' +
+                        cupon.codigo +
+                        ' (' +
+                        cupon.porcentaje +
+                        '%; ' +
+                        destino +
+                        ')'
+                );
+            }
+
+            escribir('Descuento total: -' + moneda(compra.descuento ?? 0));
+        }
+
+        if (compra.beneficios?.descuento_paquete) {
+            escribir(
+                'Beneficio combo con entrada: -' +
+                    moneda(compra.beneficios.descuento_paquete)
+            );
+        }
+        if (compra.beneficios?.descuento_canje) {
+            escribir('Canje de puntos: -' + moneda(compra.beneficios.descuento_canje));
+        }
+        for (const canje of compra.beneficios?.canjes ?? []) {
+            escribir(
+                canje.cantidad +
+                    ' x ' +
+                    canje.nombre +
+                    ': ' +
+                    canje.puntos +
+                    ' puntos + ' +
+                    moneda(canje.importe)
+            );
+        }
+        escribir('TOTAL: ' + moneda(compra.total), true, 15);
+        if (compra.pago?.medio) {
+            escribir('Medio de pago de prueba: ' + compra.pago.medio);
+            escribir('Crédito utilizado: ' + moneda(compra.pago.credito));
+            escribir('Importe del pago: ' + moneda(compra.pago.importe));
+        }
 
         /*
          * Si entradas y Candy comparten código,
          * se dibuja una única imagen QR.
          */
         const codigos = [
-            ...new Set(
-                compra.comprobantes.map(
-                    (comprobante) => comprobante.codigo
-                )
-            )
+            ...new Set(compra.comprobantes.map((comprobante) => comprobante.codigo))
         ];
 
         for (const codigo of codigos) {
@@ -310,32 +306,24 @@ export class ComprobantePdfService {
             escribir(tituloCompra, true, 14);
 
             if (soloCandy) {
-                escribir(
-                    'Presentá este QR para retirar tu compra de Candy.'
-                );
+                escribir('Presentá este QR para retirar tu compra de Candy.');
             } else {
                 escribir(
                     (compra.funcion.sala_nombre ?? 'Sala no disponible') +
-                    ' - ' +
-                    fechaFuncion
+                        ' - ' +
+                        fechaFuncion
                 );
             }
 
             if (compra.modalidad === 'prueba') {
-                escribir(
-                    'Compra de prueba: no se cobró dinero real.',
-                    true
-                );
+                escribir('Compra de prueba: no se cobró dinero real.', true);
             }
 
-            const imagen = await QRCode.toDataURL(
-                codigo,
-                {
-                    width: 600,
-                    margin: 4,
-                    errorCorrectionLevel: 'M'
-                }
-            );
+            const imagen = await QRCode.toDataURL(codigo, {
+                width: 600,
+                margin: 4,
+                errorCorrectionLevel: 'M'
+            });
 
             const tamanioQr = 85;
 
@@ -362,32 +350,31 @@ export class ComprobantePdfService {
             );
 
             for (const comprobante of comprobantes) {
-                const sector = comprobante.tipo === 'entrada'
-                    ? 'Ingreso al cine'
-                    : 'Retiro de Candy';
+                const sector =
+                    comprobante.tipo === 'entrada'
+                        ? 'Ingreso al cine'
+                        : 'Retiro de Candy';
 
-                const estado = comprobante.estado === 'utilizado'
-                    ? 'Utilizado'
-                    : comprobante.estado === 'cancelado'
-                        ? 'Cancelado'
-                        : 'Pendiente';
+                const estado =
+                    comprobante.estado === 'utilizado'
+                        ? 'Utilizado'
+                        : comprobante.estado === 'cancelado'
+                          ? 'Cancelado'
+                          : 'Pendiente';
 
-                escribir(
-                    sector + ': ' + estado,
-                    true
-                );
+                escribir(sector + ': ' + estado, true);
             }
 
             escribir(
                 soloCandy
                     ? 'Este comprobante corresponde al retiro de Candy.'
                     : 'Presentá este QR en el sector correspondiente. ' +
-                      'Cada sector registra su validación por separado.'
+                          'Cada sector registra su validación por separado.'
             );
 
             escribir(
                 'Los estados corresponden al momento de generar ' +
-                'este documento. La validez se comprueba en el sistema.'
+                    'este documento. La validez se comprueba en el sistema.'
             );
         }
 
@@ -400,17 +387,12 @@ export class ComprobantePdfService {
             documento.setTextColor(110, 110, 120);
 
             documento.text(
-                'Cinefilia Club - Página ' +
-                pagina +
-                ' de ' +
-                paginas,
+                'Cinefilia Club - Página ' + pagina + ' de ' + paginas,
                 margen,
                 altoPagina - 10
             );
         }
 
-        documento.save(
-            'cinefilia-' + compra.compra_id + '.pdf'
-        );
+        documento.save('cinefilia-' + compra.compra_id + '.pdf');
     }
 }

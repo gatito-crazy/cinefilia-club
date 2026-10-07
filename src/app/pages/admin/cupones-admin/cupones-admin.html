@@ -1,0 +1,412 @@
+<section class="cupones-admin" aria-labelledby="titulo-cupones">
+    <header class="cabecera">
+        <div>
+            <h1 id="titulo-cupones">Cupones y beneficios</h1>
+
+            <p>Administrá los descuentos y las condiciones para utilizarlos.</p>
+        </div>
+
+        <div class="acciones">
+            <button
+                type="button"
+                class="secundario"
+                [disabled]="cargando() || guardando()"
+                (click)="cargar()"
+            >
+                {{ cargando() ? 'Actualizando...' : 'Actualizar' }}
+            </button>
+
+            <button type="button" [disabled]="cargando() || guardando()" (click)="nuevo()">
+                Crear cupón
+            </button>
+        </div>
+    </header>
+
+    <div class="aviso">
+        <p>
+            Cada cupón tiene sus propias restricciones de edad, importe mínimo, vigencia y días
+            permitidos.
+        </p>
+
+        <p>
+            Todos los cupones se pueden acumular. Cada uno mantiene sus restricciones y se aplica a
+            la parte correspondiente de la compra.
+        </p>
+
+        <p>
+            Un beneficio permanente puede utilizarse en distintas compras, siempre que se cumplan
+            sus condiciones.
+        </p>
+    </div>
+
+    @if (error()) {
+        <p class="mensaje error" role="alert">
+            {{ error() }}
+        </p>
+    }
+
+    @if (exito()) {
+        <p class="mensaje exito" role="status">
+            {{ exito() }}
+        </p>
+    }
+
+    @if (editorAbierto()) {
+        <form class="editor" #form="ngForm" (ngSubmit)="guardar(form)">
+            <h2>
+                {{ formulario.id ? 'Editar cupón' : 'Crear cupón' }}
+            </h2>
+
+            <fieldset [disabled]="guardando() || cargando()">
+                <legend>Datos del cupón</legend>
+
+                <div class="campos">
+                    <label>
+                        Código
+
+                        <input
+                            type="text"
+                            name="codigo"
+                            [(ngModel)]="formulario.codigo"
+                            minlength="3"
+                            maxlength="40"
+                            pattern="[A-Za-z0-9_-]{3,40}"
+                            placeholder="Ejemplo: VIERNES10"
+                            autocomplete="off"
+                            required
+                        />
+
+                        <small>
+                            Entre 3 y 40 caracteres. Usá letras, números, guiones o guiones bajos.
+                        </small>
+                    </label>
+
+                    <label>
+                        Nombre
+
+                        <input
+                            type="text"
+                            name="nombre"
+                            [(ngModel)]="formulario.nombre"
+                            maxlength="120"
+                            placeholder="Ejemplo: Descuento de los viernes"
+                            required
+                        />
+                    </label>
+
+                    <label>
+                        Tipo de cupón
+
+                        <select
+                            name="tipo"
+                            [ngModel]="formulario.tipo"
+                            (ngModelChange)="cambiarTipo($event)"
+                            [disabled]="formulario.id !== null"
+                            required
+                        >
+                            <option value="general">General</option>
+
+                            <option value="mayores_50">Mayores de 50 años</option>
+
+                            @if (formulario.tipo === 'primera_compra') {
+                                <option value="primera_compra">Bienvenida / primera compra</option>
+                            }
+                        </select>
+
+                        <small> El tipo no se puede cambiar después de crear el cupón. </small>
+                    </label>
+
+                    <label>
+                        Porcentaje de descuento
+
+                        <input
+                            type="number"
+                            name="porcentaje"
+                            [(ngModel)]="formulario.porcentaje"
+                            min="0.01"
+                            max="100"
+                            step="0.01"
+                            required
+                        />
+
+                        <small> Mayor que 0 y hasta 100, con un máximo de dos decimales. </small>
+                    </label>
+                </div>
+
+                <h3 class="titulo-restricciones">Restricciones</h3>
+
+                <div class="campos">
+                    <label>
+                        Edad mínima
+
+                        <input
+                            type="number"
+                            name="edad_minima"
+                            [(ngModel)]="formulario.edad_minima"
+                            [min]="formulario.tipo === 'mayores_50' ? 51 : 0"
+                            max="120"
+                            step="1"
+                            required
+                        />
+
+                        <small>
+                            @if (formulario.tipo === 'mayores_50') {
+                                Para mayores de 50 años, la edad mínima debe ser 51 o superior.
+                            } @else {
+                                Usá 0 si no querés establecer una edad mínima.
+                            }
+                        </small>
+                    </label>
+
+                    <label>
+                        Importe mínimo
+
+                        <input
+                            type="number"
+                            name="importe_minimo"
+                            [(ngModel)]="formulario.importe_minimo"
+                            min="0"
+                            max="9999999999.99"
+                            step="0.01"
+                            required
+                        />
+
+                        <small> Usá 0 si no querés exigir un importe mínimo. </small>
+                    </label>
+
+                    <label>
+                        Aplicar descuento a
+
+                        <select name="aplica_a" [(ngModel)]="formulario.aplica_a" required>
+                            <option value="total">Toda la compra</option>
+
+                            <option value="entradas">Solo entradas</option>
+
+                            <option value="candy">Solo Candy</option>
+                        </select>
+
+                        <small>
+                            Define sobre qué parte de la compra se calcula el descuento.
+                        </small>
+                    </label>
+
+                    <label>
+                        Vigente desde
+
+                        <input
+                            type="date"
+                            name="vigente_desde"
+                            [(ngModel)]="formulario.vigente_desde"
+                        />
+
+                        <small> Dejalo vacío si no querés establecer una fecha de inicio. </small>
+                    </label>
+
+                    <label>
+                        Vigente hasta
+
+                        <input
+                            type="date"
+                            name="vigente_hasta"
+                            [(ngModel)]="formulario.vigente_hasta"
+                        />
+
+                        <small> Dejalo vacío si no querés establecer una fecha de fin. </small>
+                    </label>
+                </div>
+
+                <fieldset class="dias">
+                    <legend>Días permitidos</legend>
+
+                    <p>
+                        Marcá los días en los que se podrá utilizar el cupón. Si no marcás ninguno,
+                        estará disponible todos los días.
+                    </p>
+
+                    @for (dia of diasSemana; track dia.numero) {
+                        <label class="casilla">
+                            <input
+                                type="checkbox"
+                                [checked]="formulario.dias_permitidos.includes(dia.numero)"
+                                (change)="cambiarDia(dia.numero, $event)"
+                            />
+
+                            {{ dia.nombre }}
+                        </label>
+                    }
+                </fieldset>
+
+                <label class="casilla">
+                    <input type="checkbox" name="activo" [(ngModel)]="formulario.activo" />
+
+                    Cupón activo
+                </label>
+
+                @if (formulario.tipo !== 'primera_compra') {
+                    <label class="casilla">
+                        <input
+                            type="checkbox"
+                            name="beneficio_permanente"
+                            [(ngModel)]="formulario.beneficio_permanente"
+                        />
+
+                        Beneficio permanente
+                    </label>
+
+                    <p>
+                        Permite volver a utilizar el beneficio en otras compras. Se mantienen las
+                        restricciones y las fechas configuradas.
+                    </p>
+                } @else {
+                    <p>
+                        El cupón de bienvenida corresponde a la primera compra de un usuario
+                        registrado y no puede ser permanente.
+                    </p>
+                }
+
+                <div class="acciones">
+                    <button type="submit" [disabled]="guardando() || cargando()">
+                        {{ guardando() ? 'Guardando...' : 'Guardar cupón' }}
+                    </button>
+
+                    <button
+                        type="button"
+                        class="secundario"
+                        [disabled]="guardando()"
+                        (click)="cancelar()"
+                    >
+                        Cancelar
+                    </button>
+                </div>
+            </fieldset>
+        </form>
+    }
+
+    <section class="listado" aria-labelledby="titulo-listado" [attr.aria-busy]="cargando()">
+        <h2 id="titulo-listado">Cupones creados</h2>
+
+        @if (cargando()) {
+            <p class="mensaje" role="status">Cargando cupones...</p>
+        } @else {
+            <div class="cupones">
+                @for (cupon of cupones(); track cupon.id) {
+                    <article class="cupon">
+                        <div class="cabecera-cupon">
+                            <h3>
+                                {{ cupon.nombre }}
+                            </h3>
+
+                            <span class="estado" [class.inactivo]="!cupon.activo">
+                                {{ cupon.activo ? 'Activo' : 'Inactivo' }}
+                            </span>
+                        </div>
+
+                        <p class="codigo">
+                            {{ cupon.codigo }}
+                        </p>
+
+                        <p class="descuento">
+                            {{ cupon.porcentaje | number: '1.0-2' }}% de descuento
+                        </p>
+
+                        <p>
+                            <strong> Tipo: </strong>
+
+                            @switch (cupon.tipo) {
+                                @case ('primera_compra') {
+                                    Bienvenida / primera compra
+                                }
+
+                                @case ('mayores_50') {
+                                    Mayores de 50 años
+                                }
+
+                                @default {
+                                    General
+                                }
+                            }
+                        </p>
+
+                        <p>
+                            <strong> Uso: </strong>
+
+                            {{
+                                cupon.beneficio_permanente
+                                    ? 'Beneficio permanente'
+                                    : 'Un uso por usuario'
+                            }}
+                        </p>
+
+                        <p>
+                            <strong> Días permitidos: </strong>
+
+                            {{ nombresDias(cupon.dias_permitidos) }}
+                        </p>
+
+                        <p>
+                            <strong> Edad mínima: </strong>
+
+                            @if (cupon.edad_minima > 0) {
+                                {{ cupon.edad_minima }} años
+                            } @else {
+                                Sin restricción de edad
+                            }
+                        </p>
+
+                        <p>
+                            <strong> Importe mínimo: </strong>
+
+                            @if (cupon.importe_minimo > 0) {
+                                $
+                                {{ cupon.importe_minimo | number: '1.2-2' }}
+                            } @else {
+                                Sin importe mínimo
+                            }
+                        </p>
+
+                        <p>
+                            <strong> Se aplica a: </strong>
+
+                            @switch (cupon.aplica_a) {
+                                @case ('entradas') {
+                                    Solo entradas
+                                }
+
+                                @case ('candy') {
+                                    Solo Candy
+                                }
+
+                                @default {
+                                    Toda la compra
+                                }
+                            }
+                        </p>
+
+                        <p>
+                            <strong> Vigente desde: </strong>
+
+                            {{ cupon.vigente_desde || 'Sin fecha de inicio' }}
+                        </p>
+
+                        <p>
+                            <strong> Vigente hasta: </strong>
+
+                            {{ cupon.vigente_hasta || 'Sin fecha de fin' }}
+                        </p>
+
+                        <button
+                            type="button"
+                            class="secundario"
+                            [disabled]="cargando() || guardando()"
+                            (click)="editar(cupon)"
+                        >
+                            Editar cupón
+                        </button>
+                    </article>
+                } @empty {
+                    <p class="mensaje">Todavía no hay cupones creados.</p>
+                }
+            </div>
+        }
+    </section>
+</section>

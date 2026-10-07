@@ -40,10 +40,7 @@
                 {{ salaEditada ? 'Editar sala' : 'Agregar sala' }}
             </h3>
 
-            <form
-                #formSala="ngForm"
-                (ngSubmit)="guardar(formSala)"
-            >
+            <form #formSala="ngForm" (ngSubmit)="guardar(formSala)">
                 <div class="campo">
                     <label for="nombreSala">Nombre de la sala</label>
 
@@ -71,9 +68,8 @@
                 </label>
 
                 <p class="detalle-distribucion">
-                    Cada sala tiene 518 lugares: 420 estándar,
-                    14 accesibles y 84 VIP. La distribución se genera
-                    automáticamente.
+                    Cada sala tiene 518 lugares: 420 estándar, 14 accesibles y 84 VIP. La
+                    distribución se genera automáticamente.
                 </p>
 
                 @if (errorFormulario()) {
@@ -83,17 +79,13 @@
                 }
 
                 <div class="acciones">
-                    <button
-                        class="boton"
-                        type="submit"
-                        [disabled]="guardando()"
-                    >
+                    <button class="boton" type="submit" [disabled]="guardando()">
                         {{
                             guardando()
                                 ? 'Guardando...'
                                 : salaEditada
-                                    ? 'Guardar cambios'
-                                    : 'Crear sala'
+                                  ? 'Guardar cambios'
+                                  : 'Crear sala'
                         }}
                     </button>
 
@@ -110,6 +102,13 @@
         </section>
     }
 
+    @if (salaMapa(); as sala) {
+        <button class="boton secundario" type="button" (click)="salaMapa.set(null)">
+            Cerrar mapa
+        </button>
+        <app-butacas-admin [sala]="sala" [bloqueado]="ocupado() || editorAbierto()" />
+    }
+
     @if (cargando()) {
         <p role="status">Cargando salas...</p>
     } @else {
@@ -119,10 +118,7 @@
                     <div class="titulo-sala">
                         <h3>{{ sala.nombre }}</h3>
 
-                        <span
-                            class="estado"
-                            [class.desactivada]="!sala.activa"
-                        >
+                        <span class="estado" [class.desactivada]="!sala.activa">
                             {{ sala.activa ? 'Activa' : 'Desactivada' }}
                         </span>
                     </div>
@@ -151,19 +147,27 @@
                         </dl>
 
                         @if (
-                            resumen.capacidad !== 518
-                            || resumen.estandar !== 420
-                            || resumen.accesibles !== 14
-                            || resumen.vip !== 84
+                            resumen.capacidad !== 518 ||
+                            resumen.estandar !== 420 ||
+                            resumen.accesibles !== 14 ||
+                            resumen.vip !== 84
                         ) {
                             <p class="error" role="alert">
-                                La distribución no coincide con la esperada.
-                                Revisá la generación de butacas en Supabase.
+                                La distribución no coincide con la esperada. Revisá la generación de
+                                butacas en Supabase.
                             </p>
                         }
                     }
 
                     <div class="acciones">
+                        <button
+                            class="boton secundario"
+                            type="button"
+                            [disabled]="ocupado() || editorAbierto()"
+                            (click)="salaMapa.set(sala)"
+                        >
+                            Administrar butacas
+                        </button>
                         <button
                             class="boton"
                             type="button"
@@ -197,10 +201,7 @@
                     }
                 </article>
             } @empty {
-                <p>
-                    Todavía no hay salas.
-                    Presioná “Agregar sala” para crear la primera.
-                </p>
+                <p>Todavía no hay salas. Presioná “Agregar sala” para crear la primera.</p>
             }
         </div>
     }

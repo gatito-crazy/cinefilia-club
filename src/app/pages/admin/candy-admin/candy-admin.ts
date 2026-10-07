@@ -1,12 +1,5 @@
 import { DecimalPipe } from '@angular/common';
-import {
-    Component,
-    computed,
-    inject,
-    OnDestroy,
-    OnInit,
-    signal
-} from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
     CandyService,
@@ -16,6 +9,7 @@ import {
     DatosProductoCandy,
     ProductoCandy
 } from '../../../base/service/candy.service';
+import { BeneficiosService, Paquete } from '../../../base/service/beneficios.service';
 import { mensajeOperacion } from '../../../base/service/panel.service';
 
 @Component({
@@ -26,6 +20,12 @@ import { mensajeOperacion } from '../../../base/service/panel.service';
 })
 export class CandyAdmin implements OnInit, OnDestroy {
     private readonly candy = inject(CandyService);
+    readonly tipoCombo = signal<'candy' | 'entrada'>('candy');
+    private readonly beneficios = inject(BeneficiosService);
+    readonly paquetes = signal<ComboCandy[]>([]);
+    readonly combosVisibles = computed(() =>
+        this.tipoCombo() === 'entrada' ? this.paquetes() : this.combos()
+    );
 
     private archivoImagen: File | null = null;
     private urlTemporalImagen: string | null = null;
@@ -40,9 +40,7 @@ export class CandyAdmin implements OnInit, OnDestroy {
     readonly error = signal('');
     readonly exito = signal('');
 
-    readonly editor = signal<
-        'categoria' | 'producto' | 'combo' | null
-    >(null);
+    readonly editor = signal<'categoria' | 'producto' | 'combo' | null>(null);
 
     readonly vistaImagen = signal('');
 
@@ -67,14 +65,13 @@ export class CandyAdmin implements OnInit, OnDestroy {
         const categoriaId = this.categoriaFiltro();
         const estado = this.estadoFiltro();
 
-        return this.productos().filter((producto) =>
-            this.normalizar(producto.nombre).includes(texto) &&
-            (!categoriaId || producto.categoria_id === categoriaId) &&
-            (
-                estado === 'todos' ||
-                (estado === 'activos' && producto.activo) ||
-                (estado === 'inactivos' && !producto.activo)
-            )
+        return this.productos().filter(
+            (producto) =>
+                this.normalizar(producto.nombre).includes(texto) &&
+                (!categoriaId || producto.categoria_id === categoriaId) &&
+                (estado === 'todos' ||
+                    (estado === 'activos' && producto.activo) ||
+                    (estado === 'inactivos' && !producto.activo))
         );
     });
 
@@ -104,10 +101,11 @@ export class CandyAdmin implements OnInit, OnDestroy {
         this.error.set('');
 
         try {
-            const [categorias, productos, combos] = await Promise.all([
+            const [categorias, productos, combos, beneficios] = await Promise.all([
                 this.candy.obtenerCategorias(),
                 this.candy.obtenerProductos(),
-                this.candy.obtenerCombos()
+                this.candy.obtenerCombos(),
+                this.beneficios.admin()
             ]);
 
             if (this.destruido) {
@@ -117,6 +115,7 @@ export class CandyAdmin implements OnInit, OnDestroy {
             this.categorias.set(categorias);
             this.productos.set(productos);
             this.combos.set(combos);
+            this.paquetes.set(beneficios.paquetes.map((p) => this.convertirPaquete(p)));
         } catch (error) {
             if (!this.destruido) {
                 this.error.set(this.mensajeError(error));
@@ -176,9 +175,7 @@ export class CandyAdmin implements OnInit, OnDestroy {
 
             this.categorias.update((actuales) =>
                 this.ordenarPorNombre([
-                    ...actuales.filter(
-                        (actual) => actual.id !== categoria.id
-                    ),
+                    ...actuales.filter((actual) => actual.id !== categoria.id),
                     categoria
                 ])
             );
@@ -231,8 +228,7 @@ export class CandyAdmin implements OnInit, OnDestroy {
             this.candy.validarProducto(this.borrador);
 
             if (this.archivoImagen) {
-                this.borrador.imagen_url =
-                    await this.subirImagenSeleccionada();
+                this.borrador.imagen_url = await this.subirImagenSeleccionada();
             }
 
             if (this.destruido) {
@@ -250,9 +246,7 @@ export class CandyAdmin implements OnInit, OnDestroy {
 
             this.productos.update((actuales) =>
                 this.ordenarPorNombre([
-                    ...actuales.filter(
-                        (actual) => actual.id !== producto.id
-                    ),
+                    ...actuales.filter((actual) => actual.id !== producto.id),
                     producto
                 ])
             );
@@ -288,15 +282,11 @@ export class CandyAdmin implements OnInit, OnDestroy {
 
             this.productos.update((actuales) =>
                 actuales.map((actual) =>
-                    actual.id === producto.id
-                        ? { ...actual, activo }
-                        : actual
+                    actual.id === producto.id ? { ...actual, activo } : actual
                 )
             );
 
-            this.exito.set(
-                `El producto quedó ${activo ? 'activo' : 'desactivado'}.`
-            );
+            this.exito.set(`El producto quedó ${activo ? 'activo' : 'desactivado'}.`);
         } catch (error) {
             this.mostrarError(error);
         } finally {
@@ -310,9 +300,31 @@ export class CandyAdmin implements OnInit, OnDestroy {
         }
 
         this.comboEditado = null;
-        this.borradorCombo = this.comboVacio();
+        this.borradorCombo = {
+            ...this.comboVacio(),
+            incluye_entrada: this.tipoCombo() === 'entrada'
+        };
         this.busquedaComponentes.set('');
         this.abrirEditor('combo');
+    }
+
+    crearVersionConEntrada(combo: ComboCandy): void {
+        if (this.ocupado() || this.editor() !== null) {
+            return;
+        }
+        this.comboEditado = null;
+        this.tipoCombo.set('entrada');
+        this.borradorCombo = {
+            incluye_entrada: true,
+            nombre: combo.nombre.slice(0, 110) + ' + entrada',
+            descripcion: combo.descripcion,
+            precio: 0,
+            imagen_url: combo.imagen_url,
+            activo: combo.activo,
+            componentes: combo.componentes.map((c) => ({ ...c }))
+        };
+        this.busquedaComponentes.set('');
+        this.abrirEditor('combo', combo.imagen_url);
     }
 
     editarCombo(combo: ComboCandy): void {
@@ -323,14 +335,13 @@ export class CandyAdmin implements OnInit, OnDestroy {
         this.comboEditado = combo.id;
 
         this.borradorCombo = {
+            incluye_entrada: !!combo.incluye_entrada,
             nombre: combo.nombre,
             descripcion: combo.descripcion,
             precio: combo.precio,
             imagen_url: combo.imagen_url,
             activo: combo.activo,
-            componentes: combo.componentes.map(
-                (componente) => ({ ...componente })
-            )
+            componentes: combo.componentes.map((componente) => ({ ...componente }))
         };
 
         this.busquedaComponentes.set('');
@@ -338,9 +349,11 @@ export class CandyAdmin implements OnInit, OnDestroy {
     }
 
     cantidadEnCombo(productoId: string): number {
-        return this.borradorCombo.componentes.find(
-            (componente) => componente.producto_id === productoId
-        )?.cantidad ?? 0;
+        return (
+            this.borradorCombo.componentes.find(
+                (componente) => componente.producto_id === productoId
+            )?.cantidad ?? 0
+        );
     }
 
     cambiarCantidad(productoId: string, valor: unknown): void {
@@ -353,10 +366,12 @@ export class CandyAdmin implements OnInit, OnDestroy {
         if (
             !Number.isInteger(cantidad) ||
             cantidad < 0 ||
-            cantidad > 100
+            cantidad > (this.borradorCombo.incluye_entrada ? 20 : 100)
         ) {
             this.error.set(
-                'Usá una cantidad entera entre 0 y 100. Cero quita el producto.'
+                this.borradorCombo.incluye_entrada
+                    ? 'Usá una cantidad entre 0 y 20. Cero quita el producto.'
+                    : 'Usá una cantidad entre 0 y 100. Cero quita el producto.'
             );
             return;
         }
@@ -388,8 +403,7 @@ export class CandyAdmin implements OnInit, OnDestroy {
             this.candy.validarCombo(this.borradorCombo);
 
             if (this.archivoImagen) {
-                this.borradorCombo.imagen_url =
-                    await this.subirImagenSeleccionada();
+                this.borradorCombo.imagen_url = await this.subirImagenSeleccionada();
             }
 
             if (this.destruido) {
@@ -407,6 +421,7 @@ export class CandyAdmin implements OnInit, OnDestroy {
 
             // Conserva el ID para evitar crear otro si falla la recarga.
             this.comboEditado = id;
+            this.tipoCombo.set(this.borradorCombo.incluye_entrada ? 'entrada' : 'candy');
             this.terminarEditor('El combo se guardó correctamente.');
 
             await this.actualizarCombosGuardados();
@@ -433,6 +448,7 @@ export class CandyAdmin implements OnInit, OnDestroy {
 
         try {
             await this.candy.guardarCombo(combo.id, {
+                incluye_entrada: !!combo.incluye_entrada,
                 nombre: combo.nombre,
                 descripcion: combo.descripcion,
                 precio: combo.precio,
@@ -445,17 +461,14 @@ export class CandyAdmin implements OnInit, OnDestroy {
                 return;
             }
 
-            this.combos.update((actuales) =>
+            const listado = combo.incluye_entrada ? this.paquetes : this.combos;
+            listado.update((actuales) =>
                 actuales.map((actual) =>
-                    actual.id === combo.id
-                        ? { ...actual, activo }
-                        : actual
+                    actual.id === combo.id ? { ...actual, activo } : actual
                 )
             );
 
-            this.exito.set(
-                `El combo quedó ${activo ? 'activo' : 'desactivado'}.`
-            );
+            this.exito.set(`El combo quedó ${activo ? 'activo' : 'desactivado'}.`);
         } catch (error) {
             this.mostrarError(error);
         } finally {
@@ -464,35 +477,40 @@ export class CandyAdmin implements OnInit, OnDestroy {
     }
 
     comboDisponible(combo: ComboCandy): boolean {
-        return combo.activo &&
+        return (
+            combo.activo &&
             combo.componentes.length > 0 &&
             combo.componentes.every((componente) => {
                 const producto = this.productos().find(
                     (actual) => actual.id === componente.producto_id
                 );
 
-                return !!producto &&
+                return (
+                    !!producto &&
                     producto.activo &&
-                    this.categoriaEstaActiva(producto.categoria_id);
-            });
+                    this.categoriaEstaActiva(producto.categoria_id)
+                );
+            })
+        );
     }
 
     nombreDeProducto(productoId: string): string {
-        return this.productos().find(
-            (producto) => producto.id === productoId
-        )?.nombre ?? 'Producto no disponible';
+        return (
+            this.productos().find((producto) => producto.id === productoId)?.nombre ??
+            'Producto no disponible'
+        );
     }
 
     nombreDeCategoria(categoriaId: string): string {
-        return this.categorias().find(
-            (categoria) => categoria.id === categoriaId
-        )?.nombre ?? 'Sin categoría';
+        return (
+            this.categorias().find((categoria) => categoria.id === categoriaId)?.nombre ??
+            'Sin categoría'
+        );
     }
 
     categoriaEstaActiva(categoriaId: string): boolean {
         return this.categorias().some(
-            (categoria) =>
-                categoria.id === categoriaId && categoria.activa
+            (categoria) => categoria.id === categoriaId && categoria.activa
         );
     }
 
@@ -576,10 +594,16 @@ export class CandyAdmin implements OnInit, OnDestroy {
 
     private async actualizarCombosGuardados(): Promise<void> {
         try {
-            const combos = await this.candy.obtenerCombos();
+            const [combos, beneficios] = await Promise.all([
+                this.candy.obtenerCombos(),
+                this.beneficios.admin()
+            ]);
 
             if (!this.destruido) {
                 this.combos.set(combos);
+                this.paquetes.set(
+                    beneficios.paquetes.map((p) => this.convertirPaquete(p))
+                );
             }
         } catch {
             if (!this.destruido) {
@@ -639,15 +663,14 @@ export class CandyAdmin implements OnInit, OnDestroy {
     }
 
     private normalizar(texto: string): string {
-        return texto.trim()
+        return texto
+            .trim()
             .normalize('NFD')
             .replace(/[\u0300-\u036f]/g, '')
             .toLowerCase();
     }
 
-    private ordenarPorNombre<T extends { nombre: string }>(
-        elementos: T[]
-    ): T[] {
+    private ordenarPorNombre<T extends { nombre: string }>(elementos: T[]): T[] {
         return elementos.sort((primero, segundo) =>
             primero.nombre.localeCompare(segundo.nombre, 'es', {
                 numeric: true,
@@ -664,6 +687,24 @@ export class CandyAdmin implements OnInit, OnDestroy {
             precio: 0,
             imagen_url: null,
             activo: true
+        };
+    }
+
+    private convertirPaquete(paquete: Paquete): ComboCandy {
+        return {
+            id: paquete.id,
+            incluye_entrada: true,
+            nombre: paquete.nombre,
+            descripcion: paquete.descripcion ?? '',
+            imagen_url: paquete.imagen_url ?? null,
+            precio: Number(paquete.precio),
+            activo: paquete.activo,
+            creado_en: '',
+            componentes:
+                paquete.componentes ??
+                [paquete.producto_pochoclos, paquete.producto_bebida]
+                    .filter((id): id is string => !!id)
+                    .map((producto_id) => ({ producto_id, cantidad: 1 }))
         };
     }
 

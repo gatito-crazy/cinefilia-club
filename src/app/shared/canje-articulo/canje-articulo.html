@@ -1,0 +1,45 @@
+<article>
+  <p class="etiqueta">CANJE CON PUNTOS</p>
+  @if (imagen() && !compacto()) {
+    <img [src]="imagen()" [alt]="nombre() || recompensa().nombre" loading="lazy" />
+  }
+  <h3>{{ nombre() || recompensa().nombre }}</h3>
+  @if (!compacto()) {
+    <p>{{ descripcion() }}</p>
+  }
+  <strong>
+    {{ recompensa().puntos | number: '1.0-0' }} puntos
+    @if (recompensa().importe_canje > 0) {
+      + ARS {{ recompensa().importe_canje | number: '1.2-2' }}
+    } @else {
+      · Sin dinero adicional
+    }
+  </strong>
+  @if (!compacto()) {
+    <p>Por unidad. Podés combinar este canje con entradas y otros canjes.</p>
+  }
+  <div class="cantidad">
+    <button
+      type="button"
+      [disabled]="bloqueado() || cantidad() === 0"
+      (click)="cambiar(-1)"
+      [attr.aria-label]="'Quitar canje de ' + recompensa().nombre"
+    >
+      −
+    </button>
+    <span>{{ cantidad() }} a canjear</span>
+    <button
+      type="button"
+      [disabled]="!puedeAgregar()"
+      (click)="cambiar(1)"
+      [attr.aria-label]="'Agregar canje de ' + recompensa().nombre"
+    >
+      +
+    </button>
+  </div>
+  @if (!fidelizacion.auth.usuario()) {
+    <p>Iniciá sesión para usar tus puntos.</p>
+  } @else if (!puedeAgregar() && !bloqueado()) {
+    <p>No podés agregar otra unidad: revisá el saldo de puntos y la cantidad disponible.</p>
+  }
+</article>

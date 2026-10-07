@@ -358,3 +358,63 @@ textarea {
     transform: none;
   }
 }
+
+.tarjeta .precio {
+  margin-top: 0;
+}
+
+.tarjeta .cantidad {
+  margin-top: auto;
+  padding-top: 1rem;
+}
+
+/* Tarjetas compactas sin reducir el tamaño de los controles táctiles. */
+@media (max-width: 600px) {
+  .tarjeta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem 0.75rem;
+    align-content: start;
+  }
+  .tarjeta:has(> img) {
+    grid-template-columns: 80px minmax(0, 1fr);
+  }
+  .tarjeta > img {
+    grid-column: 1;
+    grid-row: 1 / span 3;
+    width: 80px;
+    height: 80px;
+    margin: 0;
+  }
+  .tarjeta:has(> img) > h3,
+  .tarjeta:has(> img) > p,
+  .tarjeta:has(> img) > ul {
+    grid-column: 2;
+  }
+  .tarjeta > h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  .tarjeta > p,
+  .tarjeta > ul {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+  .tarjeta > ul {
+    padding-left: 1rem;
+  }
+  .tarjeta .precio {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding-top: 0.5rem;
+    font-size: 1.1rem;
+  }
+  .tarjeta .cantidad {
+    grid-column: 1 / -1;
+    grid-template-columns: 46px minmax(0, 1fr) 46px;
+    margin-top: 0.25rem;
+  }
+}

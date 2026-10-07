@@ -81,8 +81,8 @@
                     </label>
 
                     <p class="ayuda">
-                        Una categoría desactivada oculta sus productos
-                        en el catálogo del cliente.
+                        Una categoría desactivada oculta sus productos en el catálogo del
+                        cliente.
                     </p>
 
                     <div class="acciones">
@@ -175,8 +175,8 @@
                             (change)="seleccionarImagen($event)"
                         />
                         <small class="ayuda">
-                            JPG, PNG o WEBP de hasta 5 MB.
-                            Si no elegís otra imagen, se conserva la actual.
+                            JPG, PNG o WEBP de hasta 5 MB. Si no elegís otra imagen, se
+                            conserva la actual.
                         </small>
                         @if (vistaImagen()) {
                             <img
@@ -258,8 +258,8 @@
                             required
                         />
                         <small class="ayuda">
-                            Este es el precio del combo completo.
-                            No se suman los precios individuales.
+                            Este es el precio del combo completo. No se suman los precios
+                            individuales.
                         </small>
                     </div>
 
@@ -272,8 +272,8 @@
                             (change)="seleccionarImagen($event)"
                         />
                         <small class="ayuda">
-                            JPG, PNG o WEBP de hasta 5 MB.
-                            Si no elegís otra imagen, se conserva la actual.
+                            JPG, PNG o WEBP de hasta 5 MB. Si no elegís otra imagen, se
+                            conserva la actual.
                         </small>
                         @if (vistaImagen()) {
                             <img
@@ -283,6 +283,24 @@
                             />
                         }
                     </div>
+
+                    <label class="check">
+                        <input
+                            type="checkbox"
+                            name="incluyeEntrada"
+                            [(ngModel)]="borradorCombo.incluye_entrada"
+                            [disabled]="comboEditado !== null"
+                        />
+                        Incluir una entrada
+                    </label>
+                    @if (borradorCombo.incluye_entrada) {
+                        <p class="ayuda">
+                            Incluye una entrada estándar para una de las butacas elegidas
+                            por el cliente y los productos que agregues abajo. El precio
+                            corresponde al combo completo; la ubicación VIP conserva su
+                            recargo.
+                        </p>
+                    }
 
                     <h4>Productos incluidos</h4>
 
@@ -299,8 +317,7 @@
                     </div>
 
                     <p class="ayuda">
-                        Indicá la cantidad de cada producto.
-                        Usá 0 para no incluirlo.
+                        Indicá la cantidad de cada producto. Usá 0 para no incluirlo.
                     </p>
 
                     <div class="componentes-editor">
@@ -311,7 +328,10 @@
                                     <small>
                                         {{ nombreDeCategoria(producto.categoria_id) }}
                                     </small>
-                                    @if (!producto.activo || !categoriaEstaActiva(producto.categoria_id)) {
+                                    @if (
+                                        !producto.activo ||
+                                        !categoriaEstaActiva(producto.categoria_id)
+                                    ) {
                                         <small class="texto-aviso">No disponible</small>
                                     }
                                 </div>
@@ -325,10 +345,15 @@
                                         [id]="'cantidadCombo-' + producto.id"
                                         type="number"
                                         min="0"
-                                        max="100"
+                                        [max]="borradorCombo.incluye_entrada ? 20 : 100"
                                         step="1"
                                         [value]="cantidadEnCombo(producto.id)"
-                                        (change)="cambiarCantidad(producto.id, cantidadProducto.value)"
+                                        (change)="
+                                            cambiarCantidad(
+                                                producto.id,
+                                                cantidadProducto.value
+                                            )
+                                        "
                                     />
                                 </div>
                             </div>
@@ -340,15 +365,26 @@
                     <div class="composicion-seleccionada">
                         <h4>Composición seleccionada</h4>
                         <ul>
-                            @for (componente of borradorCombo.componentes; track componente.producto_id) {
+                            @if (borradorCombo.incluye_entrada) {
+                                <li>1 × Entrada estándar</li>
+                            }
+                            @for (
+                                componente of borradorCombo.componentes;
+                                track componente.producto_id
+                            ) {
                                 <li>
                                     {{ componente.cantidad }} ×
                                     {{ nombreDeProducto(componente.producto_id) }}
                                     <button
                                         class="boton secundario"
                                         type="button"
-                                        [attr.aria-label]="'Quitar ' + nombreDeProducto(componente.producto_id)"
-                                        (click)="cambiarCantidad(componente.producto_id, 0)"
+                                        [attr.aria-label]="
+                                            'Quitar ' +
+                                            nombreDeProducto(componente.producto_id)
+                                        "
+                                        (click)="
+                                            cambiarCantidad(componente.producto_id, 0)
+                                        "
                                     >
                                         Quitar
                                     </button>
@@ -369,15 +405,19 @@
                     </label>
 
                     <p class="ayuda">
-                        Para activar el combo, sus productos y categorías
-                        deben estar activos.
+                        Para activar el combo, sus productos y categorías deben estar
+                        activos.
                     </p>
 
                     <div class="acciones">
                         <button
                             class="boton"
                             type="submit"
-                            [disabled]="formCombo.invalid || !borradorCombo.nombre.trim() || borradorCombo.componentes.length === 0"
+                            [disabled]="
+                                formCombo.invalid ||
+                                !borradorCombo.nombre.trim() ||
+                                borradorCombo.componentes.length === 0
+                            "
                         >
                             {{ guardando() ? 'Guardando...' : 'Guardar combo' }}
                         </button>
@@ -462,18 +502,12 @@
                 </select>
             </div>
 
-            <button
-                class="boton secundario"
-                type="button"
-                (click)="limpiarFiltros()"
-            >
+            <button class="boton secundario" type="button" (click)="limpiarFiltros()">
                 Limpiar filtros
             </button>
         </div>
 
-        <p role="status">
-            Productos encontrados: {{ productosFiltrados().length }}
-        </p>
+        <p role="status">Productos encontrados: {{ productosFiltrados().length }}</p>
 
         <div class="productos">
             @for (producto of productosFiltrados(); track producto.id) {
@@ -493,13 +527,13 @@
                     </span>
                     <h4>{{ producto.nombre }}</h4>
                     <p>{{ producto.descripcion }}</p>
-                    <p class="precio">ARS {{ producto.precio | number:'1.2-2' }}</p>
+                    <p class="precio">ARS {{ producto.precio | number: '1.2-2' }}</p>
                     <p class="estado">{{ producto.activo ? 'Activo' : 'Desactivado' }}</p>
 
                     @if (!categoriaEstaActiva(producto.categoria_id)) {
                         <p class="aviso">
-                            Su categoría está desactivada.
-                            No aparece en el catálogo del cliente.
+                            Su categoría está desactivada. No aparece en el catálogo del
+                            cliente.
                         </p>
                     }
 
@@ -529,8 +563,21 @@
 
         <h3 class="titulo-combos">Combos</h3>
 
+        <div class="campo filtro-combos">
+            <label for="tipoComboCandy">Tipo de combo</label>
+            <select
+                id="tipoComboCandy"
+                [ngModel]="tipoCombo()"
+                (ngModelChange)="tipoCombo.set($event)"
+                [disabled]="ocupado() || editor() !== null"
+            >
+                <option value="candy">Solo Candy</option>
+                <option value="entrada">Con entrada y productos a elección</option>
+            </select>
+        </div>
+
         <div class="productos">
-            @for (combo of combos(); track combo.id) {
+            @for (combo of combosVisibles(); track combo.id) {
                 <article class="tarjeta producto">
                     @if (combo.imagen_url) {
                         <img
@@ -542,12 +589,20 @@
                         <div class="sin-imagen">Sin imagen</div>
                     }
 
-                    <span class="etiqueta">COMBO</span>
+                    <span class="etiqueta">{{
+                        combo.incluye_entrada ? 'COMBO CON ENTRADA' : 'COMBO CANDY'
+                    }}</span>
                     <h4>{{ combo.nombre }}</h4>
                     <p>{{ combo.descripcion }}</p>
 
                     <ul class="contenido-combo">
-                        @for (componente of combo.componentes; track componente.producto_id) {
+                        @if (combo.incluye_entrada) {
+                            <li>1 × Entrada estándar</li>
+                        }
+                        @for (
+                            componente of combo.componentes;
+                            track componente.producto_id
+                        ) {
                             <li>
                                 {{ componente.cantidad }} ×
                                 {{ nombreDeProducto(componente.producto_id) }}
@@ -555,17 +610,30 @@
                         }
                     </ul>
 
-                    <p class="precio">ARS {{ combo.precio | number:'1.2-2' }}</p>
-                    <p class="estado">{{ combo.activo ? 'Activo' : 'Desactivado' }}</p>
+                    <p class="precio">ARS {{ combo.precio | number: '1.2-2' }}</p>
+                    <p class="estado">
+                        {{ combo.activo ? 'Activo' : 'Desactivado' }}
+                    </p>
 
                     @if (combo.activo && !comboDisponible(combo)) {
                         <p class="aviso">
-                            Tiene componentes desactivados o no disponibles.
-                            Debe ocultarse al cliente hasta que estén disponibles.
+                            Tiene componentes desactivados o no disponibles. Debe
+                            ocultarse al cliente hasta que estén disponibles.
                         </p>
                     }
 
                     <div class="acciones">
+                        @if (!combo.incluye_entrada) {
+                            <button
+                                class="boton secundario"
+                                type="button"
+                                [disabled]="ocupado() || editor() !== null"
+                                (click)="crearVersionConEntrada(combo)"
+                            >
+                                Crear versión con entrada
+                            </button>
+                        }
+
                         <button
                             class="boton secundario"
                             type="button"

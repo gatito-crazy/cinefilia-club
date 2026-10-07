@@ -1,35 +1,31 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import {
-    Component,
-    computed,
-    inject,
-    OnDestroy,
-    OnInit,
-    signal
-} from '@angular/core';
+    FidelizacionService,
+    SeleccionCanje,
+    validarCanjes,
+} from '../../base/service/fidelizacion.service';
+import { DatePipe, DecimalPipe } from '@angular/common';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import {
     CarteleraFuncionesService,
-    FuncionCartelera
+    FuncionCartelera,
 } from '../../base/service/cartelera-funciones.service';
-import {
-    Butaca,
-    SalasService
-} from '../../base/service/salas.service';
+import { Butaca, SalasService } from '../../base/service/salas.service';
 import { PeliculasService } from '../../base/service/peliculas.service';
 import {
     OcupacionButaca,
     Reserva,
     ReservasService,
-    SolicitudReserva
+    SolicitudReserva,
 } from '../../base/service/reservas.service';
 
 @Component({
     selector: 'app-butacas',
-    imports: [DatePipe, DecimalPipe, RouterLink],
+    imports: [FormsModule, DatePipe, DecimalPipe, RouterLink],
     templateUrl: './butacas.html',
-    styleUrl: './butacas.scss'
+    styleUrl: './butacas.scss',
 })
 export class Butacas implements OnInit, OnDestroy {
     private readonly ruta = inject(ActivatedRoute);
@@ -44,6 +40,92 @@ export class Butacas implements OnInit, OnDestroy {
     private sincronizacionPendiente = false;
     private funcionId = '';
     private claveAlmacenamiento = '';
+    readonly fidelizacion = inject(FidelizacionService);
+    readonly canjesElegidos = signal<SeleccionCanje[]>([]);
+    readonly recompensasEntradas = computed(() =>
+        this.funcion()?.formato === '2D'
+            ? this.fidelizacion.recompensas().filter((r) => r.activa && r.tipo === 'entrada')
+            : [],
+    );
+    readonly puntosCanje = computed(() =>
+        this.canjesElegidos().reduce(
+            (n, c) =>
+                n +
+                Number(
+                    this.fidelizacion.recompensas().find((r) => r.id === c.recompensa)?.puntos ?? 0,
+                ),
+            0,
+        ),
+    );
+
+    readonly totalConCanjes = computed(() =>
+        this.detalleSeleccion().reduce((total, b) => {
+            const premio = this.recompensasEntradas().find((r) => r.id === this.canjeButaca(b.id));
+            return total + (premio ? Number(premio.importe_canje) : this.precioButaca(b));
+        }, 0),
+    );
+
+    canjeButaca(id: string): string | null {
+        return this.canjesElegidos().find((c) => c.butacas?.includes(id))?.recompensa ?? null;
+    }
+
+    elegirCanjeButaca(id: string, recompensa: string | null): void {
+        if (this.reservando() || this.cancelando() || !this.seleccionadas().includes(id)) {
+            return;
+        }
+        if (
+            recompensa &&
+            (this.funcion()?.formato !== '2D' ||
+                this.detalleSeleccion().find((b) => b.id === id)?.tipo === 'vip')
+        ) {
+            this.errorOperacion.set(
+                'El canje de entradas es exclusivo para funciones 2D y butacas no VIP.',
+            );
+            return;
+        }
+        const otros = this.canjesElegidos().filter((c) => !c.butacas?.includes(id));
+        const premio = this.recompensasEntradas().find((r) => r.id === recompensa);
+        const puntos = otros.reduce(
+            (n, c) =>
+                n +
+                Number(this.recompensasEntradas().find((r) => r.id === c.recompensa)?.puntos ?? 0),
+            0,
+        );
+        if (
+            premio &&
+            (!this.fidelizacion.auth.usuario() ||
+                puntos + Number(premio.puntos) > (this.fidelizacion.puntos() ?? -1))
+        ) {
+            this.errorOperacion.set('No tenés puntos suficientes para ese canje.');
+            return;
+        }
+        this.errorOperacion.set('');
+        this.canjesElegidos.set(
+            premio
+                ? [
+                      ...otros,
+                      {
+                          recompensa: premio.id,
+                          tipo: 'entrada',
+                          articuloId: id,
+                          butacas: [id],
+                          cantidad: 1,
+                      },
+                  ]
+                : otros,
+        );
+        if (this.solicitud) {
+            this.solicitud.canjes = this.canjesElegidos();
+            try {
+                this.reservasService.guardarSolicitud(this.claveAlmacenamiento, this.solicitud);
+            } catch {
+                this.errorOperacion.set(
+                    'No pudimos guardar los canjes de butacas en este navegador.',
+                );
+            }
+        }
+    }
+
     private solicitud: SolicitudReserva | null = null;
     private diferenciaServidor = 0;
     private ultimoControl = 0;
@@ -72,18 +154,22 @@ export class Butacas implements OnInit, OnDestroy {
     readonly ventaCerrada = computed(() => {
         const funcion = this.funcion();
 
-        return !funcion ||
+        return (
+            !funcion ||
             !this.funcionDisponible() ||
-            new Date(funcion.inicio).getTime() <= this.ahora();
+            new Date(funcion.inicio).getTime() <= this.ahora()
+        );
     });
 
     readonly reservaVigente = computed(() => {
         const reserva = this.reserva();
 
-        return !!reserva &&
+        return (
+            !!reserva &&
             reserva.estado === 'reservada' &&
             new Date(reserva.vence_en).getTime() > this.ahora() &&
-            !this.ventaCerrada();
+            !this.ventaCerrada()
+        );
     });
 
     readonly tiempoRestante = computed(() => {
@@ -95,25 +181,17 @@ export class Butacas implements OnInit, OnDestroy {
 
         const segundos = Math.max(
             0,
-            Math.ceil(
-                (new Date(reserva.vence_en).getTime() - this.ahora()) / 1000
-            )
+            Math.ceil((new Date(reserva.vence_en).getTime() - this.ahora()) / 1000),
         );
 
         const minutos = Math.floor(segundos / 60);
         const resto = segundos % 60;
 
-        return `${String(minutos).padStart(2, '0')}:` +
-            String(resto).padStart(2, '0');
+        return `${String(minutos).padStart(2, '0')}:` + String(resto).padStart(2, '0');
     });
 
-    readonly ocupacionPorId = computed(() =>
-        new Map(
-            this.ocupacion().map((actual) => [
-                actual.butaca_id,
-                actual
-            ])
-        )
+    readonly ocupacionPorId = computed(
+        () => new Map(this.ocupacion().map((actual) => [actual.butaca_id, actual])),
     );
 
     readonly filas = computed(() => {
@@ -128,7 +206,7 @@ export class Butacas implements OnInit, OnDestroy {
         return [...agrupadas.entries()]
             .map(([nombre, butacas]) => {
                 const ordenadas = [...butacas].sort(
-                    (primera, segunda) => primera.numero - segunda.numero
+                    (primera, segunda) => primera.numero - segunda.numero,
                 );
 
                 return {
@@ -137,23 +215,17 @@ export class Butacas implements OnInit, OnDestroy {
                     bloques: [
                         {
                             nombre: 'Izquierdo',
-                            butacas: ordenadas.filter(
-                                (butaca) => butaca.bloque === 'izquierdo'
-                            )
+                            butacas: ordenadas.filter((butaca) => butaca.bloque === 'izquierdo'),
                         },
                         {
                             nombre: 'Central',
-                            butacas: ordenadas.filter(
-                                (butaca) => butaca.bloque === 'central'
-                            )
+                            butacas: ordenadas.filter((butaca) => butaca.bloque === 'central'),
                         },
                         {
                             nombre: 'Derecho',
-                            butacas: ordenadas.filter(
-                                (butaca) => butaca.bloque === 'derecho'
-                            )
-                        }
-                    ]
+                            butacas: ordenadas.filter((butaca) => butaca.bloque === 'derecho'),
+                        },
+                    ],
                 };
             })
             .sort((primera, segunda) => primera.orden - segunda.orden);
@@ -164,9 +236,9 @@ export class Butacas implements OnInit, OnDestroy {
 
         return this.butacas()
             .filter((butaca) => ids.has(butaca.id))
-            .sort((primera, segunda) =>
-                primera.orden_fila - segunda.orden_fila ||
-                primera.numero - segunda.numero
+            .sort(
+                (primera, segunda) =>
+                    primera.orden_fila - segunda.orden_fila || primera.numero - segunda.numero,
             );
     });
 
@@ -177,12 +249,12 @@ export class Butacas implements OnInit, OnDestroy {
 
         return this.detalleSeleccion().reduce(
             (acumulado, butaca) => acumulado + this.precioButaca(butaca),
-            0
+            0,
         );
     });
 
     readonly tieneVip = computed(() =>
-        this.detalleSeleccion().some((butaca) => butaca.tipo === 'vip')
+        this.detalleSeleccion().some((butaca) => butaca.tipo === 'vip'),
     );
 
     private readonly alVolver = (): void => {
@@ -241,27 +313,19 @@ export class Butacas implements OnInit, OnDestroy {
                 throw new Error('No se indicó una función.');
             }
 
-            const funcion = await this.funcionesService
-                .obtenerDisponible(this.funcionId);
+            const funcion = await this.funcionesService.obtenerDisponible(this.funcionId);
 
             if (!funcion) {
-                throw new Error(
-                    'Esta función ya no está disponible para elegir entradas.'
-                );
+                throw new Error('Esta función ya no está disponible para elegir entradas.');
             }
 
-            const [butacas, peliculas, claveAlmacenamiento] =
-                await Promise.all([
-                    this.salasService.obtenerButacas(funcion.sala_id),
-                    this.peliculasService.obtenerActivas(),
-                    this.reservasService.obtenerClaveAlmacenamiento(
-                        this.funcionId
-                    )
-                ]);
+            const [butacas, peliculas, claveAlmacenamiento] = await Promise.all([
+                this.salasService.obtenerButacas(funcion.sala_id),
+                this.peliculasService.obtenerActivas(),
+                this.reservasService.obtenerClaveAlmacenamiento(this.funcionId),
+            ]);
 
-            const pelicula = peliculas.find(
-                (actual) => actual.id === funcion.pelicula_id
-            );
+            const pelicula = peliculas.find((actual) => actual.id === funcion.pelicula_id);
 
             if (!pelicula) {
                 throw new Error('La película ya no está disponible.');
@@ -277,13 +341,12 @@ export class Butacas implements OnInit, OnDestroy {
             this.butacas.set(butacas);
             this.claveAlmacenamiento = claveAlmacenamiento;
 
-            this.solicitud = this.reservasService.leerSolicitud(
-                this.claveAlmacenamiento
-            );
+            this.solicitud = this.reservasService.leerSolicitud(this.claveAlmacenamiento);
 
             this.reserva.set(null);
             this.resultadoIncierto.set(!!this.solicitud);
             this.seleccionadas.set(this.solicitud?.butacas ?? []);
+            this.canjesElegidos.set(validarCanjes(this.solicitud?.canjes));
 
             if (!this.canal) {
                 this.canal = this.reservasService.escuchar(
@@ -293,7 +356,7 @@ export class Butacas implements OnInit, OnDestroy {
                         if (!this.destruido) {
                             this.conexionEnVivo.set(conectado);
                         }
-                    }
+                    },
                 );
             }
         } catch (error) {
@@ -313,20 +376,11 @@ export class Butacas implements OnInit, OnDestroy {
     }
 
     async sincronizar(): Promise<void> {
-        if (
-            this.destruido ||
-            this.cargando() ||
-            this.error() ||
-            !this.funcionId
-        ) {
+        if (this.destruido || this.cargando() || this.error() || !this.funcionId) {
             return;
         }
 
-        if (
-            this.sincronizando() ||
-            this.reservando() ||
-            this.cancelando()
-        ) {
+        if (this.sincronizando() || this.reservando() || this.cancelando()) {
             this.sincronizacionPendiente = true;
             return;
         }
@@ -337,12 +391,13 @@ export class Butacas implements OnInit, OnDestroy {
         try {
             const solicitud = this.solicitud;
 
-            const [estado, reserva, funcion] = await Promise.all([
+            const [estado, reserva, funcion, butacas] = await Promise.all([
                 this.reservasService.obtenerOcupacion(this.funcionId),
                 solicitud
                     ? this.reservasService.obtenerReserva(solicitud.clave)
                     : Promise.resolve(null),
-                this.funcionesService.obtenerDisponible(this.funcionId)
+                this.funcionesService.obtenerDisponible(this.funcionId),
+                this.salasService.obtenerButacas(this.funcion()!.sala_id),
             ]);
 
             if (this.destruido) {
@@ -351,6 +406,7 @@ export class Butacas implements OnInit, OnDestroy {
 
             this.ajustarReloj(estado.servidor_ahora);
             this.ocupacion.set(estado.ocupacion);
+            this.butacas.set(butacas);
             this.funcionDisponible.set(funcion !== null);
 
             if (funcion) {
@@ -376,7 +432,7 @@ export class Butacas implements OnInit, OnDestroy {
                 console.error('Error al actualizar la ocupación:', error);
 
                 this.errorSincronizacion.set(
-                    'No pudimos actualizar la disponibilidad. Revisá la conexión.'
+                    'No pudimos actualizar la disponibilidad. Revisá la conexión.',
                 );
             }
         } finally {
@@ -389,16 +445,15 @@ export class Butacas implements OnInit, OnDestroy {
         }
     }
 
-    estadoButaca(
-        butaca: Butaca
-    ): 'libre' | 'propia' | 'reservada' | 'vendida' {
+    estadoButaca(butaca: Butaca): 'libre' | 'propia' | 'reservada' | 'vendida' | 'mantenimiento' {
+        if (butaca.habilitada === false) {
+            return 'mantenimiento';
+        }
         const reserva = this.reserva();
 
         if (
             this.reservaVigente() &&
-            reserva?.butacas.some(
-                (actual) => actual.butaca_id === butaca.id
-            )
+            reserva?.butacas.some((actual) => actual.butaca_id === butaca.id)
         ) {
             return 'propia';
         }
@@ -421,12 +476,14 @@ export class Butacas implements OnInit, OnDestroy {
     }
 
     butacaBloqueada(butaca: Butaca): boolean {
-        return this.ventaCerrada() ||
+        return (
+            this.ventaCerrada() ||
             this.reservando() ||
             this.cancelando() ||
             this.resultadoIncierto() ||
             this.reservaVigente() ||
-            this.estadoButaca(butaca) !== 'libre';
+            this.estadoButaca(butaca) !== 'libre'
+        );
     }
 
     alternarButaca(butaca: Butaca): void {
@@ -439,28 +496,24 @@ export class Butacas implements OnInit, OnDestroy {
         this.aviso.set('');
         this.errorOperacion.set('');
 
-        if (
-            !this.seleccionadas().includes(butaca.id) &&
-            this.seleccionadas().length >= 20
-        ) {
-            this.aviso.set(
-                'Podés seleccionar hasta 20 ubicaciones por compra.'
-            );
+        if (!this.seleccionadas().includes(butaca.id) && this.seleccionadas().length >= 20) {
+            this.aviso.set('Podés seleccionar hasta 20 ubicaciones por compra.');
             return;
         }
 
         this.seleccionadas.update((actuales) =>
             actuales.includes(butaca.id)
                 ? actuales.filter((id) => id !== butaca.id)
-                : [...actuales, butaca.id]
+                : [...actuales, butaca.id],
         );
 
-        if (
-            butaca.tipo === 'accesible' &&
-            this.seleccionadas().includes(butaca.id)
-        ) {
+        this.canjesElegidos.update((c) =>
+            c.filter((x) => x.butacas?.every((id) => this.seleccionadas().includes(id))),
+        );
+
+        if (butaca.tipo === 'accesible' && this.seleccionadas().includes(butaca.id)) {
             this.aviso.set(
-                'Seleccionaste una ubicación accesible destinada a personas con discapacidad.'
+                'Seleccionaste una ubicación accesible destinada a personas con discapacidad.',
             );
         }
     }
@@ -476,6 +529,7 @@ export class Butacas implements OnInit, OnDestroy {
         }
 
         this.seleccionadas.set([]);
+        this.canjesElegidos.set([]);
         this.aviso.set('');
     }
 
@@ -501,21 +555,21 @@ export class Butacas implements OnInit, OnDestroy {
                 const solicitud: SolicitudReserva = {
                     clave: crypto.randomUUID(),
                     butacas: [...this.seleccionadas()],
-                    confirmada: false
+                    canjes: this.canjesElegidos().filter((c) =>
+                        c.butacas?.every((id) => this.seleccionadas().includes(id)),
+                    ),
+                    confirmada: false,
                 };
 
                 // Se guarda antes de enviar para poder recuperar
                 // la misma solicitud si la respuesta se pierde.
-                this.reservasService.guardarSolicitud(
-                    this.claveAlmacenamiento,
-                    solicitud
-                );
+                this.reservasService.guardarSolicitud(this.claveAlmacenamiento, solicitud);
 
                 this.solicitud = solicitud;
             }
         } catch {
             this.errorOperacion.set(
-                'El navegador no pudo guardar la solicitud. Revisá que permita el almacenamiento del sitio.'
+                'El navegador no pudo guardar la solicitud. Revisá que permita el almacenamiento del sitio.',
             );
             return;
         }
@@ -530,29 +584,22 @@ export class Butacas implements OnInit, OnDestroy {
         this.resultadoIncierto.set(true);
 
         try {
-            const reserva = await this.reservasService.reservar(
-                this.funcionId,
-                solicitud
-            );
+            const reserva = await this.reservasService.reservar(this.funcionId, solicitud);
 
             solicitud.confirmada = true;
 
-            this.reservasService.guardarSolicitud(
-                this.claveAlmacenamiento,
-                solicitud
-            );
+            this.reservasService.guardarSolicitud(this.claveAlmacenamiento, solicitud);
 
             if (!this.destruido) {
                 this.aplicarReserva(reserva);
                 this.aviso.set(
-                    'Tus ubicaciones quedaron reservadas. El plazo incluye candy y la confirmación de compra.'
+                    'Tus ubicaciones quedaron reservadas. El plazo incluye candy y la confirmación de compra.',
                 );
             }
         } catch (error) {
             if (!this.destruido) {
-                const codigo = typeof error === 'object' &&
-                    error !== null &&
-                    'code' in error
+                const codigo =
+                    typeof error === 'object' && error !== null && 'code' in error
                         ? String(error.code)
                         : '';
 
@@ -563,7 +610,7 @@ export class Butacas implements OnInit, OnDestroy {
                     this.resultadoIncierto.set(true);
 
                     this.errorOperacion.set(
-                        'No pudimos comprobar la respuesta. Presioná Comprobar reserva: se usará la misma solicitud y no se reiniciará el plazo.'
+                        'No pudimos comprobar la respuesta. Presioná Comprobar reserva: se usará la misma solicitud y no se reiniciará el plazo.',
                     );
                 }
             }
@@ -579,12 +626,7 @@ export class Butacas implements OnInit, OnDestroy {
     async cancelarReserva(): Promise<void> {
         const solicitud = this.solicitud;
 
-        if (
-            !solicitud ||
-            this.reservando() ||
-            this.cancelando() ||
-            this.sincronizando()
-        ) {
+        if (!solicitud || this.reservando() || this.cancelando() || this.sincronizando()) {
             return;
         }
 
@@ -597,7 +639,7 @@ export class Butacas implements OnInit, OnDestroy {
             if (!this.destruido) {
                 this.olvidarReserva();
                 this.aviso.set(
-                    'La reserva fue cancelada. Las ubicaciones volvieron a estar disponibles.'
+                    'La reserva fue cancelada. Las ubicaciones volvieron a estar disponibles.',
                 );
             }
         } catch (error) {
@@ -615,9 +657,7 @@ export class Butacas implements OnInit, OnDestroy {
 
     precioButaca(butaca: Butaca): number {
         const reservado = this.reservaVigente()
-            ? this.reserva()?.butacas.find(
-                (actual) => actual.butaca_id === butaca.id
-            )
+            ? this.reserva()?.butacas.find((actual) => actual.butaca_id === butaca.id)
             : null;
 
         if (reservado) {
@@ -634,9 +674,7 @@ export class Butacas implements OnInit, OnDestroy {
             return funcion.precio_vip;
         }
 
-        return butaca.tipo === 'accesible'
-            ? funcion.precio_accesible
-            : funcion.precio_estandar;
+        return butaca.tipo === 'accesible' ? funcion.precio_accesible : funcion.precio_estandar;
     }
 
     nombreTipo(butaca: Butaca): string {
@@ -644,27 +682,30 @@ export class Butacas implements OnInit, OnDestroy {
             return 'VIP';
         }
 
-        return butaca.tipo === 'accesible'
-            ? 'Accesible'
-            : 'Estándar';
+        return butaca.tipo === 'accesible' ? 'Accesible' : 'Estándar';
     }
 
     etiquetaButaca(butaca: Butaca): string {
         const estado = this.estadoButaca(butaca);
 
-        const descripcion = estado === 'propia'
-            ? 'reservada para vos'
-            : estado === 'reservada'
-                ? 'reservada por otro comprador'
-                : estado === 'vendida'
-                    ? 'vendida'
-                    : this.seleccionadas().includes(butaca.id)
+        const descripcion =
+            estado === 'mantenimiento'
+                ? 'fuera de servicio'
+                : estado === 'propia'
+                  ? 'reservada para vos'
+                  : estado === 'reservada'
+                    ? 'reservada por otro comprador'
+                    : estado === 'vendida'
+                      ? 'vendida'
+                      : this.seleccionadas().includes(butaca.id)
                         ? 'seleccionada'
                         : 'disponible';
 
-        return `Fila ${butaca.fila}, ubicación ${butaca.numero}, ` +
+        return (
+            `Fila ${butaca.fila}, ubicación ${butaca.numero}, ` +
             `${this.nombreTipo(butaca)}, ` +
-            `${this.precioButaca(butaca)} pesos, ${descripcion}`;
+            `${this.precioButaca(butaca)} pesos, ${descripcion}`
+        );
     }
 
     private aplicarReserva(reserva: Reserva): void {
@@ -679,58 +720,46 @@ export class Butacas implements OnInit, OnDestroy {
             this.aviso.set(
                 reserva.estado === 'confirmada'
                     ? 'La reserva ya fue confirmada.'
-                    : 'La reserva terminó. Volvé a elegir tus ubicaciones.'
+                    : 'La reserva terminó. Volvé a elegir tus ubicaciones.',
             );
             return;
         }
 
         this.reserva.set(reserva);
         this.resultadoIncierto.set(false);
-        this.seleccionadas.set(
-            reserva.butacas.map((butaca) => butaca.butaca_id)
-        );
+        this.seleccionadas.set(reserva.butacas.map((butaca) => butaca.butaca_id));
 
         if (this.solicitud && !this.solicitud.confirmada) {
             this.solicitud.confirmada = true;
 
-            this.reservasService.guardarSolicitud(
-                this.claveAlmacenamiento,
-                this.solicitud
-            );
+            this.reservasService.guardarSolicitud(this.claveAlmacenamiento, this.solicitud);
         }
     }
 
     private retirarSeleccionOcupada(): void {
-        if (
-            this.reservaVigente() ||
-            this.resultadoIncierto() ||
-            this.reservando()
-        ) {
+        if (this.reservaVigente() || this.resultadoIncierto() || this.reservando()) {
             return;
         }
 
         const retiradas = this.detalleSeleccion().filter(
-            (butaca) => this.estadoButaca(butaca) !== 'libre'
+            (butaca) => this.estadoButaca(butaca) !== 'libre',
         );
 
         if (retiradas.length > 0) {
             const ids = new Set(retiradas.map((butaca) => butaca.id));
 
-            this.seleccionadas.update((actuales) =>
-                actuales.filter((id) => !ids.has(id))
-            );
+            this.seleccionadas.update((actuales) => actuales.filter((id) => !ids.has(id)));
 
             this.aviso.set(
                 'Estas ubicaciones ya no están disponibles: ' +
-                retiradas.map(
-                    (butaca) => `${butaca.fila}${butaca.numero}`
-                ).join(', ') +
-                '. Elegí otras.'
+                    retiradas.map((butaca) => `${butaca.fila}${butaca.numero}`).join(', ') +
+                    '. Elegí otras.',
             );
         }
 
         if (this.ventaCerrada()) {
             this.seleccionadas.set([]);
+            this.canjesElegidos.set([]);
         }
     }
 
@@ -739,15 +768,12 @@ export class Butacas implements OnInit, OnDestroy {
 
         if (
             reserva &&
-            (
-                new Date(reserva.vence_en).getTime() <= this.ahora() ||
-                this.ventaCerrada()
-            )
+            (new Date(reserva.vence_en).getTime() <= this.ahora() || this.ventaCerrada())
         ) {
             this.olvidarReserva();
 
             this.aviso.set(
-                'Terminó el plazo de tu reserva. Volvé a elegir las ubicaciones si la función sigue disponible.'
+                'Terminó el plazo de tu reserva. Volvé a elegir las ubicaciones si la función sigue disponible.',
             );
         }
     }
@@ -758,13 +784,12 @@ export class Butacas implements OnInit, OnDestroy {
         this.resultadoIncierto.set(false);
 
         if (this.claveAlmacenamiento) {
-            this.reservasService.quitarSolicitud(
-                this.claveAlmacenamiento
-            );
+            this.reservasService.quitarSolicitud(this.claveAlmacenamiento);
         }
 
         if (limpiarSeleccion) {
             this.seleccionadas.set([]);
+            this.canjesElegidos.set([]);
         }
     }
 

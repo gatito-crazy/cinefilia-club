@@ -1,0 +1,126 @@
+:host {
+    display: block;
+}
+.beneficios {
+    max-width: 1180px;
+    margin: 24px auto;
+    padding: 24px;
+    color: #f8f5fc;
+    background: #151420;
+    border: 1px solid #343144;
+    border-radius: 20px;
+}
+h1,
+h2,
+h3 {
+    line-height: 1.25;
+}
+p {
+    line-height: 1.6;
+}
+.grilla {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: 24px;
+}
+.tarjeta {
+    border: 1px solid #464155;
+    padding: 20px;
+    border-radius: 16px;
+    background: #1e1c2b;
+}
+.tarjeta img {
+    width: 100%;
+    max-height: 360px;
+    object-fit: contain;
+    border-radius: 12px;
+}
+fieldset {
+    border: 1px solid #464155;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    min-width: 0;
+}
+label {
+    display: grid;
+    gap: 8px;
+    margin: 14px 0;
+}
+input,
+select,
+textarea {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #736b84;
+    background: #100f19;
+    color: #fff;
+    font: inherit;
+    width: 100%;
+    box-sizing: border-box;
+}
+input[type='checkbox'] {
+    width: auto;
+    justify-self: start;
+}
+button,
+.boton {
+    display: inline-block;
+    background: #b72843;
+    color: #fff;
+    border: 0;
+    padding: 12px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font: inherit;
+    text-decoration: none;
+    margin: 6px 8px 6px 0;
+}
+button:disabled {
+    opacity: 0.55;
+    cursor: wait;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+    outline: 3px solid #eebe56;
+    outline-offset: 3px;
+}
+.error {
+    color: #ffa7b5;
+}
+.etiqueta {
+    color: #eebe56;
+}
+.resumen {
+    padding: 18px;
+    background: #222032;
+    border-radius: 12px;
+}
+.tabla {
+    overflow: auto;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th,
+td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #464155;
+}
+li {
+    margin: 14px 0;
+}
+@media (max-width: 600px) {
+    .beneficios {
+        padding: 16px;
+        margin: 16px 0;
+    }
+    fieldset {
+        padding: 12px;
+    }
+}

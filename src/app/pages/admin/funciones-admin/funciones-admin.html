@@ -1,27 +1,49 @@
-<section class="panel-funciones" aria-labelledby="tituloFunciones">
+<section
+    class="panel-funciones"
+    aria-labelledby="tituloFunciones"
+>
     <header class="cabecera-funciones">
         <div>
-            <h2 id="tituloFunciones">Funciones y tarifas</h2>
-            <p>Organizá la programación y las tarifas generales por formato.</p>
+            <h2 id="tituloFunciones">
+                Funciones y tarifas
+            </h2>
+
+            <p>
+                Organizá la programación y las tarifas generales por formato.
+            </p>
         </div>
 
         <button
             class="boton secundario"
             type="button"
-            [disabled]="ocupado() || editorAbierto() || (programacionAbierta() && resultadosProgramacion().length === 0)"
+            [disabled]="
+                ocupado() ||
+                editorAbierto() ||
+                (
+                    programacionAbierta() &&
+                    resultadosProgramacion().length === 0
+                )
+            "
             (click)="cargarDatos()"
         >
             Actualizar
         </button>
     </header>
 
-    <nav class="solapas-modulo" aria-label="Funciones y tarifas">
+    <nav
+        class="solapas-modulo"
+        aria-label="Funciones y tarifas"
+    >
         <button
             class="boton secundario"
             type="button"
             [class.seleccionado]="solapa() === 'funciones'"
             [attr.aria-pressed]="solapa() === 'funciones'"
-            [disabled]="ocupado() || editorAbierto() || programacionAbierta()"
+            [disabled]="
+                ocupado() ||
+                editorAbierto() ||
+                programacionAbierta()
+            "
             (click)="cambiarSolapa('funciones')"
         >
             Funciones
@@ -32,7 +54,11 @@
             type="button"
             [class.seleccionado]="solapa() === 'tarifas'"
             [attr.aria-pressed]="solapa() === 'tarifas'"
-            [disabled]="ocupado() || editorAbierto() || programacionAbierta()"
+            [disabled]="
+                ocupado() ||
+                editorAbierto() ||
+                programacionAbierta()
+            "
             (click)="cambiarSolapa('tarifas')"
         >
             Tarifas
@@ -40,18 +66,35 @@
     </nav>
 
     @if (error()) {
-        <p class="error" role="alert">{{ error() }}</p>
+        <p
+            class="error"
+            role="alert"
+        >
+            {{ error() }}
+        </p>
     }
 
     @if (exito()) {
-        <p class="exito" role="status">{{ exito() }}</p>
+        <p
+            class="exito"
+            role="status"
+        >
+            {{ exito() }}
+        </p>
     }
 
     @if (cargando()) {
-        <p role="status">Cargando funciones y tarifas...</p>
+        <p role="status">
+            Cargando funciones y tarifas...
+        </p>
     } @else if (solapa() === 'tarifas') {
-        <section class="editor-funcion" aria-labelledby="tituloTarifas">
-            <h3 id="tituloTarifas">Tarifas generales por formato</h3>
+        <section
+            class="editor-funcion"
+            aria-labelledby="tituloTarifas"
+        >
+            <h3 id="tituloTarifas">
+                Tarifas generales por formato
+            </h3>
 
             <p>
                 Estos precios se aplican a todas las salas.
@@ -62,33 +105,49 @@
             <div class="resumen-tarifas">
                 @for (formato of formatos; track formato) {
                     <article class="tarjeta-tarifa">
-                        <h4>{{ formato }}</h4>
+                        <h4>
+                            {{ formato }}
+                        </h4>
 
                         @if (tarifaPorFormato(formato); as tarifa) {
                             <dl class="resumen-precios">
                                 <div>
-                                    <dt>Normal</dt>
+                                    <dt>
+                                        Normal
+                                    </dt>
+
                                     <dd>
-                                        ARS {{ tarifa.precio_estandar | number:'1.2-2' }}
+                                        ARS
+                                        {{ tarifa.precio_estandar | number:'1.2-2' }}
                                     </dd>
                                 </div>
 
                                 <div>
-                                    <dt>Accesible</dt>
+                                    <dt>
+                                        Accesible
+                                    </dt>
+
                                     <dd>
-                                        ARS {{ tarifa.precio_accesible | number:'1.2-2' }}
+                                        ARS
+                                        {{ tarifa.precio_accesible | number:'1.2-2' }}
                                     </dd>
                                 </div>
 
                                 <div class="precio-vip">
-                                    <dt>VIP</dt>
+                                    <dt>
+                                        VIP
+                                    </dt>
+
                                     <dd>
-                                        ARS {{ tarifa.precio_vip | number:'1.2-2' }}
+                                        ARS
+                                        {{ tarifa.precio_vip | number:'1.2-2' }}
                                     </dd>
                                 </div>
                             </dl>
                         } @else {
-                            <p class="detalle">Sin tarifas configuradas.</p>
+                            <p class="detalle">
+                                Sin tarifas configuradas.
+                            </p>
                         }
 
                         <button
@@ -107,10 +166,18 @@
                 }
             </div>
 
-            <form #formTarifa="ngForm" (ngSubmit)="guardarTarifa(formTarifa)">
-                <fieldset class="campos" [disabled]="ocupado()">
+            <form
+                #formTarifa="ngForm"
+                (ngSubmit)="guardarTarifa(formTarifa)"
+            >
+                <fieldset
+                    class="campos"
+                    [disabled]="ocupado()"
+                >
                     <div class="campo">
-                        <label for="formatoTarifa">Formato</label>
+                        <label for="formatoTarifa">
+                            Formato
+                        </label>
 
                         <select
                             id="formatoTarifa"
@@ -120,7 +187,9 @@
                             required
                         >
                             @for (formato of formatos; track formato) {
-                                <option [value]="formato">{{ formato }}</option>
+                                <option [value]="formato">
+                                    {{ formato }}
+                                </option>
                             }
                         </select>
                     </div>
@@ -135,7 +204,9 @@
 
                     <div class="precios-formulario">
                         <div class="campo">
-                            <label for="tarifaEstandar">Estándar · ARS</label>
+                            <label for="tarifaEstandar">
+                                Estándar · ARS
+                            </label>
 
                             <input
                                 id="tarifaEstandar"
@@ -150,7 +221,9 @@
                         </div>
 
                         <div class="campo">
-                            <label for="tarifaAccesible">Accesible · ARS</label>
+                            <label for="tarifaAccesible">
+                                Accesible · ARS
+                            </label>
 
                             <input
                                 id="tarifaAccesible"
@@ -165,7 +238,9 @@
                         </div>
 
                         <div class="campo">
-                            <label for="tarifaVip">VIP · ARS</label>
+                            <label for="tarifaVip">
+                                VIP · ARS
+                            </label>
 
                             <input
                                 id="tarifaVip"
@@ -178,13 +253,20 @@
                                 required
                             />
 
-                            <small>Debe ser mayor al precio estándar.</small>
+                            <small>
+                                Debe ser mayor al precio estándar.
+                            </small>
                         </div>
                     </div>
                 </fieldset>
 
                 @if (errorTarifa()) {
-                    <p class="error" role="alert">{{ errorTarifa() }}</p>
+                    <p
+                        class="error"
+                        role="alert"
+                    >
+                        {{ errorTarifa() }}
+                    </p>
                 }
 
                 <button
@@ -192,19 +274,29 @@
                     type="submit"
                     [disabled]="ocupado()"
                 >
-                    {{ guardandoTarifa() ? 'Guardando...' : 'Guardar tarifas' }}
+                    {{
+                        guardandoTarifa()
+                            ? 'Guardando...'
+                            : 'Guardar tarifas'
+                    }}
                 </button>
             </form>
         </section>
     } @else {
         <div class="cabecera-funciones">
-            <p>Consultá las funciones agrupadas por sala.</p>
+            <p>
+                Consultá las funciones agrupadas por sala.
+            </p>
 
             <div class="acciones">
                 <button
                     class="boton"
                     type="button"
-                    [disabled]="ocupado() || editorAbierto() || programacionAbierta()"
+                    [disabled]="
+                        ocupado() ||
+                        editorAbierto() ||
+                        programacionAbierta()
+                    "
                     (click)="nuevaFuncion()"
                 >
                     Agregar función
@@ -213,7 +305,11 @@
                 <button
                     class="boton secundario"
                     type="button"
-                    [disabled]="ocupado() || editorAbierto() || programacionAbierta()"
+                    [disabled]="
+                        ocupado() ||
+                        editorAbierto() ||
+                        programacionAbierta()
+                    "
                     (click)="abrirProgramacion()"
                 >
                     Programar varios días
@@ -221,7 +317,10 @@
             </div>
         </div>
 
-        <nav class="filtro-salas" aria-label="Filtrar funciones por sala">
+        <nav
+            class="filtro-salas"
+            aria-label="Filtrar funciones por sala"
+        >
             <button
                 class="boton secundario"
                 type="button"
@@ -245,6 +344,23 @@
             }
         </nav>
 
+        <label class="opcion filtro-archivadas">
+            <input
+                type="checkbox"
+                [ngModel]="mostrarArchivadas()"
+                (ngModelChange)="mostrarArchivadas.set($event)"
+                [disabled]="
+                    ocupado() ||
+                    editorAbierto() ||
+                    programacionAbierta()
+                "
+            />
+
+            <span>
+                Mostrar archivadas
+            </span>
+        </label>
+
         @if (programacionAbierta()) {
             <section
                 class="programacion-multiple"
@@ -266,10 +382,15 @@
                 >
                     <fieldset
                         class="campos-programacion"
-                        [disabled]="ocupado() || resultadosProgramacion().length > 0"
+                        [disabled]="
+                            ocupado() ||
+                            resultadosProgramacion().length > 0
+                        "
                     >
                         <div class="campo">
-                            <label for="peliculaProgramacion">Película</label>
+                            <label for="peliculaProgramacion">
+                                Película
+                            </label>
 
                             <select
                                 id="peliculaProgramacion"
@@ -277,7 +398,11 @@
                                 [(ngModel)]="borradorProgramacion.pelicula_id"
                                 required
                             >
-                                <option value="" disabled hidden>
+                                <option
+                                    value=""
+                                    disabled
+                                    hidden
+                                >
                                     Seleccioná una película
                                 </option>
 
@@ -293,7 +418,9 @@
 
                         <div class="fila">
                             <div class="campo">
-                                <label for="desdeProgramacion">Desde</label>
+                                <label for="desdeProgramacion">
+                                    Desde
+                                </label>
 
                                 <input
                                     id="desdeProgramacion"
@@ -337,25 +464,38 @@
                         </div>
 
                         <fieldset class="dias-programacion">
-                            <legend>Días de la semana</legend>
+                            <legend>
+                                Días de la semana
+                            </legend>
 
                             @for (dia of diasSemana; track dia.numero) {
                                 <label class="dia-programacion">
                                     <input
                                         #seleccionDia
                                         type="checkbox"
-                                        [checked]="diasElegidos().includes(dia.numero)"
-                                        (change)="cambiarDia(dia.numero, seleccionDia.checked)"
+                                        [checked]="
+                                            diasElegidos().includes(dia.numero)
+                                        "
+                                        (change)="
+                                            cambiarDia(
+                                                dia.numero,
+                                                seleccionDia.checked
+                                            )
+                                        "
                                     />
 
-                                    <span>{{ dia.nombre }}</span>
+                                    <span>
+                                        {{ dia.nombre }}
+                                    </span>
                                 </label>
                             }
                         </fieldset>
 
                         <div class="fila">
                             <div class="campo">
-                                <label for="formatoProgramacion">Formato</label>
+                                <label for="formatoProgramacion">
+                                    Formato
+                                </label>
 
                                 <select
                                     id="formatoProgramacion"
@@ -372,7 +512,9 @@
                             </div>
 
                             <div class="campo">
-                                <label for="idiomaProgramacion">Idioma</label>
+                                <label for="idiomaProgramacion">
+                                    Idioma
+                                </label>
 
                                 <select
                                     id="idiomaProgramacion"
@@ -392,7 +534,9 @@
                         </div>
 
                         <div class="vista-tarifas">
-                            <h4>Asignación automática de salas</h4>
+                            <h4>
+                                Asignación automática de salas
+                            </h4>
 
                             <p>
                                 Para cada fecha se elegirá la primera sala
@@ -402,29 +546,55 @@
                             </p>
                         </div>
 
-                        @if (tarifaPorFormato(borradorProgramacion.formato); as tarifa) {
+                        @if (
+                            tarifaPorFormato(borradorProgramacion.formato);
+                            as tarifa
+                        ) {
                             <div class="vista-tarifas">
-                                <h4>Tarifas del formato</h4>
+                                <h4>
+                                    Tarifas del formato
+                                </h4>
 
                                 <dl class="resumen-precios">
                                     <div>
-                                        <dt>Estándar</dt>
+                                        <dt>
+                                            Estándar
+                                        </dt>
+
                                         <dd>
-                                            ARS {{ tarifa.precio_estandar | number:'1.2-2' }}
+                                            ARS
+                                            {{
+                                                tarifa.precio_estandar
+                                                    | number:'1.2-2'
+                                            }}
                                         </dd>
                                     </div>
 
                                     <div>
-                                        <dt>Accesible</dt>
+                                        <dt>
+                                            Accesible
+                                        </dt>
+
                                         <dd>
-                                            ARS {{ tarifa.precio_accesible | number:'1.2-2' }}
+                                            ARS
+                                            {{
+                                                tarifa.precio_accesible
+                                                    | number:'1.2-2'
+                                            }}
                                         </dd>
                                     </div>
 
                                     <div class="precio-vip">
-                                        <dt>VIP</dt>
+                                        <dt>
+                                            VIP
+                                        </dt>
+
                                         <dd>
-                                            ARS {{ tarifa.precio_vip | number:'1.2-2' }}
+                                            ARS
+                                            {{
+                                                tarifa.precio_vip
+                                                    | number:'1.2-2'
+                                            }}
                                         </dd>
                                     </div>
                                 </dl>
@@ -437,14 +607,17 @@
                         }
 
                         <p class="detalle">
-                            Se crearán funciones activas.
-                            Podés elegir un rango de hasta 90 días
-                            y crear hasta 60 funciones por programación.
+                            Se crearán funciones activas. Podés elegir
+                            un rango de hasta 90 días y crear hasta
+                            60 funciones por programación.
                         </p>
                     </fieldset>
 
                     @if (errorProgramacion()) {
-                        <p class="error" role="alert">
+                        <p
+                            class="error"
+                            role="alert"
+                        >
                             {{ errorProgramacion() }}
                         </p>
                     }
@@ -456,7 +629,10 @@
                     }
 
                     <div class="acciones-programacion">
-                        @if (resultadosProgramacion().length === 0 || programando()) {
+                        @if (
+                            resultadosProgramacion().length === 0 ||
+                            programando()
+                        ) {
                             <button
                                 class="boton"
                                 type="submit"
@@ -486,15 +662,22 @@
                 </form>
 
                 @if (resultadosProgramacion().length > 0) {
-                    <section aria-labelledby="tituloResultadoProgramacion">
+                    <section
+                        aria-labelledby="tituloResultadoProgramacion"
+                    >
                         <h4 id="tituloResultadoProgramacion">
                             Resultado por fecha
                         </h4>
 
                         <ul class="resultados-programacion">
-                            @for (resultado of resultadosProgramacion(); track resultado.inicio) {
+                            @for (
+                                resultado of resultadosProgramacion();
+                                track resultado.inicio
+                            ) {
                                 <li
-                                    [class.resultado-creado]="resultado.estado === 'creada'"
+                                    [class.resultado-creado]="
+                                        resultado.estado === 'creada'
+                                    "
                                 >
                                     <strong>
                                         {{
@@ -516,10 +699,14 @@
                                     </span>
 
                                     @if (resultado.sala) {
-                                        <span>{{ resultado.sala }}</span>
+                                        <span>
+                                            {{ resultado.sala }}
+                                        </span>
                                     }
 
-                                    <p>{{ resultado.mensaje }}</p>
+                                    <p>
+                                        {{ resultado.mensaje }}
+                                    </p>
                                 </li>
                             }
                         </ul>
@@ -534,13 +721,25 @@
                 aria-labelledby="tituloEditorFuncion"
             >
                 <h3 id="tituloEditorFuncion">
-                    {{ funcionEditada ? 'Editar función' : 'Agregar función' }}
+                    {{
+                        funcionEditada
+                            ? 'Editar función'
+                            : 'Agregar función'
+                    }}
                 </h3>
 
-                <form #formFuncion="ngForm" (ngSubmit)="guardar(formFuncion)">
-                    <fieldset class="campos" [disabled]="ocupado()">
+                <form
+                    #formFuncion="ngForm"
+                    (ngSubmit)="guardar(formFuncion)"
+                >
+                    <fieldset
+                        class="campos"
+                        [disabled]="ocupado()"
+                    >
                         <div class="campo">
-                            <label for="peliculaFuncion">Película</label>
+                            <label for="peliculaFuncion">
+                                Película
+                            </label>
 
                             <select
                                 id="peliculaFuncion"
@@ -548,14 +747,22 @@
                                 [(ngModel)]="borrador.pelicula_id"
                                 required
                             >
-                                <option value="" disabled hidden>
+                                <option
+                                    value=""
+                                    disabled
+                                    hidden
+                                >
                                     Seleccioná una película
                                 </option>
 
                                 @for (pelicula of peliculas(); track pelicula.id) {
                                     <option [value]="pelicula.id">
                                         {{ pelicula.nombre }}
-                                        {{ pelicula.activa ? '' : ' · Desactivada' }}
+                                        {{
+                                            pelicula.activa
+                                                ? ''
+                                                : ' · Desactivada'
+                                        }}
                                     </option>
                                 }
                             </select>
@@ -563,7 +770,9 @@
 
                         @if (funcionEditada) {
                             <div class="campo">
-                                <label for="salaFuncion">Sala</label>
+                                <label for="salaFuncion">
+                                    Sala
+                                </label>
 
                                 <select
                                     id="salaFuncion"
@@ -574,7 +783,11 @@
                                     @for (sala of salas(); track sala.id) {
                                         <option [value]="sala.id">
                                             {{ sala.nombre }}
-                                            {{ sala.activa ? '' : ' · Desactivada' }}
+                                            {{
+                                                sala.activa
+                                                    ? ''
+                                                    : ' · Desactivada'
+                                            }}
                                         </option>
                                     }
                                 </select>
@@ -586,7 +799,9 @@
                             </div>
                         } @else {
                             <div class="vista-tarifas">
-                                <h4>Asignación automática de sala</h4>
+                                <h4>
+                                    Asignación automática de sala
+                                </h4>
 
                                 <p>
                                     Al guardar, el sistema elegirá una sala
@@ -615,7 +830,9 @@
                             @if (finPrevisto(); as fin) {
                                 <small>
                                     Finalización estimada:
-                                    {{ fin | date:'dd/MM/yyyy HH:mm':'-0300' }}.
+                                    {{
+                                        fin | date:'dd/MM/yyyy HH:mm':'-0300'
+                                    }}.
                                     Deben quedar 30 minutos antes de la
                                     siguiente función de esa sala.
                                 </small>
@@ -624,7 +841,9 @@
 
                         <div class="fila">
                             <div class="campo">
-                                <label for="formatoFuncion">Formato</label>
+                                <label for="formatoFuncion">
+                                    Formato
+                                </label>
 
                                 <select
                                     id="formatoFuncion"
@@ -641,7 +860,9 @@
                             </div>
 
                             <div class="campo">
-                                <label for="idiomaFuncion">Idioma</label>
+                                <label for="idiomaFuncion">
+                                    Idioma
+                                </label>
 
                                 <select
                                     id="idiomaFuncion"
@@ -662,27 +883,50 @@
 
                         @if (preciosFuncion(); as precios) {
                             <div class="vista-tarifas">
-                                <h4>Precios de esta función</h4>
+                                <h4>
+                                    Precios de esta función
+                                </h4>
 
                                 <dl class="resumen-precios">
                                     <div>
-                                        <dt>Estándar</dt>
+                                        <dt>
+                                            Estándar
+                                        </dt>
+
                                         <dd>
-                                            ARS {{ precios.precio_estandar | number:'1.2-2' }}
+                                            ARS
+                                            {{
+                                                precios.precio_estandar
+                                                    | number:'1.2-2'
+                                            }}
                                         </dd>
                                     </div>
 
                                     <div>
-                                        <dt>Accesible</dt>
+                                        <dt>
+                                            Accesible
+                                        </dt>
+
                                         <dd>
-                                            ARS {{ precios.precio_accesible | number:'1.2-2' }}
+                                            ARS
+                                            {{
+                                                precios.precio_accesible
+                                                    | number:'1.2-2'
+                                            }}
                                         </dd>
                                     </div>
 
                                     <div class="precio-vip">
-                                        <dt>VIP</dt>
+                                        <dt>
+                                            VIP
+                                        </dt>
+
                                         <dd>
-                                            ARS {{ precios.precio_vip | number:'1.2-2' }}
+                                            ARS
+                                            {{
+                                                precios.precio_vip
+                                                    | number:'1.2-2'
+                                            }}
                                         </dd>
                                     </div>
                                 </dl>
@@ -696,7 +940,8 @@
                         } @else {
                             <p class="error">
                                 Configurá las tarifas generales de
-                                {{ borrador.formato }} antes de crear la función.
+                                {{ borrador.formato }}
+                                antes de crear la función.
                             </p>
                         }
 
@@ -707,7 +952,9 @@
                                 [(ngModel)]="borrador.activa"
                             />
 
-                            <span>Función activa</span>
+                            <span>
+                                Función activa
+                            </span>
                         </label>
 
                         <small>
@@ -717,7 +964,10 @@
                     </fieldset>
 
                     @if (errorFormulario()) {
-                        <p class="error" role="alert">
+                        <p
+                            class="error"
+                            role="alert"
+                        >
                             {{ errorFormulario() }}
                         </p>
                     }
@@ -769,14 +1019,23 @@
 
                 @for (seccion of grupo.secciones; track seccion.nombre) {
                     <section class="seccion-horarios">
-                        <h4>{{ seccion.nombre }}</h4>
+                        <h4>
+                            {{ seccion.nombre }}
+                        </h4>
 
                         <div class="lista-funciones">
-                            @for (funcion of seccion.funciones; track funcion.id) {
+                            @for (
+                                funcion of seccion.funciones;
+                                track funcion.id
+                            ) {
                                 <article class="tarjeta-funcion">
                                     <div class="titulo-funcion">
                                         <h3>
-                                            {{ nombrePelicula(funcion.pelicula_id) }}
+                                            {{
+                                                nombrePelicula(
+                                                    funcion.pelicula_id
+                                                )
+                                            }}
                                         </h3>
 
                                         <span
@@ -784,111 +1043,195 @@
                                             [class.desactivada]="!funcion.activa"
                                         >
                                             {{
-                                                funcion.activa
-                                                    ? 'Activa'
-                                                    : 'Desactivada'
+                                                funcion.archivada
+                                                    ? 'Archivada'
+                                                    : funcion.cancelada
+                                                        ? 'Cancelada'
+                                                        : funcion.activa
+                                                            ? 'Activa'
+                                                            : 'Desactivada'
                                             }}
                                         </span>
                                     </div>
 
                                     <p
                                         class="estado-temporal"
-                                        [class.en-curso]="estadoTemporal(funcion) === 'En curso'"
-                                        [class.terminada]="estadoTemporal(funcion) === 'Terminada' || !funcion.activa"
+                                        [class.en-curso]="
+                                            estadoTemporal(funcion) === 'En curso'
+                                        "
+                                        [class.terminada]="
+                                            estadoTemporal(funcion) === 'Terminada' ||
+                                            !funcion.activa
+                                        "
                                     >
                                         {{ estadoTemporal(funcion) }}
 
-                                        @if (!funcion.activa || funcionComenzada(funcion)) {
+                                        @if (
+                                            !funcion.activa ||
+                                            funcionComenzada(funcion)
+                                        ) {
                                             · Venta cerrada
                                         }
                                     </p>
 
                                     <p>
-                                        <strong>Inicio:</strong>
-                                        {{ funcion.inicio | date:'dd/MM/yyyy HH:mm':'-0300' }}
+                                        <strong>
+                                            Inicio:
+                                        </strong>
+
+                                        {{
+                                            funcion.inicio
+                                                | date:'dd/MM/yyyy HH:mm':'-0300'
+                                        }}
                                     </p>
 
                                     <p>
-                                        <strong>Finalización:</strong>
-                                        {{ funcion.fin | date:'dd/MM/yyyy HH:mm':'-0300' }}
+                                        <strong>
+                                            Finalización:
+                                        </strong>
+
+                                        {{
+                                            funcion.fin
+                                                | date:'dd/MM/yyyy HH:mm':'-0300'
+                                        }}
                                     </p>
 
                                     <p class="detalle">
                                         {{ funcion.formato }} ·
+
                                         {{
                                             funcion.idioma === 'castellano'
                                                 ? 'Castellano'
                                                 : 'Subtitulada'
                                         }}
+
                                         · {{ funcion.duracion_minutos }} minutos
                                     </p>
 
                                     <dl class="resumen-precios">
                                         <div>
-                                            <dt>Estándar</dt>
+                                            <dt>
+                                                Estándar
+                                            </dt>
+
                                             <dd>
-                                                ARS {{ funcion.precio_estandar | number:'1.2-2' }}
+                                                ARS
+                                                {{
+                                                    funcion.precio_estandar
+                                                        | number:'1.2-2'
+                                                }}
                                             </dd>
                                         </div>
 
                                         <div>
-                                            <dt>Accesible</dt>
+                                            <dt>
+                                                Accesible
+                                            </dt>
+
                                             <dd>
-                                                ARS {{ funcion.precio_accesible | number:'1.2-2' }}
+                                                ARS
+                                                {{
+                                                    funcion.precio_accesible
+                                                        | number:'1.2-2'
+                                                }}
                                             </dd>
                                         </div>
 
                                         <div class="precio-vip">
-                                            <dt>VIP</dt>
+                                            <dt>
+                                                VIP
+                                            </dt>
+
                                             <dd>
-                                                ARS {{ funcion.precio_vip | number:'1.2-2' }}
+                                                ARS
+                                                {{
+                                                    funcion.precio_vip
+                                                        | number:'1.2-2'
+                                                }}
                                             </dd>
                                         </div>
                                     </dl>
 
-                                    @if (estadoTemporal(funcion) === 'Terminada') {
+                                    @if (
+                                        !funcion.cancelada &&
+                                        estadoTemporal(funcion) === 'Terminada'
+                                    ) {
                                         <p class="detalle">
-                                            Se muestra hasta que termine
-                                            otra función activa de esta sala.
+                                            Se muestra hasta que termine otra
+                                            función activa de esta sala.
                                             Permanece guardada en el historial.
                                         </p>
                                     }
 
                                     <div class="acciones">
-                                        <button
-                                            class="boton"
-                                            type="button"
-                                            [disabled]="ocupado() || editorAbierto() || programacionAbierta() || funcionComenzada(funcion)"
-                                            (click)="editarFuncion(funcion)"
-                                        >
-                                            Editar
-                                        </button>
+                                        @if (funcion.cancelada) {
+                                            <button
+                                                class="boton secundario"
+                                                type="button"
+                                                [disabled]="
+                                                    ocupado() ||
+                                                    editorAbierto() ||
+                                                    programacionAbierta()
+                                                "
+                                                (click)="cambiarArchivo(funcion)"
+                                            >
+                                                {{
+                                                    funcion.archivada
+                                                        ? 'Volver a mostrar'
+                                                        : 'Ocultar del listado'
+                                                }}
+                                            </button>
+                                        } @else {
+                                            <button
+                                                class="boton"
+                                                type="button"
+                                                [disabled]="
+                                                    ocupado() ||
+                                                    editorAbierto() ||
+                                                    programacionAbierta() ||
+                                                    funcionComenzada(funcion)
+                                                "
+                                                (click)="editarFuncion(funcion)"
+                                            >
+                                                Editar
+                                            </button>
 
-                                        <button
-                                            class="boton secundario"
-                                            type="button"
-                                            [disabled]="ocupado() || editorAbierto() || programacionAbierta() || (!funcion.activa && funcionComenzada(funcion))"
-                                            (click)="cambiarEstado(funcion)"
-                                        >
-                                            {{
-                                                funcion.activa
-                                                    ? 'Desactivar'
-                                                    : 'Activar'
-                                            }}
-                                        </button>
-                                        
-                                        <button
-                                            class="boton peligro"
-                                            type="button"
-                                            [disabled]="ocupado() || editorAbierto() || programacionAbierta() || funcionComenzada(funcion)"
-                                            (click)="eliminarFuncion(funcion)"
-                                        >
-                                            Eliminar
-                                        </button>
+                                            @if (!funcion.activa) {
+                                                <button
+                                                    class="boton secundario"
+                                                    type="button"
+                                                    [disabled]="
+                                                        ocupado() ||
+                                                        editorAbierto() ||
+                                                        programacionAbierta() ||
+                                                        funcionComenzada(funcion)
+                                                    "
+                                                    (click)="cambiarEstado(funcion)"
+                                                >
+                                                    Activar
+                                                </button>
+                                            }
+
+                                            <button
+                                                class="boton peligro"
+                                                type="button"
+                                                [disabled]="
+                                                    ocupado() ||
+                                                    editorAbierto() ||
+                                                    programacionAbierta() ||
+                                                    funcionComenzada(funcion)
+                                                "
+                                                (click)="eliminarFuncion(funcion)"
+                                            >
+                                                Cancelar función
+                                            </button>
+                                        }
                                     </div>
 
                                     @if (procesando() === funcion.id) {
-                                        <p role="status">Procesando...</p>
+                                        <p role="status">
+                                            Procesando...
+                                        </p>
                                     }
                                 </article>
                             } @empty {
@@ -901,7 +1244,9 @@
                 }
             </section>
         } @empty {
-            <p>No hay salas para mostrar.</p>
+            <p>
+                No hay salas para mostrar.
+            </p>
         }
     }
 </section>

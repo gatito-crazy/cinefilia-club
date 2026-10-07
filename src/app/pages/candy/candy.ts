@@ -1,11 +1,22 @@
-import { DecimalPipe } from '@angular/common';
+import { CanjeArticulo } from '../../shared/canje-articulo/canje-articulo';
 import {
-    Component,
-    computed,
-    inject,
-    OnInit,
-    signal
-} from '@angular/core';
+    actualizarCanjes,
+    unidadesCanje,
+    validarCanjes,
+    FidelizacionService,
+    SeleccionCanje
+} from '../../base/service/fidelizacion.service';
+import { PagoElegido } from '../../base/service/beneficios.service';
+import { PagoSelector } from '../../shared/pago-selector/pago-selector';
+import {
+    calcularResumenCupones,
+    comprobarSeleccionCupones,
+    Cupon,
+    validarCuponesGuardados
+} from '../../base/service/cupones.service';
+import { CuponSelector } from '../../shared/cupon-selector/cupon-selector';
+import { DecimalPipe } from '@angular/common';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import {
@@ -19,9 +30,7 @@ import {
     ComprasService
 } from '../../base/service/compras.service';
 import { SupabaseService } from '../../base/service/supabase.service';
-import {
-    ComprobantePdfService
-} from '../../base/service/comprobante-pdf.service';
+import { ComprobantePdfService } from '../../base/service/comprobante-pdf.service';
 
 interface ArticuloCatalogo {
     clave: string;
@@ -38,11 +47,22 @@ interface SolicitudCandy {
     usuarioId: string | null;
     articulos: ArticuloCompra[];
     total: number;
+    cupon?: Cupon | null;
+    cupones?: Cupon[];
+    totalFinal?: number;
+    pago?: PagoElegido | null;
 }
 
 @Component({
     selector: 'app-candy',
-    imports: [DecimalPipe, FormsModule, RouterLink],
+    imports: [
+        DecimalPipe,
+        FormsModule,
+        RouterLink,
+        CuponSelector,
+        PagoSelector,
+        CanjeArticulo
+    ],
     templateUrl: './candy.html',
     styleUrl: './candy.scss'
 })
@@ -52,7 +72,18 @@ export class Candy implements OnInit {
     private readonly supabase = inject(SupabaseService);
     private readonly comprobantePdf = inject(ComprobantePdfService);
 
+    readonly fidelizacion = inject(FidelizacionService);
+    readonly canjesElegidos = signal<SeleccionCanje[]>([]);
+    readonly tiposArticulos = ['producto', 'combo'] as const;
+
     private almacenamiento = '';
+    clavePago = crypto.randomUUID();
+    readonly pagoElegido = signal<PagoElegido | null>(null);
+    readonly articulosPago = computed(() =>
+        this.seleccion().map((a) => ({ tipo: a.tipo, id: a.id, cantidad: a.cantidad }))
+    );
+
+    readonly cuponesElegidos = signal<Cupon[]>([]);
 
     readonly cargando = signal(true);
     readonly procesando = signal(false);
@@ -77,9 +108,7 @@ export class Candy implements OnInit {
         const texto = this.normalizar(this.busqueda());
 
         return this.catalogo().filter((articulo) =>
-            this.normalizar(
-                `${articulo.nombre} ${articulo.descripcion}`
-            ).includes(texto)
+            this.normalizar(`${articulo.nombre} ${articulo.descripcion}`).includes(texto)
         );
     });
 
@@ -87,25 +116,28 @@ export class Candy implements OnInit {
         this.catalogo()
             .map((articulo) => ({
                 ...articulo,
-                cantidad: this.cantidades()[articulo.clave] ?? 0
+                cantidad:
+                    (this.cantidades()[articulo.clave] ?? 0) +
+                    unidadesCanje(this.canjesElegidos(), articulo.tipo, articulo.id)
             }))
             .filter((articulo) => articulo.cantidad > 0)
     );
 
-    readonly total = computed(() =>
-        this.seleccion().reduce(
-            (acumulado, articulo) =>
-                acumulado +
-                Math.round(articulo.precio * 100) * articulo.cantidad,
-            0
-        ) / 100
+    readonly total = computed(
+        () =>
+            this.seleccion().reduce(
+                (acumulado, articulo) =>
+                    acumulado + Math.round(articulo.precio * 100) * articulo.cantidad,
+                0
+            ) / 100
     );
 
-    readonly edicionBloqueada = computed(() =>
-        this.cargando() ||
-        this.procesando() ||
-        this.pendiente() !== null ||
-        this.compra() !== null
+    readonly edicionBloqueada = computed(
+        () =>
+            this.cargando() ||
+            this.procesando() ||
+            this.pendiente() !== null ||
+            this.compra() !== null
     );
 
     async ngOnInit(): Promise<void> {
@@ -123,17 +155,15 @@ export class Candy implements OnInit {
         try {
             const usuarioId = await this.obtenerUsuarioId();
 
-            this.almacenamiento =
-                `cinefilia-candy-pendiente-${usuarioId ?? 'invitado'}`;
+            this.almacenamiento = `cinefilia-candy-pendiente-${usuarioId ?? 'invitado'}`;
 
             this.recuperarSolicitud();
 
-            const [categorias, productos, combos] =
-                await Promise.all([
-                    this.candyService.obtenerCategorias(),
-                    this.candyService.obtenerProductos(),
-                    this.candyService.obtenerCombos()
-                ]);
+            const [categorias, productos, combos] = await Promise.all([
+                this.candyService.obtenerCategorias(),
+                this.candyService.obtenerProductos(),
+                this.candyService.obtenerCombos()
+            ]);
 
             const categoriasActivas = new Set(
                 categorias
@@ -141,31 +171,29 @@ export class Candy implements OnInit {
                     .map((categoria) => categoria.id)
             );
 
-            const productosActivos = productos.filter((producto) =>
-                producto.activo &&
-                categoriasActivas.has(producto.categoria_id)
+            const productosActivos = productos.filter(
+                (producto) =>
+                    producto.activo && categoriasActivas.has(producto.categoria_id)
             );
 
-            const idsProductos = new Set(
-                productosActivos.map((producto) => producto.id)
-            );
+            const idsProductos = new Set(productosActivos.map((producto) => producto.id));
 
-            const combosActivos = combos.filter((combo) =>
-                combo.activo &&
-                combo.componentes.length > 0 &&
-                combo.componentes.every((componente) =>
-                    idsProductos.has(componente.producto_id) &&
-                    componente.cantidad > 0
-                )
+            const combosActivos = combos.filter(
+                (combo) =>
+                    combo.activo &&
+                    combo.componentes.length > 0 &&
+                    combo.componentes.every(
+                        (componente) =>
+                            idsProductos.has(componente.producto_id) &&
+                            componente.cantidad > 0
+                    )
             );
 
             this.catalogo.set([
                 ...productosActivos.map((producto) =>
                     this.convertirArticulo('producto', producto)
                 ),
-                ...combosActivos.map((combo) =>
-                    this.convertirArticulo('combo', combo)
-                )
+                ...combosActivos.map((combo) => this.convertirArticulo('combo', combo))
             ]);
 
             if (this.pendiente()) {
@@ -190,26 +218,52 @@ export class Candy implements OnInit {
             return;
         }
 
+        const articulo = this.catalogo().find((a) => a.clave === clave);
+        if (
+            articulo &&
+            cantidad + unidadesCanje(this.canjesElegidos(), articulo.tipo, articulo.id) >
+                20
+        ) {
+            return;
+        }
         this.cantidades.update((actuales) => ({
             ...actuales,
             [clave]: cantidad
         }));
     }
 
+    cantidadTotalArticulo(articulo: ArticuloCatalogo): number {
+        return (
+            (this.cantidades()[articulo.clave] ?? 0) +
+            unidadesCanje(this.canjesElegidos(), articulo.tipo, articulo.id)
+        );
+    }
+
+    articulosPorTipo(tipo: 'producto' | 'combo'): ArticuloCatalogo[] {
+        return this.articulosFiltrados().filter((a) => a.tipo === tipo);
+    }
+
+    elegirCanje(canje: SeleccionCanje): void {
+        if (this.edicionBloqueada()) {
+            return;
+        }
+        this.canjesElegidos.update((c) => actualizarCanjes(c, canje));
+    }
+
+    recompensasArticulo(tipo: string, id: string) {
+        return this.fidelizacion
+            .recompensas()
+            .filter((r) => r.activa && r.tipo === tipo && r.articulo_id === id);
+    }
+
     marcarImagenFallida(clave: string): void {
         this.imagenesFallidas.update((actuales) =>
-            actuales.includes(clave)
-                ? actuales
-                : [...actuales, clave]
+            actuales.includes(clave) ? actuales : [...actuales, clave]
         );
     }
 
     async confirmar(): Promise<void> {
-        if (
-            this.cargando() ||
-            this.procesando() ||
-            this.compra()
-        ) {
+        if (this.cargando() || this.procesando() || this.compra()) {
             return;
         }
 
@@ -229,48 +283,53 @@ export class Candy implements OnInit {
             }
 
             if (!solicitud) {
+                if (!this.pagoElegido()) {
+                    throw new Error('Comprobá el resumen de pago antes de confirmar.');
+                }
                 if (this.total() <= 0) {
-                    throw new Error(
-                        'Elegí al menos un producto o combo.'
-                    );
+                    throw new Error('Elegí al menos un producto o combo.');
                 }
 
                 if (this.seleccion().length > 100) {
-                    throw new Error(
-                        'Podés comprar hasta 100 artículos diferentes.'
-                    );
+                    throw new Error('Podés comprar hasta 100 artículos diferentes.');
                 }
 
+                comprobarSeleccionCupones(this.cuponesElegidos(), 0, this.total());
+
                 solicitud = {
-                    clave: crypto.randomUUID(),
+                    clave: this.clavePago,
+                    pago: this.pagoElegido(),
                     usuarioId,
                     articulos: this.seleccion().map((articulo) => ({
                         tipo: articulo.tipo,
                         id: articulo.id,
                         cantidad: articulo.cantidad
                     })),
-                    total: this.total()
+                    total: this.total(),
+                    cupones: this.cuponesElegidos(),
+                    totalFinal: calcularResumenCupones(
+                        0,
+                        this.total(),
+                        this.cuponesElegidos()
+                    ).total
                 };
 
-                this.almacenamiento =
-                    `cinefilia-candy-pendiente-${usuarioId ?? 'invitado'}`;
+                this.almacenamiento = `cinefilia-candy-pendiente-${usuarioId ?? 'invitado'}`;
 
-                sessionStorage.setItem(
-                    this.almacenamiento,
-                    JSON.stringify(solicitud)
-                );
+                sessionStorage.setItem(this.almacenamiento, JSON.stringify(solicitud));
 
                 this.pendiente.set(solicitud);
             }
 
-            await this.comprasService.guardarAccesoInvitado(
-                solicitud.clave
-            );
+            await this.comprasService.guardarAccesoInvitado(solicitud.clave);
 
             const compra = await this.comprasService.confirmarSoloCandy(
                 solicitud.clave,
                 solicitud.articulos,
-                solicitud.total
+                solicitud.total,
+                solicitud.cupones ?? [],
+                solicitud.totalFinal ?? solicitud.total,
+                solicitud.pago ?? null
             );
 
             await this.aplicarCompra(compra);
@@ -308,14 +367,10 @@ export class Candy implements OnInit {
             const usuarioId = await this.obtenerUsuarioId();
 
             if (usuarioId !== solicitud.usuarioId) {
-                throw new Error(
-                    'Volvé a la cuenta con la que comenzaste esta compra.'
-                );
+                throw new Error('Volvé a la cuenta con la que comenzaste esta compra.');
             }
 
-            const compra = await this.comprasService.obtener(
-                solicitud.clave
-            );
+            const compra = await this.comprasService.obtener(solicitud.clave);
 
             if (compra) {
                 if (!compra.solo_candy) {
@@ -337,7 +392,7 @@ export class Candy implements OnInit {
         }
     }
 
-        async prepararQr(): Promise<void> {
+    async prepararQr(): Promise<void> {
         const codigo = this.compra()?.comprobantes.find(
             (comprobante) => comprobante.tipo === 'candy'
         )?.codigo;
@@ -361,21 +416,15 @@ export class Candy implements OnInit {
             const modulo = await import('qrcode');
             const QRCode = modulo.default ?? modulo;
 
-            const imagen = await QRCode.toDataURL(
-                codigo,
-                {
-                    width: 280,
-                    margin: 2,
-                    errorCorrectionLevel: 'M'
-                }
-            );
+            const imagen = await QRCode.toDataURL(codigo, {
+                width: 280,
+                margin: 2,
+                errorCorrectionLevel: 'M'
+            });
 
             this.imagenQr.set(imagen);
         } catch (error) {
-            console.error(
-                'No se pudo generar el QR de Candy:',
-                error
-            );
+            console.error('No se pudo generar el QR de Candy:', error);
 
             this.errorQr.set(
                 'La compra está confirmada, pero no pudimos dibujar el QR. Podés volver a intentarlo.'
@@ -391,6 +440,10 @@ export class Candy implements OnInit {
         }
 
         this.compra.set(null);
+        this.clavePago = crypto.randomUUID();
+        this.pagoElegido.set(null);
+        this.cuponesElegidos.set([]);
+        this.canjesElegidos.set([]);
         this.imagenQr.set('');
         this.errorQr.set('');
         this.cantidades.set({});
@@ -403,6 +456,7 @@ export class Candy implements OnInit {
 
     private async aplicarCompra(compra: Compra): Promise<void> {
         this.compra.set(compra);
+        void this.fidelizacion.actualizar();
         this.pendiente.set(null);
         this.aviso.set('');
 
@@ -429,23 +483,23 @@ export class Candy implements OnInit {
         if (
             !datos ||
             typeof datos.clave !== 'string' ||
-            !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(datos.clave) ||
-            (
-                datos.usuarioId !== null &&
-                typeof datos.usuarioId !== 'string'
+            !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+                datos.clave
             ) ||
+            (datos.usuarioId !== null && typeof datos.usuarioId !== 'string') ||
             !Number.isFinite(datos.total) ||
             datos.total <= 0 ||
             !Array.isArray(datos.articulos) ||
             datos.articulos.length === 0 ||
             datos.articulos.length > 100 ||
-            datos.articulos.some((articulo) =>
-                !articulo ||
-                !['producto', 'combo'].includes(articulo.tipo) ||
-                typeof articulo.id !== 'string' ||
-                !Number.isInteger(articulo.cantidad) ||
-                articulo.cantidad < 1 ||
-                articulo.cantidad > 20
+            datos.articulos.some(
+                (articulo) =>
+                    !articulo ||
+                    !['producto', 'combo'].includes(articulo.tipo) ||
+                    typeof articulo.id !== 'string' ||
+                    !Number.isInteger(articulo.cantidad) ||
+                    articulo.cantidad < 1 ||
+                    articulo.cantidad > 20
             )
         ) {
             throw new Error(
@@ -453,7 +507,16 @@ export class Candy implements OnInit {
             );
         }
 
-        this.pendiente.set(datos);
+        const cupones = validarCuponesGuardados(datos.cupones ?? datos.cupon);
+        const calculado = calcularResumenCupones(0, datos.total, cupones).total;
+        const totalFinal = datos.totalFinal ?? calculado;
+
+        if (!Number.isFinite(totalFinal) || totalFinal !== calculado) {
+            throw new Error('El total guardado con descuento no es válido.');
+        }
+
+        this.cuponesElegidos.set(cupones);
+        this.pendiente.set({ ...datos, cupones, totalFinal });
 
         this.cantidades.set(
             Object.fromEntries(
@@ -478,14 +541,9 @@ export class Candy implements OnInit {
         try {
             await this.comprobantePdf.descargar(compra);
         } catch (error) {
-            console.error(
-                'No se pudo descargar el comprobante de Candy:',
-                error
-            );
+            console.error('No se pudo descargar el comprobante de Candy:', error);
 
-            this.errorPdf.set(
-                'No pudimos generar el PDF. Podés volver a intentarlo.'
-            );
+            this.errorPdf.set('No pudimos generar el PDF. Podés volver a intentarlo.');
         } finally {
             this.descargandoPdf.set(false);
         }
@@ -496,27 +554,24 @@ export class Candy implements OnInit {
             sessionStorage.removeItem(this.almacenamiento);
             this.pendiente.set(null);
         } catch {
-            this.aviso.set(
-                'No pudimos limpiar la solicitud rechazada.'
-            );
+            this.aviso.set('No pudimos limpiar la solicitud rechazada.');
         }
     }
 
     private esRechazoConfirmado(error: unknown): boolean {
-        return typeof error === 'object' &&
+        return (
+            typeof error === 'object' &&
             error !== null &&
             'code' in error &&
-            (
-                error.code === 'P0001' ||
+            (error.code === 'P0001' ||
                 error.code === '23514' ||
                 error.code === '22023' ||
-                error.code === '22P02'
-            );
+                error.code === '22P02')
+        );
     }
 
     private async obtenerUsuarioId(): Promise<string | null> {
-        const { data, error } = await this.supabase.cliente
-            .auth.getSession();
+        const { data, error } = await this.supabase.cliente.auth.getSession();
 
         if (error) {
             throw error;
@@ -541,7 +596,8 @@ export class Candy implements OnInit {
     }
 
     private normalizar(texto: string): string {
-        return texto.trim()
+        return texto
+            .trim()
             .normalize('NFD')
             .replace(/[\u0300-\u036f]/g, '')
             .toLowerCase();

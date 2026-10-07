@@ -1,0 +1,297 @@
+:host {
+  display: block;
+  min-width: 0;
+  margin: 1.5rem 0;
+  color: #f8f5fc;
+  font-family: Arial, Helvetica, sans-serif;
+}
+* {
+  box-sizing: border-box;
+}
+.pago {
+  min-width: 0;
+  padding: 1.5rem;
+  border: 1px solid #464155;
+  border-radius: 16px;
+  background: #151420;
+}
+.cabecera-pago {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+h2 {
+  margin-bottom: 0;
+  font-size: 1.4rem;
+  line-height: 1.3;
+}
+h3 {
+  font-size: 1.1rem;
+  margin-bottom: 1.25rem;
+}
+p {
+  line-height: 1.6;
+}
+.etiqueta {
+  margin-bottom: 0.4rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: #ffb4c0;
+}
+.insignia-prueba {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #75613b;
+  border-radius: 20px;
+  color: #ffe0ad;
+  background: #342d22;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.aviso-prueba {
+  margin: 0.75rem 0 1.5rem;
+  color: #bcbccc;
+  font-size: 0.9rem;
+}
+.distribucion-pago {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 1.25rem;
+}
+.opciones-pago {
+  min-width: 0;
+  margin: 0;
+  padding: 1.25rem;
+  border: 1px solid #464155;
+  border-radius: 12px;
+}
+legend {
+  padding: 0 0.5rem;
+  font-weight: 700;
+}
+.saldo-cuenta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.saldo-cuenta span {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: #222032;
+  color: #bcbccc;
+  font-size: 0.8rem;
+}
+.saldo-cuenta strong {
+  font-size: 1rem;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+label {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+label:last-child {
+  margin-bottom: 0;
+}
+input,
+select {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0.75rem;
+  border: 1px solid #736b84;
+  border-radius: 8px;
+  background: #100f19;
+  color: #fff;
+  font: inherit;
+  font-size: 1rem;
+}
+small,
+.ayuda {
+  color: #bcbccc;
+  font-weight: 400;
+  line-height: 1.5;
+}
+small {
+  font-size: 0.8rem;
+}
+.contacto {
+  display: grid;
+  gap: 0.4rem;
+  padding-top: 1rem;
+  border-top: 1px solid #464155;
+  font-size: 0.9rem;
+}
+.contacto span {
+  color: #bcbccc;
+}
+.contacto strong {
+  overflow-wrap: anywhere;
+}
+.resumen-final {
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid #50506a;
+  border-radius: 12px;
+  background: #222032;
+}
+.detalle-importes {
+  margin: 0;
+}
+.detalle-importes > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid #38384b;
+}
+dt {
+  min-width: 0;
+  color: #d7d7e5;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+dt small {
+  display: block;
+}
+dd {
+  margin: 0;
+  flex-shrink: 0;
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.descuento dt,
+.descuento dd {
+  color: #bcf0d7;
+}
+.total-compra {
+  font-weight: 700;
+}
+.importe-final {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border: 1px solid #86505b;
+  border-radius: 10px;
+  background: #34202a;
+}
+.importe-final span {
+  color: #ffb4c0;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.importe-final strong {
+  font-size: clamp(1.4rem, 2.5vw, 1.9rem);
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.importe-final.actualizando {
+  opacity: 0.65;
+}
+.puntos-compra {
+  margin: 1rem 0 0;
+  color: #bcf0d7;
+  font-size: 0.9rem;
+}
+.resumen-final > .ayuda {
+  margin-top: 1rem;
+  margin-bottom: 0;
+}
+.detalle-beneficios {
+  margin-top: 1rem;
+}
+summary {
+  cursor: pointer;
+  padding: 0.5rem 0;
+  color: #d7d7e5;
+  font-size: 0.9rem;
+}
+.detalle-beneficios p,
+.detalle-beneficios li {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.sin-pago {
+  padding: 1rem;
+  background: #18372d;
+  border-radius: 8px;
+  color: #bcf0d7;
+}
+.error {
+  color: #ffb4b4;
+  overflow-wrap: anywhere;
+}
+input:focus-visible,
+select:focus-visible,
+summary:focus-visible {
+  outline: 2px solid #ffb4c0;
+  outline-offset: 3px;
+}
+@media (max-width: 850px) {
+  .distribucion-pago {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  :host {
+    margin: 1rem 0;
+  }
+  .pago {
+    padding: 1rem;
+  }
+  h2 {
+    font-size: 1.2rem;
+  }
+  .opciones-pago,
+  .resumen-final {
+    padding: 1rem;
+  }
+  .detalle-importes > div {
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  dd {
+    margin-left: auto;
+  }
+  .saldo-cuenta {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.usar-credito {
+  min-height: 44px;
+  padding: 0.75rem;
+  border: 1px solid #50506a;
+  border-radius: 8px;
+  background: #28283a;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.usar-credito:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.usar-credito:focus-visible {
+  outline: 2px solid #ffb4c0;
+  outline-offset: 3px;
+}

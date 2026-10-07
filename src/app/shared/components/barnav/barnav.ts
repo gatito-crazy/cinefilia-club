@@ -1,3 +1,5 @@
+import { DecimalPipe } from '@angular/common';
+import { FidelizacionService } from '../../../base/service/fidelizacion.service';
 import {
     Component,
     computed,
@@ -9,49 +11,34 @@ import {
 
 import { FormsModule } from '@angular/forms';
 
-import {
-    Router,
-    RouterLink,
-    RouterLinkActive
-} from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
-import {
-    AuthService,
-    CorreoPendienteError
-} from '../../../base/service/auth.service';
+import { AuthService, CorreoPendienteError } from '../../../base/service/auth.service';
 
 @Component({
     selector: 'app-barnav',
-    imports: [
-        RouterLink,
-        RouterLinkActive,
-        FormsModule
-    ],
+    imports: [RouterLink, RouterLinkActive, FormsModule, DecimalPipe],
     templateUrl: './barnav.html',
     styleUrl: './barnav.scss'
 })
 export class Barnav {
     readonly auth = inject(AuthService);
+    readonly fidelizacion = inject(FidelizacionService);
 
     private readonly router = inject(Router);
 
-    private readonly ventana =
-        viewChild<ElementRef<HTMLDialogElement>>('ventana');
+    private readonly ventana = viewChild<ElementRef<HTMLDialogElement>>('ventana');
 
     readonly nombreUsuario = computed(() => {
         const datos = this.auth.usuario()?.user_metadata;
 
-        const nombre = typeof datos?.['nombre'] === 'string'
-            ? datos['nombre'].trim()
-            : '';
+        const nombre =
+            typeof datos?.['nombre'] === 'string' ? datos['nombre'].trim() : '';
 
-        const apellido = typeof datos?.['apellido'] === 'string'
-            ? datos['apellido'].trim()
-            : '';
+        const apellido =
+            typeof datos?.['apellido'] === 'string' ? datos['apellido'].trim() : '';
 
-        return [nombre, apellido]
-            .filter(Boolean)
-            .join(' ') || 'Mi cuenta';
+        return [nombre, apellido].filter(Boolean).join(' ') || 'Mi cuenta';
     });
 
     readonly enviando = signal(false);
@@ -92,10 +79,7 @@ export class Barnav {
 
             await this.router.navigateByUrl(destino);
         } catch (error) {
-            console.error(
-                'No se pudo comprobar el acceso desde el logo:',
-                error
-            );
+            console.error('No se pudo comprobar el acceso desde el logo:', error);
 
             await this.router.navigateByUrl('/');
         } finally {
@@ -122,10 +106,7 @@ export class Barnav {
     }
 
     async ingresar(): Promise<void> {
-        if (
-            this.enviando() ||
-            this.reenviandoConfirmacion()
-        ) {
+        if (this.enviando() || this.reenviandoConfirmacion()) {
             return;
         }
 
@@ -138,38 +119,26 @@ export class Barnav {
         let sesionIniciada = false;
 
         try {
-            await this.auth.iniciarSesion(
-                this.email,
-                this.password,
-                this.recordarme
-            );
+            await this.auth.iniciarSesion(this.email, this.password, this.recordarme);
 
             sesionIniciada = true;
 
             const rol = await this.auth.obtenerRol();
 
             if (rol === null) {
-                throw new Error(
-                    'No se encontró una sesión activa.'
-                );
+                throw new Error('No se encontró una sesión activa.');
             }
 
-            const rutaActual = this.router.url
-                .split(/[?#]/)[0];
+            const rutaActual = this.router.url.split(/[?#]/)[0];
 
             if (rutaActual === '/registro') {
                 destino = '/';
             }
         } catch (error) {
-            console.error(
-                'Error al ingresar:',
-                error
-            );
+            console.error('Error al ingresar:', error);
 
             if (error instanceof CorreoPendienteError) {
-                this.correoConfirmacion.set(
-                    this.email.trim().toLowerCase()
-                );
+                this.correoConfirmacion.set(this.email.trim().toLowerCase());
 
                 this.mensajeError.set(error.message);
 
@@ -180,19 +149,16 @@ export class Barnav {
                 'Tu cuenta está desactivada. Contactanos para ' +
                 'reactivarla si crees que fue un error.';
 
-            if (
-                error instanceof Error &&
-                error.message === mensajeCuenta
-            ) {
+            if (error instanceof Error && error.message === mensajeCuenta) {
                 this.mensajeError.set(mensajeCuenta);
             } else {
                 this.mensajeError.set(
                     sesionIniciada
                         ? 'La sesión se inició, pero no pudimos ' +
-                          'comprobar el rol de tu cuenta. ' +
-                          'Intentá nuevamente.'
+                              'comprobar el rol de tu cuenta. ' +
+                              'Intentá nuevamente.'
                         : 'No se pudo ingresar. Revisá tus datos ' +
-                          'y que hayas confirmado el correo.'
+                              'y que hayas confirmado el correo.'
                 );
             }
 
@@ -219,8 +185,7 @@ export class Barnav {
         try {
             await this.auth.cerrarSesion();
 
-            const rutaActual = this.router.url
-                .split(/[?#]/)[0];
+            const rutaActual = this.router.url.split(/[?#]/)[0];
 
             if (
                 rutaActual === '/admin' ||
@@ -231,14 +196,9 @@ export class Barnav {
                 await this.router.navigateByUrl('/');
             }
         } catch (error) {
-            console.error(
-                'Error al cerrar sesión:',
-                error
-            );
+            console.error('Error al cerrar sesión:', error);
 
-            this.errorSalida.set(
-                'No se pudo completar el cierre de sesión.'
-            );
+            this.errorSalida.set('No se pudo completar el cierre de sesión.');
         } finally {
             this.cerrando.set(false);
         }
@@ -247,11 +207,7 @@ export class Barnav {
     async reenviarCorreo(): Promise<void> {
         const email = this.correoConfirmacion();
 
-        if (
-            !email ||
-            this.reenviandoConfirmacion() ||
-            this.enviando()
-        ) {
+        if (!email || this.reenviandoConfirmacion() || this.enviando()) {
             return;
         }
 
@@ -259,8 +215,7 @@ export class Barnav {
         this.mensajeReenvio.set('');
 
         try {
-            const mensaje = await this.auth
-                .reenviarConfirmacion(email);
+            const mensaje = await this.auth.reenviarConfirmacion(email);
 
             this.mensajeReenvio.set(mensaje);
         } catch (error) {

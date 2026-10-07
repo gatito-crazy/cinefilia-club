@@ -8,6 +8,7 @@ import {
     signal
 } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
+
 import {
     DatosFuncion,
     FormatoFuncion,
@@ -15,14 +16,17 @@ import {
     FuncionesService,
     IdiomaFuncion
 } from '../../../base/service/funciones.service';
+
 import {
     Pelicula,
     PeliculasService
 } from '../../../base/service/peliculas.service';
+
 import {
     Sala,
     SalasService
 } from '../../../base/service/salas.service';
+
 import {
     TarifaFormato,
     TarifasService
@@ -62,7 +66,11 @@ interface ResultadoProgramacion {
 
 @Component({
     selector: 'app-funciones-admin',
-    imports: [FormsModule, DatePipe, DecimalPipe],
+    imports: [
+        FormsModule,
+        DatePipe,
+        DecimalPipe
+    ],
     templateUrl: './funciones-admin.html',
     styleUrl: './funciones-admin.scss'
 })
@@ -76,6 +84,7 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
 
     readonly solapa = signal<'funciones' | 'tarifas'>('funciones');
     readonly salaSeleccionada = signal('');
+    readonly mostrarArchivadas = signal(false);
 
     readonly funciones = signal<Funcion[]>([]);
     readonly peliculas = signal<Pelicula[]>([]);
@@ -94,7 +103,12 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
     readonly errorFormulario = signal('');
     readonly errorTarifa = signal('');
 
-    readonly formatos: FormatoFuncion[] = ['2D', '3D', '4D', '5D'];
+    readonly formatos: FormatoFuncion[] = [
+        '2D',
+        '3D',
+        '4D',
+        '5D'
+    ];
 
     readonly programacionAbierta = signal(false);
     readonly programando = signal(false);
@@ -116,11 +130,18 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
 
     readonly funcionesVisibles = computed(() => {
         const ahora = this.ahora();
-        const todas = this.funciones();
+
+        const todas = this.funciones().filter((funcion) =>
+            this.mostrarArchivadas() || !funcion.archivada
+        );
+
         const ultimas = new Map<string, Funcion>();
 
         for (const funcion of todas) {
-            if (!funcion.activa || new Date(funcion.fin).getTime() > ahora) {
+            if (
+                !funcion.activa ||
+                new Date(funcion.fin).getTime() > ahora
+            ) {
                 continue;
             }
 
@@ -141,6 +162,10 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
 
         return todas
             .filter((funcion) => {
+                if (funcion.cancelada) {
+                    return true;
+                }
+
                 if (new Date(funcion.inicio).getTime() > ahora) {
                     return true;
                 }
@@ -149,8 +174,10 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
                     return false;
                 }
 
-                return new Date(funcion.fin).getTime() > ahora ||
-                    ultimas.get(funcion.sala_id)?.id === funcion.id;
+                return (
+                    new Date(funcion.fin).getTime() > ahora ||
+                    ultimas.get(funcion.sala_id)?.id === funcion.id
+                );
             })
             .sort((primera, segunda) =>
                 new Date(primera.inicio).getTime() -
@@ -164,10 +191,16 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
         const ahora = this.ahora();
 
         return this.salas()
-            .filter((sala) => !seleccionada || sala.id === seleccionada)
+            .filter((sala) =>
+                !seleccionada || sala.id === seleccionada
+            )
             .map((sala) => {
-                const propias = funciones.filter(
-                    (funcion) => funcion.sala_id === sala.id
+                const propias = funciones.filter((funcion) =>
+                    funcion.sala_id === sala.id
+                );
+
+                const vigentes = propias.filter((funcion) =>
+                    !funcion.cancelada && !funcion.archivada
                 );
 
                 return {
@@ -175,7 +208,7 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
                     secciones: [
                         {
                             nombre: 'En curso',
-                            funciones: propias.filter((funcion) =>
+                            funciones: vigentes.filter((funcion) =>
                                 funcion.activa &&
                                 new Date(funcion.inicio).getTime() <= ahora &&
                                 new Date(funcion.fin).getTime() > ahora
@@ -183,17 +216,32 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
                         },
                         {
                             nombre: 'Próximas',
-                            funciones: propias.filter((funcion) =>
+                            funciones: vigentes.filter((funcion) =>
                                 new Date(funcion.inicio).getTime() > ahora
                             )
                         },
                         {
                             nombre: 'Última terminada',
-                            funciones: propias.filter((funcion) =>
+                            funciones: vigentes.filter((funcion) =>
                                 new Date(funcion.fin).getTime() <= ahora
                             )
+                        },
+                        {
+                            nombre: 'Canceladas',
+                            funciones: propias.filter((funcion) =>
+                                funcion.cancelada && !funcion.archivada
+                            )
+                        },
+                        {
+                            nombre: 'Archivadas',
+                            funciones: propias.filter((funcion) =>
+                                funcion.archivada
+                            )
                         }
-                    ]
+                    ].filter((seccion) =>
+                        seccion.nombre !== 'Archivadas' ||
+                        this.mostrarArchivadas()
+                    )
                 };
             });
     });
@@ -233,11 +281,13 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
     }
 
     ocupado(): boolean {
-        return this.cargando() ||
+        return (
+            this.cargando() ||
             this.guardando() ||
             this.guardandoTarifa() ||
             this.programando() ||
-            this.procesando() !== null;
+            this.procesando() !== null
+        );
     }
 
     cambiarSolapa(solapa: 'funciones' | 'tarifas'): void {
@@ -284,7 +334,11 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
                 this.cargarBorradorTarifa();
             }
         } catch (error) {
-            console.error('Error al cargar funciones y tarifas:', error);
+            console.error(
+                'Error al cargar funciones y tarifas:',
+                error
+            );
+
             this.error.set(this.obtenerMensaje(error));
         } finally {
             this.cargando.set(false);
@@ -319,7 +373,9 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
         const siguiente =
             Math.floor(this.ahora() / 60000) * 60000 + 60000;
 
-        return this.fechaParaEntrada(new Date(siguiente).toISOString());
+        return this.fechaParaEntrada(
+            new Date(siguiente).toISOString()
+        );
     }
 
     fechaMinimaProgramacion(): string {
@@ -451,6 +507,7 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
             this.errorFormulario.set(
                 'Esta función ya comenzó y no puede editarse.'
             );
+
             return;
         }
 
@@ -460,6 +517,7 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
             this.errorFormulario.set(
                 'Seleccioná una fecha y hora futuras.'
             );
+
             return;
         }
 
@@ -467,6 +525,7 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
             this.errorFormulario.set(
                 'Completá todos los campos obligatorios.'
             );
+
             return;
         }
 
@@ -474,6 +533,7 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
             this.errorFormulario.set(
                 'Primero configurá las tarifas generales de este formato en Tarifas.'
             );
+
             return;
         }
 
@@ -509,7 +569,11 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
                     : 'Los cambios fueron guardados.'
             );
         } catch (error) {
-            console.error('Error al guardar la función:', error);
+            console.error(
+                'Error al guardar la función:',
+                error
+            );
+
             this.errorFormulario.set(this.obtenerMensaje(error));
         } finally {
             this.guardando.set(false);
@@ -533,22 +597,32 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
         this.ahora.set(Date.now());
 
         if (!funcion.activa && this.funcionComenzada(funcion)) {
-            this.error.set('No podés reactivar una función que ya comenzó.');
+            this.error.set(
+                'No podés reactivar una función que ya comenzó.'
+            );
+
             return;
         }
 
         const activa = !funcion.activa;
 
-        if (!window.confirm(
-            `¿Querés ${activa ? 'activar' : 'desactivar'} esta función?`
-        )) {
+        if (
+            !window.confirm(
+                activa
+                    ? '¿Querés activar esta función?'
+                    : '¿Cancelar esta función? Se compensarán las compras con crédito y se enviarán avisos por correo.'
+            )
+        ) {
             return;
         }
 
         this.ahora.set(Date.now());
 
         if (activa && this.funcionComenzada(funcion)) {
-            this.error.set('No podés reactivar una función que ya comenzó.');
+            this.error.set(
+                'No podés reactivar una función que ya comenzó.'
+            );
+
             return;
         }
 
@@ -557,12 +631,19 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
         this.exito.set('');
 
         try {
-            await this.funcionesService.cambiarEstado(funcion.id, activa);
+            await this.funcionesService.cambiarEstado(
+                funcion.id,
+                activa
+            );
 
             this.funciones.update((funciones) =>
                 funciones.map((actual) =>
                     actual.id === funcion.id
-                        ? { ...actual, activa }
+                        ? {
+                            ...actual,
+                            activa,
+                            cancelada: !activa
+                        }
                         : actual
                 )
             );
@@ -570,7 +651,56 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
             this.exito.set(
                 activa
                     ? 'La función quedó activa.'
-                    : 'La función quedó desactivada.'
+                    : 'La función quedó cancelada. Se registraron las compensaciones y los avisos.'
+            );
+        } catch (error) {
+            this.error.set(this.obtenerMensaje(error));
+        } finally {
+            this.procesando.set(null);
+        }
+    }
+
+    async cambiarArchivo(funcion: Funcion): Promise<void> {
+        if (
+            this.ocupado() ||
+            this.editorAbierto() ||
+            this.programacionAbierta()
+        ) {
+            return;
+        }
+
+        if (!funcion.cancelada || funcion.activa) {
+            this.error.set(
+                'Solo se pueden archivar funciones canceladas.'
+            );
+
+            return;
+        }
+
+        const archivada = !funcion.archivada;
+
+        this.procesando.set(funcion.id);
+        this.error.set('');
+        this.exito.set('');
+
+        try {
+            const actualizada = await this.funcionesService.archivar(
+                funcion.id,
+                archivada
+            );
+
+            this.funciones.update((actuales) =>
+                actuales.map((actual) =>
+                    actual.id === actualizada.id
+                        ? actualizada
+                        : actual
+                )
+            );
+
+            this.exito.set(
+                archivada
+                    ? 'La función se ocultó del listado. Conserva su historial.'
+                    : 'La función vuelve a mostrarse y continúa cancelada.'
             );
         } catch (error) {
             this.error.set(this.obtenerMensaje(error));
@@ -594,6 +724,7 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
             this.error.set(
                 'No podés eliminar una función que ya comenzó.'
             );
+
             return;
         }
 
@@ -610,9 +741,9 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
         }).format(new Date(funcion.inicio));
 
         const confirmado = window.confirm(
-            `¿Querés eliminar esta función?\n\n` +
+            `¿Querés cancelar esta función?\n\n` +
             `${pelicula}\n${sala}\n${fecha}\n\n` +
-            'Esta acción no se puede deshacer.'
+            'Se cancelarán las compras, se compensará a los clientes y se enviarán avisos por correo. Se conservará el historial.'
         );
 
         if (!confirmado) {
@@ -627,14 +758,26 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
             await this.funcionesService.eliminar(funcion.id);
 
             this.funciones.update((actuales) =>
-                actuales.filter((actual) => actual.id !== funcion.id)
+                actuales.map((actual) =>
+                    actual.id === funcion.id
+                        ? {
+                            ...actual,
+                            activa: false,
+                            cancelada: true
+                        }
+                        : actual
+                )
             );
 
             this.exito.set(
-                'La función fue eliminada y la operación quedó registrada en Actividades.'
+                'La función fue cancelada. Se registraron las compensaciones y los avisos.'
             );
         } catch (error) {
-            console.error('Error al eliminar la función:', error);
+            console.error(
+                'Error al eliminar la función:',
+                error
+            );
+
             this.error.set(this.obtenerMensaje(error));
         } finally {
             this.procesando.set(null);
@@ -681,7 +824,10 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
         this.programacionAbierta.set(false);
     }
 
-    cambiarDia(numero: number, seleccionado: boolean): void {
+    cambiarDia(
+        numero: number,
+        seleccionado: boolean
+    ): void {
         if (this.programando()) {
             return;
         }
@@ -694,17 +840,24 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
     }
 
     async programarFunciones(formulario: NgForm): Promise<void> {
-        if (this.ocupado() || this.resultadosProgramacion().length > 0) {
+        if (
+            this.ocupado() ||
+            this.resultadosProgramacion().length > 0
+        ) {
             return;
         }
 
         formulario.form.markAllAsTouched();
         this.errorProgramacion.set('');
 
-        if (formulario.invalid || this.diasElegidos().length === 0) {
+        if (
+            formulario.invalid ||
+            this.diasElegidos().length === 0
+        ) {
             this.errorProgramacion.set(
                 'Completá los campos y elegí al menos un día de la semana.'
             );
+
             return;
         }
 
@@ -715,7 +868,10 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
         );
 
         if (!pelicula?.activa) {
-            this.errorProgramacion.set('Elegí una película activa.');
+            this.errorProgramacion.set(
+                'Elegí una película activa.'
+            );
+
             return;
         }
 
@@ -723,6 +879,7 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
             this.errorProgramacion.set(
                 'Primero configurá las tarifas de este formato.'
             );
+
             return;
         }
 
@@ -735,11 +892,13 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
             return;
         }
 
-        if (!window.confirm(
-            `Se intentarán crear ${fechas.length} funciones de ${
-                pelicula.nombre
-            }, con sala automática. ¿Continuar?`
-        )) {
+        if (
+            !window.confirm(
+                `Se intentarán crear ${fechas.length} funciones de ${
+                    pelicula.nombre
+                }, con sala automática. ¿Continuar?`
+            )
+        ) {
             return;
         }
 
@@ -789,7 +948,8 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
                         }
                     ]);
                 } catch (error) {
-                    const codigo = typeof error === 'object' &&
+                    const codigo =
+                        typeof error === 'object' &&
                         error !== null &&
                         'code' in error
                             ? String(error.code)
@@ -865,9 +1025,15 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
             (actual) => actual.formato === this.borradorTarifa.formato
         );
 
-        this.borradorTarifa.precio_estandar = tarifa?.precio_estandar ?? null;
-        this.borradorTarifa.precio_accesible = tarifa?.precio_accesible ?? null;
-        this.borradorTarifa.precio_vip = tarifa?.precio_vip ?? null;
+        this.borradorTarifa.precio_estandar =
+            tarifa?.precio_estandar ?? null;
+
+        this.borradorTarifa.precio_accesible =
+            tarifa?.precio_accesible ?? null;
+
+        this.borradorTarifa.precio_vip =
+            tarifa?.precio_vip ?? null;
+
         this.errorTarifa.set('');
     }
 
@@ -893,7 +1059,10 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
             precio_accesible === null ||
             precio_vip === null
         ) {
-            this.errorTarifa.set('Completá el formato y los precios.');
+            this.errorTarifa.set(
+                'Completá el formato y los precios.'
+            );
+
             return;
         }
 
@@ -908,7 +1077,9 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
             });
 
             this.tarifas.update((actuales) => [
-                ...actuales.filter((actual) => actual.formato !== formato),
+                ...actuales.filter(
+                    (actual) => actual.formato !== formato
+                ),
                 {
                     formato,
                     precio_estandar,
@@ -933,7 +1104,10 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
                 this.ahora.set(Date.now());
                 this.cargarBorradorTarifa();
             } catch (error) {
-                console.error('Error al actualizar los listados:', error);
+                console.error(
+                    'Error al actualizar los listados:',
+                    error
+                );
 
                 this.errorTarifa.set(
                     'Los cambios se guardaron, pero no pudimos actualizar los listados. Presioná Actualizar.'
@@ -948,11 +1122,19 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
 
     private generarFechasProgramacion(): string[] {
         const { desde, hasta, hora } = this.borradorProgramacion;
-        const inicioRango = this.convertirInicio(`${desde}T00:00`);
-        const finRango = this.convertirInicio(`${hasta}T00:00`);
+
+        const inicioRango = this.convertirInicio(
+            `${desde}T00:00`
+        );
+
+        const finRango = this.convertirInicio(
+            `${hasta}T00:00`
+        );
 
         if (!inicioRango || !finRango || desde > hasta) {
-            throw new Error('Indicá un rango de fechas válido.');
+            throw new Error(
+                'Indicá un rango de fechas válido.'
+            );
         }
 
         const cantidadDias =
@@ -987,7 +1169,9 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
                 continue;
             }
 
-            const inicio = this.convertirInicio(`${fechaLocal}T${hora}`);
+            const inicio = this.convertirInicio(
+                `${fechaLocal}T${hora}`
+            );
 
             if (!inicio || inicio.getTime() <= Date.now()) {
                 throw new Error(
@@ -1059,10 +1243,14 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
         }).formatToParts(new Date(valor));
 
         const obtener = (tipo: string): string =>
-            partes.find((parte) => parte.type === tipo)?.value ?? '';
+            partes.find(
+                (parte) => parte.type === tipo
+            )?.value ?? '';
 
-        return `${obtener('year')}-${obtener('month')}-${obtener('day')}` +
-            `T${obtener('hour')}:${obtener('minute')}`;
+        return (
+            `${obtener('year')}-${obtener('month')}-${obtener('day')}` +
+            `T${obtener('hour')}:${obtener('minute')}`
+        );
     }
 
     private obtenerMensaje(error: unknown): string {
@@ -1071,7 +1259,10 @@ export class FuncionesAdmin implements OnInit, OnDestroy {
                 message?: string;
             };
 
-            if (typeof detalle.message === 'string' && detalle.message) {
+            if (
+                typeof detalle.message === 'string' &&
+                detalle.message
+            ) {
                 return detalle.message;
             }
         }

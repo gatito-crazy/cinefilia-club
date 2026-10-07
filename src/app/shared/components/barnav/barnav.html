@@ -1,222 +1,225 @@
 <header class="barra">
+  <a
+    class="marca"
+    href="/"
+    aria-label="Cinefilia Club — Acceso según tu cuenta"
+    [attr.aria-busy]="abriendoPanel()"
+    (click)="abrirDesdeLogo($event)"
+  >
+    <img class="logo-marca" src="/cinefilia-club-logo.png" alt="Cinefilia Club" />
+  </a>
+
+  <nav class="paginas" aria-label="Navegación principal">
     <a
-        class="marca"
-        href="/"
-        aria-label="Cinefilia Club — Acceso según tu cuenta"
-        [attr.aria-busy]="abriendoPanel()"
-        (click)="abrirDesdeLogo($event)"
+      routerLink="/"
+      routerLinkActive="activo"
+      [routerLinkActiveOptions]="{ exact: true }"
+      ariaCurrentWhenActive="page"
     >
-        <img
-            class="logo-marca"
-            src="/cinefilia-club-logo.png"
-            alt="Cinefilia Club"
-        />
+      Inicio
     </a>
 
-    <nav class="paginas" aria-label="Navegación principal">
-        <a
-            routerLink="/"
-            routerLinkActive="activo"
-            [routerLinkActiveOptions]="{ exact: true }"
-            ariaCurrentWhenActive="page"
-        >
-            Inicio
-        </a>
+    <a routerLink="/cartelera" routerLinkActive="activo" ariaCurrentWhenActive="page">
+      Cartelera
+    </a>
 
-        <a
-            routerLink="/cartelera"
-            routerLinkActive="activo"
-            ariaCurrentWhenActive="page"
-        >
-            Cartelera
-        </a>
+    <a routerLink="/candy"> Candy </a>
 
-        <a routerLink="/candy">
-            Candy
-        </a>
+    <a routerLink="/mis-compras" routerLinkActive="activo" ariaCurrentWhenActive="page">
+      Mis compras
+    </a>
 
-        <a
-            routerLink="/mis-compras"
-            routerLinkActive="activo"
-            ariaCurrentWhenActive="page"
-        >
-            Mis compras
-        </a>
-    </nav>
+    @if (auth.usuario()) {
+      <a routerLink="/mi-perfil" routerLinkActive="activo"> Mi perfil y películas </a>
+    }
+  </nav>
 
-    <div class="cuenta">
-        @if (auth.sesionLista()) {
-            @if (auth.usuario(); as usuario) {
-                <span class="nombre-usuario">{{ nombreUsuario() }}</span>
-                <button type="button" [disabled]="cerrando()" (click)="salir()">
-                    {{ cerrando() ? 'Cerrando...' : 'Cerrar sesión' }}
-                </button>
+  <div class="cuenta">
+    @if (auth.sesionLista()) {
+      @if (auth.usuario(); as usuario) {
+        <div class="datos-cuenta">
+          <span class="nombre-usuario">
+            {{ nombreUsuario() }}
+          </span>
+
+          <a class="puntos-cuenta" routerLink="/mi-perfil" aria-live="polite">
+            @if (fidelizacion.puntos() !== null) {
+              {{ fidelizacion.puntos() | number: '1.0-0' }} puntos
             } @else {
-                <button
-                    class="boton-usuario"
-                    type="button"
-                    aria-label="Abrir inicio de sesión"
-                    aria-haspopup="dialog"
-                    (click)="abrirLogin()"
-                >
-                    <svg
-                        width="28"
-                        height="28"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        aria-hidden="true"
-                    >
-                        <circle cx="12" cy="8" r="4" />
-                        <path d="M4 21v-2a8 8 0 0 1 16 0v2" />
-                    </svg>
-
-                    <span>Mi cuenta</span>
-                </button>
+              {{ fidelizacion.cargando() ? 'Consultando puntos…' : 'Puntos no disponibles' }}
             }
-        }
-    </div>
+          </a>
+
+          <a class="puntos-cuenta" routerLink="/mi-perfil" aria-live="polite">
+            @if (fidelizacion.credito() !== null) {
+              Crédito: ARS
+              {{ fidelizacion.credito() | number: '1.2-2' }}
+            } @else {
+              {{ fidelizacion.cargando() ? 'Consultando crédito…' : 'Crédito no disponible' }}
+            }
+          </a>
+        </div>
+
+        <button type="button" [disabled]="cerrando()" (click)="salir()">
+          {{ cerrando() ? 'Cerrando...' : 'Cerrar sesión' }}
+        </button>
+      } @else {
+        <button
+          class="boton-usuario"
+          type="button"
+          aria-label="Abrir inicio de sesión"
+          aria-haspopup="dialog"
+          (click)="abrirLogin()"
+        >
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="8" r="4" />
+
+            <path d="M4 21v-2a8 8 0 0 1 16 0v2" />
+          </svg>
+
+          <span> Mi cuenta </span>
+        </button>
+      }
+    }
+  </div>
 </header>
 
 @if (errorSalida()) {
-    <p class="error-salida" role="alert">{{ errorSalida() }}</p>
+  <p class="error-salida" role="alert">
+    {{ errorSalida() }}
+  </p>
 }
 
-<dialog
-    #ventana
-    class="ventana-login"
-    aria-labelledby="tituloLogin"
-    (close)="limpiarPassword()"
->
-    <div class="encabezado-login">
-        <span>Cinefilia Club</span>
+<dialog #ventana class="ventana-login" aria-labelledby="tituloLogin" (close)="limpiarPassword()">
+  <div class="encabezado-login">
+    <span> Cinefilia Club </span>
 
-        <button
-            class="cerrar"
+    <button class="cerrar" type="button" aria-label="Cerrar ventana" (click)="cerrarLogin()">
+      ×
+    </button>
+  </div>
+
+  <div class="contenido-login">
+    <h2 id="tituloLogin">¡Qué bueno verte por acá!</h2>
+
+    <p>Iniciá sesión para acceder a tu cuenta.</p>
+
+    <form #formLogin="ngForm" (ngSubmit)="ingresar()">
+      <div class="campo">
+        <label for="loginEmail"> Correo electrónico </label>
+
+        <input
+          id="loginEmail"
+          name="email"
+          type="email"
+          autocomplete="username"
+          [(ngModel)]="email"
+          required
+          email
+        />
+      </div>
+
+      <div class="campo">
+        <label for="loginPassword"> Contraseña </label>
+
+        <div class="entrada-password">
+          <input
+            id="loginPassword"
+            name="password"
+            [type]="mostrarPassword() ? 'text' : 'password'"
+            autocomplete="current-password"
+            [(ngModel)]="password"
+            required
+          />
+
+          <button
+            class="boton-ojo"
             type="button"
-            aria-label="Cerrar ventana"
-            (click)="cerrarLogin()"
-        >
-            ×
-        </button>
-    </div>
-
-    <div class="contenido-login">
-        <h2 id="tituloLogin">¡Qué bueno verte por acá!</h2>
-        <p>Iniciá sesión para acceder a tu cuenta.</p>
-
-        <form #formLogin="ngForm" (ngSubmit)="ingresar()">
-            <div class="campo">
-                <label for="loginEmail">Correo electrónico</label>
-
-                <input
-                    id="loginEmail"
-                    name="email"
-                    type="email"
-                    autocomplete="username"
-                    [(ngModel)]="email"
-                    required
-                    email
-                />
-            </div>
-
-            <div class="campo">
-                <label for="loginPassword">Contraseña</label>
-
-                <div class="entrada-password">
-                    <input
-                        id="loginPassword"
-                        name="password"
-                        [type]="mostrarPassword() ? 'text' : 'password'"
-                        autocomplete="current-password"
-                        [(ngModel)]="password"
-                        required
-                    />
-
-                    <button
-                        class="boton-ojo"
-                        type="button"
-                        [attr.aria-label]="mostrarPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
-                        [attr.aria-pressed]="mostrarPassword()"
-                        (click)="mostrarPassword.set(!mostrarPassword())"
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="22"
-                            height="22"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            aria-hidden="true"
-                        >
-                            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
-                            <circle cx="12" cy="12" r="3" />
-
-                            @if (mostrarPassword()) {
-                                <path d="M3 3 21 21" />
-                            }
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            <label class="recordarme" for="loginRecordarme">
-                <input
-                    id="loginRecordarme"
-                    name="recordarme"
-                    type="checkbox"
-                    [(ngModel)]="recordarme"
-                />
-
-                <span>Recordarme en este dispositivo</span>
-            </label>
-
-            @if (mensajeError()) {
-                <p class="error" role="alert">{{ mensajeError() }}</p>
-            }
-            @if (correoConfirmacion()) {
-                <div class="confirmacion-correo">
-                    <p>
-                        Confirmá tu correo para poder iniciar sesión.
-                        Si no recibiste el mensaje, podés solicitar otro.
-                    </p>
-
-                    <button
-                        class="boton-reenvio"
-                        type="button"
-                        [disabled]="reenviandoConfirmacion()"
-                        (click)="reenviarCorreo()"
-                    >
-                        {{
-                            reenviandoConfirmacion()
-                                ? 'Enviando...'
-                                : 'Reenviar correo de confirmación'
-                        }}
-                    </button>
-
-                    @if (mensajeReenvio()) {
-                        <p role="status">
-                            {{ mensajeReenvio() }}
-                        </p>
-                    }
-                </div>
-            }
-            <button
-                class="iniciar"
-                type="submit"
-                [disabled]="formLogin.invalid || enviando()"
+            [attr.aria-label]="mostrarPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            [attr.aria-pressed]="mostrarPassword()"
+            (click)="mostrarPassword.set(!mostrarPassword())"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
             >
-                {{ enviando() ? 'Ingresando...' : 'Iniciar sesión' }}
-            </button>
-        </form>
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
 
-        <div class="crear-cuenta">
-            <p>¿Todavía no tenés cuenta?</p>
-            <a routerLink="/registro" (click)="cerrarLogin()">Crear cuenta</a>
+              <circle cx="12" cy="12" r="3" />
+
+              @if (mostrarPassword()) {
+                <path d="M3 3 21 21" />
+              }
+            </svg>
+          </button>
         </div>
+      </div>
+
+      <label class="recordarme" for="loginRecordarme">
+        <input id="loginRecordarme" name="recordarme" type="checkbox" [(ngModel)]="recordarme" />
+
+        <span> Recordarme en este dispositivo </span>
+      </label>
+
+      @if (mensajeError()) {
+        <p class="error" role="alert">
+          {{ mensajeError() }}
+        </p>
+      }
+
+      @if (correoConfirmacion()) {
+        <div class="confirmacion-correo">
+          <p>
+            Confirmá tu correo para poder iniciar sesión. Si no recibiste el mensaje, podés
+            solicitar otro.
+          </p>
+
+          <button
+            class="boton-reenvio"
+            type="button"
+            [disabled]="reenviandoConfirmacion()"
+            (click)="reenviarCorreo()"
+          >
+            {{ reenviandoConfirmacion() ? 'Enviando...' : 'Reenviar correo de confirmación' }}
+          </button>
+
+          @if (mensajeReenvio()) {
+            <p role="status">
+              {{ mensajeReenvio() }}
+            </p>
+          }
+        </div>
+      }
+
+      <button class="iniciar" type="submit" [disabled]="formLogin.invalid || enviando()">
+        {{ enviando() ? 'Ingresando...' : 'Iniciar sesión' }}
+      </button>
+    </form>
+
+    <p class="recuperar-password">
+      <a routerLink="/recuperar-contrasena" (click)="cerrarLogin()"> ¿Olvidaste tu contraseña? </a>
+    </p>
+
+    <div class="crear-cuenta">
+      <p>¿Todavía no tenés cuenta?</p>
+
+      <a routerLink="/registro" (click)="cerrarLogin()"> Crear cuenta </a>
     </div>
+  </div>
 </dialog>

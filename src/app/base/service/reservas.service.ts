@@ -1,3 +1,4 @@
+import { SeleccionCanje, validarCanjes } from './fidelizacion.service';
 import { inject, Injectable } from '@angular/core';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { SupabaseService } from './supabase.service';
@@ -33,6 +34,7 @@ export interface EstadoOcupacion {
 }
 
 export interface SolicitudReserva {
+    canjes?: SeleccionCanje[];
     clave: string;
     butacas: string[];
     confirmada: boolean;
@@ -45,10 +47,12 @@ export class ReservasService {
     private readonly supabase = inject(SupabaseService);
 
     async obtenerOcupacion(funcionId: string): Promise<EstadoOcupacion> {
-        const { data, error } = await this.supabase.cliente
-            .rpc('cine_obtener_ocupacion', {
+        const { data, error } = await this.supabase.cliente.rpc(
+            'cine_obtener_ocupacion',
+            {
                 p_funcion: funcionId
-            });
+            }
+        );
 
         if (error) {
             throw error;
@@ -57,16 +61,12 @@ export class ReservasService {
         return data as EstadoOcupacion;
     }
 
-    async reservar(
-        funcionId: string,
-        solicitud: SolicitudReserva
-    ): Promise<Reserva> {
-        const { data, error } = await this.supabase.cliente
-            .rpc('cine_reservar_butacas', {
-                p_funcion: funcionId,
-                p_butacas: solicitud.butacas,
-                p_clave: solicitud.clave
-            });
+    async reservar(funcionId: string, solicitud: SolicitudReserva): Promise<Reserva> {
+        const { data, error } = await this.supabase.cliente.rpc('cine_reservar_butacas', {
+            p_funcion: funcionId,
+            p_butacas: solicitud.butacas,
+            p_clave: solicitud.clave
+        });
 
         if (error) {
             throw error;
@@ -80,10 +80,9 @@ export class ReservasService {
     }
 
     async obtenerReserva(clave: string): Promise<Reserva | null> {
-        const { data, error } = await this.supabase.cliente
-            .rpc('cine_obtener_reserva', {
-                p_clave: clave
-            });
+        const { data, error } = await this.supabase.cliente.rpc('cine_obtener_reserva', {
+            p_clave: clave
+        });
 
         if (error) {
             throw error;
@@ -93,10 +92,9 @@ export class ReservasService {
     }
 
     async cancelar(clave: string): Promise<void> {
-        const { error } = await this.supabase.cliente
-            .rpc('cine_cancelar_reserva', {
-                p_clave: clave
-            });
+        const { error } = await this.supabase.cliente.rpc('cine_cancelar_reserva', {
+            p_clave: clave
+        });
 
         if (error) {
             throw error;
@@ -166,7 +164,8 @@ export class ReservasService {
             return {
                 clave: datos.clave,
                 butacas: datos.butacas,
-                confirmada: datos.confirmada === true
+                confirmada: datos.confirmada === true,
+                canjes: validarCanjes(datos.canjes)
             };
         } catch {
             sessionStorage.removeItem(claveAlmacenamiento);
@@ -174,14 +173,8 @@ export class ReservasService {
         }
     }
 
-    guardarSolicitud(
-        claveAlmacenamiento: string,
-        solicitud: SolicitudReserva
-    ): void {
-        sessionStorage.setItem(
-            claveAlmacenamiento,
-            JSON.stringify(solicitud)
-        );
+    guardarSolicitud(claveAlmacenamiento: string, solicitud: SolicitudReserva): void {
+        sessionStorage.setItem(claveAlmacenamiento, JSON.stringify(solicitud));
     }
 
     quitarSolicitud(claveAlmacenamiento: string): void {

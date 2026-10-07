@@ -1,0 +1,130 @@
+<section class="descuentos" aria-label="Cupones y total de compra">
+  <h3>Cupones y beneficios</h3>
+
+  @if (bloqueado()) {
+    <p class="ayuda">Los cupones y el importe se conservan al reintentar la misma compra.</p>
+
+    @for (cupon of elegidos(); track cupon.id) {
+      <p>
+        <strong>
+          {{ cupon.codigo }}
+        </strong>
+
+        ·
+        {{ cupon.porcentaje | number: '1.0-2' }} % ·
+        {{ destino(cupon) }}
+      </p>
+    } @empty {
+      <p>Sin cupones seleccionados.</p>
+    }
+  } @else {
+    <p class="ayuda">
+      Los cupones seleccionados se acumulan automáticamente. Los porcentajes se suman sobre cada
+      parte de la compra, hasta un máximo del 100 %.
+    </p>
+
+    @for (cupon of cupones(); track cupon.id) {
+      <label class="opcion">
+        <input
+          type="checkbox"
+          [checked]="seleccionado(cupon)"
+          [disabled]="cargando() || (!!motivo(cupon) && !seleccionado(cupon))"
+          (change)="seleccionar(cupon, $event)"
+        />
+
+        <span>
+          <strong>
+            {{ cupon.codigo }}
+          </strong>
+
+          ·
+          {{ cupon.porcentaje | number: '1.0-2' }} %
+
+          <small>
+            {{ cupon.nombre }}
+            ·
+            {{ destino(cupon) }}
+          </small>
+
+          <small>
+            {{ cupon.beneficio_permanente ? 'Beneficio permanente' : 'Un uso por usuario' }}
+          </small>
+
+          @if (cupon.importe_minimo > 0) {
+            <small>
+              Mínimo sobre {{ destino(cupon) }}: ARS
+              {{ cupon.importe_minimo | number: '1.2-2' }}
+            </small>
+          }
+
+          @if (motivo(cupon)) {
+            <small class="error">
+              {{ motivo(cupon) }}
+            </small>
+          }
+        </span>
+      </label>
+    }
+
+    @if (cargando()) {
+      <p role="status">Consultando cupones…</p>
+    } @else if (!error() && cupones().length === 0) {
+      <p class="ayuda">
+        No tenés cupones disponibles hoy. Los beneficios requieren una cuenta registrada y cumplir
+        sus condiciones.
+      </p>
+    }
+
+    @if (error()) {
+      <p class="error" role="alert">
+        {{ error() }}
+      </p>
+    }
+
+    @if (aviso()) {
+      <p role="status">
+        {{ aviso() }}
+      </p>
+    }
+
+    <div class="acciones-cupones">
+      <button type="button" [disabled]="cargando()" (click)="cargar()">Actualizar cupones</button>
+
+      <button type="button" [disabled]="cargando()" (click)="quitarTodos()">
+        Comprar sin cupones
+      </button>
+    </div>
+  }
+
+  <dl aria-live="polite">
+    <div>
+      <dt>Subtotal</dt>
+
+      <dd>
+        ARS
+        {{ entradas() + candy() | number: '1.2-2' }}
+      </dd>
+    </div>
+
+    @if (elegidos().length > 0) {
+      <div>
+        <dt>Descuento total</dt>
+
+        <dd>
+          − ARS
+          {{ resumen().descuento | number: '1.2-2' }}
+        </dd>
+      </div>
+    }
+
+    <div class="total">
+      <dt>Total después de cupones</dt>
+
+      <dd>
+        ARS
+        {{ resumen().total | number: '1.2-2' }}
+      </dd>
+    </div>
+  </dl>
+  <p class="ayuda aclaracion-total">Los canjes y el crédito se aplican en el resumen final.</p>
+</section>

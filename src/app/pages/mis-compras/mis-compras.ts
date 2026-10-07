@@ -1,16 +1,9 @@
+import { FidelizacionService } from '../../base/service/fidelizacion.service';
+import { BeneficiosService } from '../../base/service/beneficios.service';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import {
-    Component,
-    inject,
-    OnDestroy,
-    OnInit,
-    signal
-} from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import {
-    Compra,
-    ComprasService
-} from '../../base/service/compras.service';
+import { Compra, ComprasService } from '../../base/service/compras.service';
 
 interface QrCompra {
     tipo: 'entrada' | 'candy';
@@ -26,6 +19,8 @@ interface QrCompra {
     styleUrl: './mis-compras.scss'
 })
 export class MisCompras implements OnInit, OnDestroy {
+    private readonly fidelizacion = inject(FidelizacionService);
+    private readonly beneficios = inject(BeneficiosService);
     private readonly comprasService = inject(ComprasService);
 
     private destruido = false;
@@ -69,17 +64,12 @@ export class MisCompras implements OnInit, OnDestroy {
                 return;
             }
 
-            const ultimaPagina = Math.max(
-                0,
-                Math.ceil(resultado.total / 10) - 1
-            );
+            const ultimaPagina = Math.max(0, Math.ceil(resultado.total / 10) - 1);
 
             const paginaDestino = Math.min(pagina, ultimaPagina);
 
             if (paginaDestino !== pagina) {
-                resultado = await this.comprasService.listar(
-                    paginaDestino
-                );
+                resultado = await this.comprasService.listar(paginaDestino);
             }
 
             if (this.destruido) {
@@ -102,6 +92,50 @@ export class MisCompras implements OnInit, OnDestroy {
         }
     }
 
+    async cancelarCompra(compra: Compra): Promise<void> {
+        if (this.modificando() || this.cargando()) {
+            return;
+        }
+        if (
+            !window.confirm(
+                '¿Cancelar esta compra? Hasta 2 horas antes de la función recibirás crédito en tu cuenta. Sus entradas y QR dejarán de ser válidos.'
+            )
+        ) {
+            return;
+        }
+        this.modificando.set(true);
+        this.error.set('');
+        this.exito.set('');
+        try {
+            if (this.invitado()) {
+                const codigo = compra.comprobantes.find(
+                    (q) => q.tipo === 'entrada'
+                )?.codigo;
+                if (!codigo) {
+                    throw new Error('No encontramos el código de tu comprobante.');
+                }
+                await this.beneficios.rpc('cine_cancelar_compra_invitado', {
+                    p_codigo: codigo
+                });
+            } else {
+                await this.beneficios.rpc('cine_cancelar_compra_credito', {
+                    p_compra: compra.compra_id
+                });
+            }
+            await this.cargar(this.pagina());
+            void this.fidelizacion.actualizar();
+            this.exito.set(
+                this.invitado()
+                    ? 'Compra cancelada. Registrate con el correo de la compra y reclamá el crédito en Mi perfil usando el código del QR.'
+                    : 'Compra cancelada. El crédito está disponible en Mi perfil.'
+            );
+        } catch (e) {
+            this.error.set(this.obtenerMensaje(e));
+        } finally {
+            this.modificando.set(false);
+        }
+    }
+
     async ocultar(compra: Compra): Promise<void> {
         if (this.cargando() || this.modificando()) {
             return;
@@ -109,9 +143,9 @@ export class MisCompras implements OnInit, OnDestroy {
 
         const confirmado = window.confirm(
             '¿Querés ocultar esta compra de tu historial?\n\n' +
-            'Esto no cancela las entradas ni el Candy, no genera ' +
-            'un reintegro y sus QR siguen siendo válidos.\n\n' +
-            'Descargá los QR antes de continuar si todavía los necesitás.'
+                'Esto no cancela las entradas ni el Candy, no genera ' +
+                'un reintegro y sus QR siguen siendo válidos.\n\n' +
+                'Descargá los QR antes de continuar si todavía los necesitás.'
         );
 
         if (!confirmado) {
@@ -130,6 +164,7 @@ export class MisCompras implements OnInit, OnDestroy {
             }
 
             await this.cargar(this.pagina());
+            void this.fidelizacion.actualizar();
 
             if (!this.destruido) {
                 this.exito.set('La compra se ocultó del historial.');
@@ -146,19 +181,15 @@ export class MisCompras implements OnInit, OnDestroy {
     }
 
     async limpiarHistorial(): Promise<void> {
-        if (
-            this.cargando() ||
-            this.modificando() ||
-            this.total() === 0
-        ) {
+        if (this.cargando() || this.modificando() || this.total() === 0) {
             return;
         }
 
         const confirmado = window.confirm(
             '¿Querés ocultar todas las compras de tu historial?\n\n' +
-            'Esto no cancela tus compras ni genera un reintegro. ' +
-            'Las entradas y los QR siguen siendo válidos.\n\n' +
-            'Descargá los QR que necesites antes de continuar.'
+                'Esto no cancela tus compras ni genera un reintegro. ' +
+                'Las entradas y los QR siguen siendo válidos.\n\n' +
+                'Descargá los QR que necesites antes de continuar.'
         );
 
         if (!confirmado) {
@@ -241,9 +272,7 @@ export class MisCompras implements OnInit, OnDestroy {
             console.error('Error al dibujar comprobantes:', error);
 
             if (!this.destruido && consulta === this.consultaQr) {
-                this.errorQr.set(
-                    'No pudimos dibujar los QR. Volvé a intentarlo.'
-                );
+                this.errorQr.set('No pudimos dibujar los QR. Volvé a intentarlo.');
             }
         } finally {
             if (!this.destruido && consulta === this.consultaQr) {

@@ -1,11 +1,7 @@
+import { ButacasAdmin } from '../butacas-admin/butacas-admin';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
-import {
-    Butaca,
-    DatosSala,
-    Sala,
-    SalasService
-} from '../../../base/service/salas.service';
+import { Butaca, DatosSala, Sala, SalasService } from '../../../base/service/salas.service';
 
 export interface ResumenSala {
     capacidad: number;
@@ -16,14 +12,15 @@ export interface ResumenSala {
 
 @Component({
     selector: 'app-salas-admin',
-    imports: [FormsModule],
+    imports: [FormsModule, ButacasAdmin],
     templateUrl: './salas-admin.html',
-    styleUrl: './salas-admin.scss'
+    styleUrl: './salas-admin.scss',
 })
 export class SalasAdmin implements OnInit {
     private readonly salasService = inject(SalasService);
 
     readonly salas = signal<Sala[]>([]);
+    readonly salaMapa = signal<Sala | null>(null);
     readonly resumenes = signal<Record<string, ResumenSala>>({});
     readonly cargando = signal(false);
     readonly guardando = signal(false);
@@ -38,7 +35,7 @@ export class SalasAdmin implements OnInit {
 
     borrador: DatosSala = {
         nombre: '',
-        activa: true
+        activa: true,
     };
 
     ngOnInit(): void {
@@ -46,9 +43,7 @@ export class SalasAdmin implements OnInit {
     }
 
     ocupado(): boolean {
-        return this.cargando()
-            || this.guardando()
-            || this.procesandoSala() !== null;
+        return this.cargando() || this.guardando() || this.procesandoSala() !== null;
     }
 
     async cargarSalas(): Promise<void> {
@@ -64,15 +59,13 @@ export class SalasAdmin implements OnInit {
 
             const resultados = await Promise.all(
                 salas.map(async (sala) => {
-                    const butacas = await this.salasService.obtenerButacas(
-                        sala.id
-                    );
+                    const butacas = await this.salasService.obtenerButacas(sala.id);
 
                     return {
                         id: sala.id,
-                        resumen: this.resumirButacas(butacas)
+                        resumen: this.resumirButacas(butacas),
                     };
-                })
+                }),
             );
 
             const resumenes: Record<string, ResumenSala> = {};
@@ -100,7 +93,7 @@ export class SalasAdmin implements OnInit {
 
         this.borrador = {
             nombre: '',
-            activa: true
+            activa: true,
         };
 
         this.errorFormulario.set('');
@@ -118,7 +111,7 @@ export class SalasAdmin implements OnInit {
 
         this.borrador = {
             nombre: sala.nombre,
-            activa: sala.activa
+            activa: sala.activa,
         };
 
         this.errorFormulario.set('');
@@ -146,9 +139,7 @@ export class SalasAdmin implements OnInit {
         this.errorFormulario.set('');
 
         if (formulario.invalid || !this.borrador.nombre.trim()) {
-            this.errorFormulario.set(
-                'Ingresá un nombre para la sala, de hasta 80 caracteres.'
-            );
+            this.errorFormulario.set('Ingresá un nombre para la sala, de hasta 80 caracteres.');
             return;
         }
 
@@ -161,17 +152,14 @@ export class SalasAdmin implements OnInit {
         let guardada = false;
 
         try {
-            await this.salasService.guardar(
-                this.salaEditada,
-                this.borrador
-            );
+            await this.salasService.guardar(this.salaEditada, this.borrador);
 
             guardada = true;
 
             this.exito.set(
                 esNueva
                     ? 'Sala creada. Sus 518 butacas se generaron automáticamente.'
-                    : 'Los cambios de la sala fueron guardados.'
+                    : 'Los cambios de la sala fueron guardados.',
             );
         } catch (error) {
             console.error('Error al guardar la sala:', error);
@@ -203,24 +191,15 @@ export class SalasAdmin implements OnInit {
         this.exito.set('');
 
         try {
-            await this.salasService.cambiarEstado(
-                sala.id,
-                nuevaActiva
-            );
+            await this.salasService.cambiarEstado(sala.id, nuevaActiva);
 
             this.salas.update((salas) =>
                 salas.map((actual) =>
-                    actual.id === sala.id
-                        ? { ...actual, activa: nuevaActiva }
-                        : actual
-                )
+                    actual.id === sala.id ? { ...actual, activa: nuevaActiva } : actual,
+                ),
             );
 
-            this.exito.set(
-                `"${sala.nombre}" quedó ${
-                    nuevaActiva ? 'activa' : 'desactivada'
-                }.`
-            );
+            this.exito.set(`"${sala.nombre}" quedó ${nuevaActiva ? 'activa' : 'desactivada'}.`);
         } catch (error) {
             console.error('Error al cambiar el estado de la sala:', error);
             this.error.set(this.obtenerMensaje(error));
@@ -236,9 +215,9 @@ export class SalasAdmin implements OnInit {
 
         const confirmacion = window.prompt(
             `Vas a eliminar definitivamente "${sala.nombre}" ` +
-            'y todas sus butacas.\n\n' +
-            'Esta acción no se puede deshacer.\n\n' +
-            'Escribí ELIMINAR para confirmar:'
+                'y todas sus butacas.\n\n' +
+                'Esta acción no se puede deshacer.\n\n' +
+                'Escribí ELIMINAR para confirmar:',
         );
 
         if (confirmacion !== 'ELIMINAR') {
@@ -252,9 +231,7 @@ export class SalasAdmin implements OnInit {
         try {
             await this.salasService.eliminar(sala.id);
 
-            this.salas.update((salas) =>
-                salas.filter((actual) => actual.id !== sala.id)
-            );
+            this.salas.update((salas) => salas.filter((actual) => actual.id !== sala.id));
 
             this.resumenes.update((actuales) => {
                 const restantes = { ...actuales };
@@ -262,9 +239,7 @@ export class SalasAdmin implements OnInit {
                 return restantes;
             });
 
-            this.exito.set(
-                `"${sala.nombre}" y sus butacas fueron eliminadas.`
-            );
+            this.exito.set(`"${sala.nombre}" y sus butacas fueron eliminadas.`);
         } catch (error) {
             console.error('Error al eliminar la sala:', error);
             this.error.set(this.obtenerMensaje(error));
@@ -276,15 +251,9 @@ export class SalasAdmin implements OnInit {
     private resumirButacas(butacas: Butaca[]): ResumenSala {
         return {
             capacidad: butacas.length,
-            estandar: butacas.filter(
-                (butaca) => butaca.tipo === 'estandar'
-            ).length,
-            accesibles: butacas.filter(
-                (butaca) => butaca.tipo === 'accesible'
-            ).length,
-            vip: butacas.filter(
-                (butaca) => butaca.tipo === 'vip'
-            ).length
+            estandar: butacas.filter((butaca) => butaca.tipo === 'estandar').length,
+            accesibles: butacas.filter((butaca) => butaca.tipo === 'accesible').length,
+            vip: butacas.filter((butaca) => butaca.tipo === 'vip').length,
         };
     }
 

@@ -1,267 +1,378 @@
 <h1>Cartelera</h1>
+
 <p>Descubrí las películas de Cinefilia Club.</p>
 
 @if (cargando()) {
-    <p role="status">Cargando cartelera...</p>
+  <p role="status">Cargando cartelera...</p>
 } @else if (mensajeError()) {
-    <p role="alert">{{ mensajeError() }}</p>
+  <p role="alert">
+    {{ mensajeError() }}
+  </p>
 } @else {
-    <div class="filtros">
-        <div class="campo">
-            <label for="busqueda">Buscar película</label>
+  <div class="filtros">
+    <div class="campo">
+      <label for="busqueda"> Buscar película </label>
 
-            <input
-                #campoBusqueda
-                id="busqueda"
-                type="search"
-                placeholder="Escribí un nombre..."
-                [value]="busqueda()"
-                (input)="busqueda.set(campoBusqueda.value)"
-            />
-        </div>
-
-        <div class="campo">
-            <label for="genero">Género</label>
-
-            <select
-                #campoGenero
-                id="genero"
-                [value]="generoSeleccionado()"
-                (change)="generoSeleccionado.set(campoGenero.value)"
-            >
-                <option value="">Todos los géneros</option>
-
-                @for (genero of generos(); track genero.id) {
-                    <option [value]="genero.id">
-                        {{ genero.nombre }}
-                    </option>
-                }
-            </select>
-        </div>
-
-        <button type="button" (click)="limpiarFiltros()">
-            Limpiar filtros
-        </button>
+      <input
+        #campoBusqueda
+        id="busqueda"
+        type="search"
+        placeholder="Escribí un nombre..."
+        [value]="busqueda()"
+        (input)="busqueda.set(campoBusqueda.value)"
+      />
     </div>
 
-    @if (peliculaSeleccionada(); as seleccionada) {
-        <section
-            id="horarios-pc"
-            class="funciones-disponibles horarios-pc"
-            aria-labelledby="tituloHorariosPc"
-            [attr.aria-busy]="cargandoFunciones()"
-            aria-live="polite"
-        >
-            <header class="cabecera-funciones">
-                <div>
-                    <p class="etiqueta-funciones">HORARIOS DISPONIBLES</p>
+    <div class="campo">
+      <label for="genero"> Género </label>
 
-                    <h2 id="tituloHorariosPc">
-                        {{ seleccionada.nombre }}
-                    </h2>
+      <select
+        #campoGenero
+        id="genero"
+        [value]="generoSeleccionado()"
+        (change)="generoSeleccionado.set(campoGenero.value)"
+      >
+        <option value="">Todos los géneros</option>
 
-                    <p>Fecha y hora de Argentina.</p>
-                </div>
+        @for (genero of generos(); track genero.id) {
+          <option [value]="genero.id">
+            {{ genero.nombre }}
+          </option>
+        }
+      </select>
+    </div>
 
-                <button
-                    class="cerrar-funciones"
-                    type="button"
-                    (click)="cerrarFunciones()"
-                >
-                    Cerrar horarios
-                </button>
-            </header>
+    <button type="button" (click)="limpiarFiltros()">Limpiar filtros</button>
+  </div>
 
-            <ng-container
-                [ngTemplateOutlet]="contenidoHorarios"
-            ></ng-container>
-        </section>
-    }
+  @if (peliculaSeleccionada(); as seleccionada) {
+    <section
+      id="horarios-pc"
+      class="funciones-disponibles horarios-pc"
+      aria-labelledby="tituloHorariosPc"
+      [attr.aria-busy]="cargandoFunciones()"
+      aria-live="polite"
+    >
+      <header class="cabecera-funciones">
+        <div>
+          <p class="etiqueta-funciones">HORARIOS DISPONIBLES</p>
 
-    <p role="status">
-        Películas encontradas: {{ peliculasFiltradas().length }}
+          <h2 id="tituloHorariosPc">
+            {{ seleccionada.nombre }}
+          </h2>
+
+          <p>Fecha y hora de Argentina.</p>
+        </div>
+
+        <button class="cerrar-funciones" type="button" (click)="cerrarFunciones()">
+          Cerrar horarios
+        </button>
+      </header>
+
+      <ng-container [ngTemplateOutlet]="contenidoHorarios"></ng-container>
+      <ng-container
+        [ngTemplateOutlet]="contenidoResenas"
+        [ngTemplateOutletContext]="{ ubicacion: 'pc' }"
+      ></ng-container>
+    </section>
+  }
+
+  <p role="status">Películas encontradas: {{ peliculasFiltradas().length }}</p>
+
+  @if (errorProximas()) {
+    <p class="error-funciones" role="alert">
+      No pudimos consultar los próximos estrenos y sus avisos.
+      {{ errorProximas() }}
     </p>
 
-    <section class="peliculas" aria-label="Películas disponibles">
-        @for (pelicula of peliculasFiltradas(); track pelicula.id) {
-            <article class="pelicula">
-                @if (pelicula.imagen_url) {
-                    <img
-                        [src]="pelicula.imagen_url"
-                        [alt]="'Póster de ' + pelicula.nombre"
-                        loading="lazy"
-                    />
-                } @else {
-                    <div class="sin-imagen">Póster pendiente</div>
+    <button
+      type="button"
+      [disabled]="cargandoAlertas() || procesandoAlerta()"
+      (click)="cargarProximas()"
+    >
+      Reintentar próximos estrenos
+    </button>
+  }
+
+  @for (seccion of secciones(); track seccion.id) {
+    <section class="seccion-cartelera" [attr.aria-labelledby]="'titulo-' + seccion.id">
+      <header class="cabecera-seccion">
+        <h2 [id]="'titulo-' + seccion.id">
+          {{ seccion.titulo }}
+        </h2>
+
+        <p>
+          {{ seccion.descripcion }}
+        </p>
+      </header>
+
+      <div class="peliculas">
+        @for (pelicula of seccion.peliculas; track pelicula.id) {
+          <article class="pelicula">
+            @if (pelicula.imagen_url) {
+              <img
+                [src]="pelicula.imagen_url"
+                [alt]="'Póster de ' + pelicula.nombre"
+                loading="lazy"
+              />
+            } @else {
+              <div class="sin-imagen">Póster pendiente</div>
+            }
+
+            <div class="informacion">
+              <h3>
+                {{ pelicula.nombre }}
+              </h3>
+
+              @if (seccion.id === 'proximamente' && pelicula.fecha_estreno) {
+                <p class="estreno-pelicula">
+                  Estreno:
+                  {{ pelicula.fecha_estreno | date: 'dd/MM/yyyy' }}
+                </p>
+              }
+
+              <p>
+                {{ pelicula.sinopsis }}
+              </p>
+
+              <div class="generos">
+                @for (genero of pelicula.generos; track genero.id) {
+                  <span>
+                    {{ genero.nombre }}
+                  </span>
                 }
+              </div>
 
-                <div class="informacion">
-                    <h2>{{ pelicula.nombre }}</h2>
-                    <p>{{ pelicula.sinopsis }}</p>
+              <p>
+                <strong> Duración: </strong>
 
-                    <div class="generos">
-                        @for (genero of pelicula.generos; track genero.id) {
-                            <span>{{ genero.nombre }}</span>
-                        }
-                    </div>
+                {{ pelicula.duracion_minutos }} minutos
+              </p>
 
-                    <p>
-                        <strong>Duración:</strong>
-                        {{ pelicula.duracion_minutos }} minutos
-                    </p>
+              <p>
+                <strong> Edad mínima: </strong>
 
-                    <p>
-                        <strong>Edad mínima:</strong>
+                {{
+                  pelicula.edad_minima === 0 ? 'Sin restricción' : pelicula.edad_minima + ' años'
+                }}
+              </p>
 
-                        {{
-                            pelicula.edad_minima === 0
-                                ? 'Sin restricción'
-                                : pelicula.edad_minima + ' años'
-                        }}
-                    </p>
+              <button
+                class="ver-funciones"
+                type="button"
+                [attr.aria-expanded]="peliculaSeleccionada()?.id === pelicula.id"
+                (click)="alternarFunciones(pelicula)"
+              >
+                {{
+                  peliculaSeleccionada()?.id === pelicula.id ? 'Ocultar horarios' : 'Ver funciones'
+                }}
 
-                    <button
-                        class="ver-funciones"
-                        type="button"
-                        [attr.aria-expanded]="peliculaSeleccionada()?.id === pelicula.id"
-                        (click)="alternarFunciones(pelicula)"
-                    >
-                        {{
-                            peliculaSeleccionada()?.id === pelicula.id
-                                ? 'Ocultar horarios'
-                                : 'Ver funciones'
-                        }}
+                <span aria-hidden="true">
+                  {{ peliculaSeleccionada()?.id === pelicula.id ? '−' : '+' }}
+                </span>
+              </button>
+              <button class="ver-resenas" type="button" (click)="abrirResenas(pelicula)">
+                Ver reseñas
+              </button>
+            </div>
 
-                        <span aria-hidden="true">
-                            {{
-                                peliculaSeleccionada()?.id === pelicula.id
-                                    ? '−'
-                                    : '+'
-                            }}
-                        </span>
-                    </button>
-                </div>
+            @if (peliculaSeleccionada()?.id === pelicula.id) {
+              <section
+                class="funciones-disponibles horarios-movil"
+                [id]="'horarios-movil-' + pelicula.id"
+                [attr.aria-labelledby]="'tituloHorariosMovil-' + pelicula.id"
+                [attr.aria-busy]="cargandoFunciones()"
+                aria-live="polite"
+              >
+                <header class="cabecera-funciones">
+                  <div>
+                    <h3 [id]="'tituloHorariosMovil-' + pelicula.id">Horarios disponibles</h3>
 
-                @if (peliculaSeleccionada()?.id === pelicula.id) {
-                    <section
-                        class="funciones-disponibles horarios-movil"
-                        [id]="'horarios-movil-' + pelicula.id"
-                        [attr.aria-labelledby]="'tituloHorariosMovil-' + pelicula.id"
-                        [attr.aria-busy]="cargandoFunciones()"
-                        aria-live="polite"
-                    >
-                        <header class="cabecera-funciones">
-                            <div>
-                                <h3 [id]="'tituloHorariosMovil-' + pelicula.id">
-                                    Horarios disponibles
-                                </h3>
+                    <p>Fecha y hora de Argentina.</p>
+                  </div>
+                </header>
 
-                                <p>Fecha y hora de Argentina.</p>
-                            </div>
-                        </header>
-
-                        <ng-container
-                            [ngTemplateOutlet]="contenidoHorarios"
-                        ></ng-container>
-                    </section>
-                }
-            </article>
+                <ng-container [ngTemplateOutlet]="contenidoHorarios"></ng-container>
+                <ng-container
+                  [ngTemplateOutlet]="contenidoResenas"
+                  [ngTemplateOutletContext]="{ ubicacion: 'movil-' + pelicula.id }"
+                ></ng-container>
+              </section>
+            }
+          </article>
         } @empty {
-            <p>No hay películas que coincidan con los filtros.</p>
+          <p>No hay películas que coincidan con los filtros.</p>
         }
+      </div>
     </section>
+  }
 }
 
 <ng-template #contenidoHorarios>
-    @if (cargandoFunciones()) {
-        <p role="status">Consultando funciones...</p>
-    } @else if (errorFunciones()) {
-        <p class="error-funciones" role="alert">
-            {{ errorFunciones() }}
-        </p>
+  @if (cargandoFunciones()) {
+    <p role="status">Consultando funciones...</p>
+  } @else if (errorFunciones()) {
+    <p class="error-funciones" role="alert">
+      {{ errorFunciones() }}
+    </p>
 
-        <button
-            type="button"
-            (click)="reintentarFunciones()"
-        >
-            Volver a intentar
-        </button>
-    } @else {
-        <div class="lista-funciones">
-            @for (funcion of funciones(); track funcion.id) {
-                <article class="funcion">
-                    <div class="fecha-funcion">
-                        <span>
-                            {{ funcion.inicio | date:'dd/MM/yyyy':'-0300' }}
-                        </span>
+    <button type="button" (click)="reintentarFunciones()">Volver a intentar</button>
+  } @else {
+    <div class="lista-funciones">
+      @for (funcion of funciones(); track funcion.id) {
+        <article class="funcion">
+          <div class="fecha-funcion">
+            <span>
+              {{ funcion.inicio | date: 'dd/MM/yyyy' : '-0300' }}
+            </span>
 
-                        <h4>
-                            {{ funcion.inicio | date:'HH:mm':'-0300' }} hs
-                        </h4>
-                    </div>
+            <h4>{{ funcion.inicio | date: 'HH:mm' : '-0300' }} hs</h4>
+          </div>
 
-                    <p class="sala-funcion">
-                        {{ funcion.sala.nombre }}
-                    </p>
+          <p class="sala-funcion">
+            {{ funcion.sala.nombre }}
+          </p>
 
-                    <div class="detalles-funcion">
-                        <span>{{ funcion.formato }}</span>
+          <div class="detalles-funcion">
+            <span>
+              {{ funcion.formato }}
+            </span>
 
-                        <span>
-                            {{
-                                funcion.idioma === 'castellano'
-                                    ? 'Castellano'
-                                    : 'Subtitulada'
-                            }}
-                        </span>
-                    </div>
+            <span>
+              {{ funcion.idioma === 'castellano' ? 'Castellano' : 'Subtitulada' }}
+            </span>
+          </div>
 
-                    <p class="fin-funcion">
-                        Finaliza a las
-                        {{ funcion.fin | date:'HH:mm':'-0300' }} hs.
-                    </p>
+          @if (funcion.preventa) {
+            <p class="fin-funcion">
+              Preventa: {{ funcion.preventa_descuento ?? 10 }} % de descuento · excepto VIP.
+            </p>
+          }
 
-                    <dl class="precios-funcion">
-                        <div>
-                            <dt>Estándar</dt>
+          <p class="fin-funcion">
+            Finaliza a las
+            {{ funcion.fin | date: 'HH:mm' : '-0300' }} hs.
+          </p>
 
-                            <dd>
-                                $ {{ funcion.precio_estandar | number:'1.2-2' }}
-                                ARS
-                            </dd>
-                        </div>
+          <dl class="precios-funcion">
+            <div>
+              <dt>Estándar</dt>
 
-                        <div>
-                            <dt>Accesible</dt>
+              <dd>
+                $
+                {{ funcion.precio_estandar | number: '1.2-2' }}
+                ARS
+              </dd>
+            </div>
 
-                            <dd>
-                                $ {{ funcion.precio_accesible | number:'1.2-2' }}
-                                ARS
-                            </dd>
-                        </div>
+            <div>
+              <dt>Accesible</dt>
 
-                        <div class="precio-vip">
-                            <dt>VIP · Filas R, S y T</dt>
+              <dd>
+                $
+                {{ funcion.precio_accesible | number: '1.2-2' }}
+                ARS
+              </dd>
+            </div>
 
-                            <dd>
-                                $ {{ funcion.precio_vip | number:'1.2-2' }}
-                                ARS
-                            </dd>
-                        </div>
-                    </dl>
+            <div class="precio-vip">
+              <dt>VIP · Filas R, S y T</dt>
 
-                    <a
-                        class="elegir-butacas"
-                        [routerLink]="['/butacas', funcion.id]"
-                    >
-                        Elegir butacas
-                    </a>
-                </article>
-            } @empty {
-                <p class="sin-funciones">
-                    Esta película todavía no tiene funciones disponibles.
+              <dd>
+                $
+                {{ funcion.precio_vip | number: '1.2-2' }}
+                ARS
+              </dd>
+            </div>
+          </dl>
+
+          <a class="elegir-butacas" [routerLink]="['/butacas', funcion.id]"> Elegir butacas </a>
+        </article>
+      } @empty {
+        <div class="aviso-funciones">
+          <p class="sin-funciones">
+            Esta película todavía no tiene funciones disponibles para comprar.
+          </p>
+
+          @if (seleccionEsProxima()) {
+            @if (cargandoAlertas()) {
+              <p role="status">Consultando tu aviso...</p>
+            } @else if (errorProximas()) {
+              <p>Reintentá la consulta de próximos estrenos para gestionar el aviso.</p>
+            } @else {
+              @if (alertaActivada() && auth.usuario()) {
+                <p class="exito-alerta" role="status">Aviso activado para esta película.</p>
+              }
+
+              <button
+                type="button"
+                [disabled]="procesandoAlerta() || !auth.sesionLista()"
+                (click)="cambiarAlerta()"
+              >
+                {{
+                  procesandoAlerta()
+                    ? 'Guardando...'
+                    : alertaActivada() && auth.usuario()
+                      ? 'Cancelar aviso por correo'
+                      : 'Avisame al mail cuando haya entradas disponibles'
+                }}
+              </button>
+
+              <p>
+                @if (auth.usuario()) {
+                  Usaremos el correo registrado en tu cuenta.
+                } @else {
+                  Iniciá sesión desde Mi cuenta para activar el aviso.
+                }
+              </p>
+
+              @if (errorAlerta()) {
+                <p class="error-funciones" role="alert">
+                  {{ errorAlerta() }}
                 </p>
+              }
+
+              @if (exitoAlerta()) {
+                <p class="exito-alerta" role="status">
+                  {{ exitoAlerta() }}
+                </p>
+              }
             }
+          }
         </div>
-    }
+      }
+    </div>
+  }
+</ng-template>
+
+<ng-template #contenidoResenas let-ubicacion="ubicacion">
+  @if (peliculaSeleccionada(); as seleccionada) {
+    <section
+      class="resenas-publicas"
+      [id]="'resenas-' + ubicacion"
+      aria-label="Reseñas de la película seleccionada"
+      tabindex="-1"
+    >
+      <h3>Opiniones sobre {{ seleccionada.nombre }}</h3>
+      @if (cargandoFunciones()) {
+        <p role="status">Cargando reseñas…</p>
+      } @else if (errorResenas()) {
+        <p role="alert">{{ errorResenas() }}</p>
+        <button type="button" (click)="abrirResenas(seleccionada)">Reintentar reseñas</button>
+      } @else if (resenas(); as r) {
+        <p>Promedio: {{ r.promedio }} / 5 · {{ r.cantidad }} reseñas</p>
+        <details [open]="comentariosAbiertos()">
+          <summary>Ver comentarios</summary>
+          @for (opinion of r.resenas; track $index) {
+            <article>
+              <p>{{ opinion.estrellas }} / 5 · {{ opinion.fecha | date: 'dd/MM/yyyy' }}</p>
+              <p>{{ opinion.comentario }}</p>
+            </article>
+          } @empty {
+            <p>Todavía no hay reseñas.</p>
+          }
+        </details>
+      }
+    </section>
+  }
 </ng-template>

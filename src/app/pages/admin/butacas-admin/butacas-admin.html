@@ -1,0 +1,105 @@
+<section aria-labelledby="titulo-mapa-admin">
+    <h3 id="titulo-mapa-admin">Mapa de {{ sala().nombre }}</h3>
+    <p>
+        {{ habilitadas() }} de {{ butacas().length }} lugares habilitados. Seleccioná una butaca
+        para gestionar su disponibilidad.
+    </p>
+    <p>
+        La distribución conserva tres bloques, la fila accesible y las filas VIP R, S y T. No se
+        puede dejar fuera de servicio una butaca con reservas o entradas vigentes.
+    </p>
+    <div class="acciones">
+        <button
+            type="button"
+            [disabled]="cargando() || guardando() || bloqueado()"
+            (click)="cargar()"
+        >
+            Actualizar mapa
+        </button>
+    </div>
+    <p>
+        La restauración requiere una sala sin funciones pendientes y conserva los identificadores de
+        las butacas.
+    </p>
+    @if (error()) {
+        <p class="error" role="alert">{{ error() }}</p>
+    }
+    @if (exito()) {
+        <p role="status">{{ exito() }}</p>
+    }
+    @if (cargando()) {
+        <p role="status">Cargando mapa…</p>
+    } @else {
+        <p class="leyenda">Estándar · Azul: accesible · Dorado: VIP · Gris: fuera de servicio</p>
+        <p class="ayuda-mapa">Deslizá el mapa hacia los costados para ver todas las butacas.</p>
+        <div
+            class="mapa"
+            tabindex="0"
+            role="region"
+            aria-label="Mapa de butacas; desplazamiento horizontal y vertical"
+        >
+            <div class="mapa-interior">
+                <div class="pantalla">PANTALLA</div>
+
+                @for (fila of filas(); track fila.nombre) {
+                    <div class="fila" [class.fila-accesible]="fila.nombre === 'ACC'">
+                        <strong class="nombre-fila">{{ fila.nombre }}</strong>
+
+                        @for (bloque of fila.bloques; track $index) {
+                            <div class="bloque">
+                                @for (butaca of bloque; track butaca.id) {
+                                    <button
+                                        class="butaca"
+                                        type="button"
+                                        [class.accesible]="butaca.tipo === 'accesible'"
+                                        [class.vip]="butaca.tipo === 'vip'"
+                                        [class.inhabilitada]="!butaca.habilitada"
+                                        [class.seleccionada]="seleccionada()?.id === butaca.id"
+                                        [disabled]="guardando() || bloqueado()"
+                                        [attr.aria-pressed]="seleccionada()?.id === butaca.id"
+                                        [attr.aria-label]="
+                                            butaca.fila +
+                                            ' ' +
+                                            butaca.numero +
+                                            ', ' +
+                                            butaca.tipo +
+                                            (butaca.habilitada ? ', habilitada' : ', fuera de servicio')
+                                        "
+                                        (click)="seleccionada.set(butaca)"
+                                    >
+                                        {{ butaca.numero }}
+                                    </button>
+                                }
+                            </div>
+                        }
+
+                        <strong class="nombre-fila" aria-hidden="true">
+                            {{ fila.nombre }}
+                        </strong>
+                    </div>
+                }
+            </div>
+        </div>
+        @if (seleccionada(); as butaca) {
+            <div class="seleccion">
+                <p>
+                    <strong>{{ butaca.fila }} · {{ butaca.numero }}</strong>
+                    — {{ butaca.tipo }} — bloque {{ butaca.bloque }}
+                </p>
+                <button
+                    type="button"
+                    [disabled]="guardando() || bloqueado()"
+                    (click)="cambiarEstado()"
+                >
+                    {{
+                        guardando()
+                            ? 'Guardando…'
+                            : butaca.habilitada
+                              ? 'Dejar fuera de servicio'
+                              : 'Habilitar butaca'
+                    }}
+                </button>
+            </div>
+        }
+    }
+</section>
