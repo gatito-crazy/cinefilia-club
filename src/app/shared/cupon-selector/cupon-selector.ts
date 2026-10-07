@@ -82,8 +82,8 @@ export class CuponSelector implements OnInit {
         return cupon.aplica_a === 'entradas'
             ? 'Solo entradas'
             : cupon.aplica_a === 'candy'
-              ? 'Solo Candy'
-              : 'Toda la compra';
+                ? 'Solo Candy'
+                : 'Toda la compra';
     }
 
     seleccionar(cupon: Cupon, evento: Event): void {
